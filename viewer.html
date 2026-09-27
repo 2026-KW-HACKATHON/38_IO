@@ -1,0 +1,760 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<title>Voxel Reef AR</title>
+<style>
+  :root{ --ink:#F2EEF9; --dim:#B3A9CC; --accent:#7FC4FF; }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;background:#0F0C1A;color:var(--ink);
+    font-family:ui-rounded,"Quicksand","Segoe UI",system-ui,sans-serif;overflow:hidden;
+    -webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;}
+  #stage{position:fixed;inset:0;overflow:hidden;background:#0F0C1A}
+  #cam{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+  #gl{position:absolute;inset:0;width:100%;height:100%;}
+  #bubbles{position:absolute;inset:0;pointer-events:none;}
+
+  /* 말풍선 기본 모양. reef-data.json을 읽고 나면 All Reefs에서 정한
+     말풍선·글꼴로 이 스타일 위에 덮어써진다 (reef-kit.js의 kit.applyStyle) */
+  .reef-say{
+    position:absolute;max-width:min(62vw,220px);padding:8px 11px;border-radius:14px;
+    background:rgba(20,16,36,.62);backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);
+    border:1px solid rgba(220,212,255,.28);
+    font-size:14px;line-height:1.35;color:#F6F2FF;text-shadow:0 1px 3px rgba(0,0,0,.5);
+    box-shadow:0 10px 30px -14px rgba(0,0,0,.9);
+    white-space:pre-wrap;word-break:keep-all;overflow-wrap:anywhere;width:max-content;
+  }
+  .reef-say.out{opacity:0;transition:opacity .3s}
+
+  /* 시작 화면 */
+  #gate{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;gap:18px;padding:28px;text-align:center;
+    background:radial-gradient(120% 90% at 50% 20%,#241C40 0%,#0F0C1A 70%);z-index:5}
+  #gate h1{margin:0;font-size:24px;font-weight:700;letter-spacing:.01em}
+  #gate p{margin:0;max-width:34ch;color:var(--dim);font-size:14px;line-height:1.55}
+  #go{appearance:none;border:0;border-radius:999px;padding:15px 30px;font:inherit;font-weight:700;
+    font-size:16px;background:var(--accent);color:#0C1622;cursor:pointer;
+    box-shadow:0 10px 30px -12px rgba(127,196,255,.7)}
+  #go:active{transform:translateY(1px)}
+  .fine{font-family:ui-monospace,monospace;font-size:11px;letter-spacing:.05em;color:#6F6690}
+
+  /* 위쪽 상태 표시줄 */
+  #hud{position:absolute;left:0;right:0;top:0;padding:calc(10px + env(safe-area-inset-top,0px)) 14px 10px;
+    display:flex;justify-content:space-between;align-items:flex-start;gap:10px;pointer-events:none}
+  .chip{font-family:ui-monospace,monospace;font-size:10.5px;letter-spacing:.06em;
+    background:rgba(16,12,30,.5);border:1px solid rgba(220,212,255,.18);border-radius:8px;
+    padding:6px 9px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);color:var(--dim)}
+  .chip b{color:var(--ink);font-weight:600}
+  #track.lock{border-color:rgba(127,196,255,.6);color:#CFE9FF}
+  #tip{position:absolute;left:0;right:0;bottom:calc(16px + env(safe-area-inset-bottom,0px));
+    text-align:center;pointer-events:none}
+  #tip span{display:inline-block;font-family:ui-monospace,monospace;font-size:11px;letter-spacing:.05em;
+    background:rgba(16,12,30,.5);border:1px solid rgba(220,212,255,.16);border-radius:999px;
+    padding:7px 14px;color:var(--dim);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+  .hidden{display:none!important}
+</style>
+</head>
+<body>
+<div id="stage">
+  <video id="cam" playsinline muted autoplay></video>
+  <canvas id="gl"></canvas>
+  <div id="bubbles"></div>
+
+  <div id="hud" class="hidden">
+    <div class="chip" id="scene">—</div>
+    <div class="chip" id="track">SEARCHING</div>
+  </div>
+  <div id="tip" class="hidden"><span id="tiptext">point at the card · double-tap a turtle</span></div>
+
+  <div id="gate">
+    <h1>Voxel Reef</h1>
+    <p id="gatemsg">Point your camera at the printed reef card. Turtles will settle onto it at their real size. Double-tap one to hear from it.</p>
+    <button id="go" type="button">Start camera</button>
+    <p class="fine" id="gatefine">camera stays on your device · nothing is uploaded</p>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<script src="reef-kit.js"></script>
+<script>
+(function(){
+"use strict";
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   복셀 산호초 AR
+   ---------------------------------------------------------------------------
+   종이에 인쇄된 QR코드의 네 모서리로 카드의 위치와 각도를 알아낸다.
+   QR을 읽어주는 라이브러리(jsQR)가 모서리 위치를 이미 알려주기 때문에
+   따로 마커 인식 코드를 만들 필요가 없고, 장면을 띄우는 코드와
+   위치를 잡는 기준이 같은 QR이라 편하다.
+
+   카드 위치를 알면 QR 옆에 인쇄된 색 칸들이 사진 어디에 찍혔는지도
+   계산할 수 있다. 그 칸들의 색을 읽어서 방 조명의 밝기와 색을 알아내
+   거북이가 화면에서 겉돌지 않게 맞춘다. 또 카드가 흑백으로 인쇄됐거나
+   흑백 조명 아래에 있으면 색 칸들이 전부 회색으로 읽히는데, 이때는
+   거북이 색도 같이 흐리게 만든다.
+
+   장면 데이터를 가져오는 순서:
+     #d=<인코딩된 json>   링크 안에 장면이 통째로 들어있는 경우
+     #s=<id>              이 파일 옆 scenes.json에서 id로 찾는 경우
+     (아무것도 없음)      기본으로 들어있는 데모 장면
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ───────────────────────────── 1. 장면 설정 ────────────────────────────── */
+
+var DEMO = {
+  v:1, name:"Demo reef", qr:8.0, fov:63,
+  wall:false,
+  turtles:[
+    { morph:0, cx: 0, cz: 0, rx: 11, rz:  8, h: 9, sp:0.13, ph:0.7, sc:1.0,
+      say:["Morning.","This card is warm. I approve.","Do not pick me up."] },
+    { morph:1, cx: 4, cz: 3, rx:  8, rz: 10, h:15, sp:0.11, ph:3.9, sc:0.9,
+      say:["Slow is a strategy.","I have been swimming since Tuesday."] },
+    { morph:2, cx:-4, cz:-2, rx:  9, rz:  7, h:21, sp:0.12, ph:2.2, sc:0.95,
+      say:["Yes, the cherry is structural.","Do not eat me.","Dessert has feelings too."] }
+  ]
+};
+
+// 링크에 들어있는 글자를 원래 글자로 되돌림
+function b64urlDecode(s){
+  s = s.replace(/-/g,'+').replace(/_/g,'/');
+  while (s.length % 4) s += '=';
+  return decodeURIComponent(escape(atob(s)));
+}
+
+/* scenes.json을 어디서 읽을지 정하는 부분 (앞에 있을수록 먼저 시도)
+
+   깃허브 페이지 주소면 저장소 이름을 알 수 있어서 원본 파일을 바로 읽는다.
+   원본은 수정하고 몇 초면 반영되는데, 페이지는 다시 빌드될 때까지
+   기다려야 해서 느리기 때문이다. 어디서든 돌아가게 상대경로는 마지막에 둔다. */
+function scenesSources(){
+  var out = [];
+  var m = location.hostname.match(/^([^.]+)\.github\.io$/i);
+  if (m){
+    var seg = location.pathname.split('/').filter(Boolean);
+    var repo = (seg.length >= 2) ? seg[0] : (m[1] + '.github.io');
+    out.push('https://raw.githubusercontent.com/' + m[1] + '/' + repo + '/main/scenes.json');
+  }
+  out.push('scenes.json');
+  return out;
+}
+
+var SCENE_ID = null, SCENE_RAW = null;
+
+// 주소 목록을 차례대로 시도해서 처음 성공한 내용을 가져옴
+function fetchScenes(){
+  var urls = scenesSources(), i = 0;
+  function attempt(){
+    if (i >= urls.length) return Promise.resolve(null);
+    var u = urls[i++];
+    return fetch(u + (u.indexOf('?') < 0 ? '?' : '&') + 't=' + Date.now(), {cache:'no-store'})
+      .then(function(r){ return r.ok ? r.text() : attempt(); })
+      .catch(attempt);
+  }
+  return attempt();
+}
+
+// 주소 뒤의 값을 보고 어떤 장면을 쓸지 정함
+function loadScene(){
+  var h = location.hash.replace(/^#/, '');
+  if (h.indexOf('d=') === 0){
+    try { return Promise.resolve(JSON.parse(b64urlDecode(h.slice(2)))); }
+    catch(e){ return Promise.resolve(DEMO); }
+  }
+  SCENE_ID = h.indexOf('s=') === 0 ? h.slice(2) : h;
+  if (!SCENE_ID) return Promise.resolve(DEMO);
+  return fetchScenes().then(function(txt){
+    if (!txt) return DEMO;
+    SCENE_RAW = txt;
+    try {
+      var all = JSON.parse(txt);
+      return (all && all[SCENE_ID]) ? all[SCENE_ID] : DEMO;
+    } catch(e){ return DEMO; }
+  });
+}
+
+/* 15초마다 다시 읽어서, 수정한 내용이 새로고침 없이 반영되게 함.
+   내용이 바뀐 경우에만 다시 만든다. 안 그러면 15초마다
+   거북이가 처음 위치로 돌아가 버린다. */
+function watchScene(){
+  if (!SCENE_ID) return;
+  setInterval(function(){
+    if (document.hidden) return;
+    fetchScenes().then(function(txt){
+      if (!txt || txt === SCENE_RAW) return;
+      SCENE_RAW = txt;
+      try {
+        var all = JSON.parse(txt);
+        if (all && all[SCENE_ID]){
+          buildScene(all[SCENE_ID]);
+          sceneEl.innerHTML = '<b>' + (all[SCENE_ID].name || 'reef') + '</b>';
+        }
+      } catch(e){}
+    });
+  }, 15000);
+}
+
+/* ───────────────────────── 2. 물고기 모델 (All Reefs에서 가져옴) ───────────────────────── */
+// 예전에는 거북이 모양을 이 파일 안에서 블록으로 직접 만들었는데,
+// 이제는 reef-kit.js + reef-data.json에 있는 모양을 그대로 갖다 쓴다.
+// All Reefs 프로그램에서 물고기를 고치면 reef-data.json이 바뀌고,
+// 이 페이지도 그 파일을 다시 읽어서 스스로 모양을 바꾼다 (아래 9번 참고).
+
+var kit = ReefKit(THREE);
+var REEF_DATA = null;          // reef-data.json 내용. 아직 못 받았으면 null
+
+// 예전 scenes.json에는 거북이 번호(0, 1, 2)만 적혀 있었다.
+// 그 번호가 reef-data.json의 어떤 물고기인지 짝지어 둠
+var LEGACY_MORPH = ['turtle-cream', 'turtle-lime', 'turtle-sundae'];
+
+// scene에 적힌 거북이 한 마리(spec)가 reef-data.json의 어떤 물고기인지 찾음
+function speciesFor(spec){
+  var id = spec.species || LEGACY_MORPH[(spec.morph || 0) % LEGACY_MORPH.length];
+  return REEF_DATA ? kit.find(REEF_DATA, id) : null;
+}
+
+// 거북이 한 마리를 3D로 만듦.
+// 천장에 붙인 카드일 때는 등이 천장 쪽을 보게 겉 그룹을 하나 더 씌워서 뒤집는다
+// (물고기 모양 자체는 안 건드리고, 감싸는 그룹만 180도 돌리는 방식)
+function buildTurtle(spec){
+  var m = speciesFor(spec);
+  if (!m) return null;         // 아직 데이터를 못 읽었으면 이번엔 안 만듦
+  var holder = new THREE.Group();
+  holder.rotation.order = 'YZX';
+  var built = kit.build(m, { scale: (0.30 / 0.52) * (spec.sc || 1), phase: spec.ph });
+  holder.add(built);
+  if (CEILING) holder.rotation.x = Math.PI;
+  holder.userData.built = built;   // 몸 흔들기 애니메이션은 이 안쪽 모델에 적용해야 함
+  return holder;
+}
+
+/* ─────────────────────── 3. QR 네 모서리로 카드 위치 계산 ─────────────────── */
+
+// 카드 위의 네 점과 사진 속 네 점을 짝지어서, 카드 평면이 사진에 어떻게 찍혔는지 구함
+function homography(src, dst){          // src: 카드 위 좌표 4개, dst: 사진 속 좌표 4개
+  var A = [], i;
+  for (i = 0; i < 4; i++){
+    var X = src[i][0], Z = src[i][1], u = dst[i][0], v = dst[i][1];
+    A.push([X, Z, 1, 0, 0, 0, -u*X, -u*Z, u]);
+    A.push([0, 0, 0, X, Z, 1, -v*X, -v*Z, v]);
+  }
+  // 연립방정식 풀기 (가우스 소거법)
+  for (i = 0; i < 8; i++){
+    var piv = i;
+    for (var r = i+1; r < 8; r++) if (Math.abs(A[r][i]) > Math.abs(A[piv][i])) piv = r;
+    if (Math.abs(A[piv][i]) < 1e-12) return null;
+    var tmp = A[i]; A[i] = A[piv]; A[piv] = tmp;
+    for (var r2 = 0; r2 < 8; r2++){
+      if (r2 === i) continue;
+      var f = A[r2][i] / A[i][i];
+      if (!f) continue;
+      for (var c = i; c < 9; c++) A[r2][c] -= f * A[i][c];
+    }
+  }
+  var h = [];
+  for (i = 0; i < 8; i++) h.push(A[i][8] / A[i][i]);
+  return [[h[0],h[1],h[2]],[h[3],h[4],h[5]],[h[6],h[7],1]];
+}
+
+// 위에서 구한 값으로 카드의 방향(회전)과 위치를 계산함.
+// 카드의 가로축, 세로축 방향을 구하고, 둘을 곱해서 카드가 바라보는
+// 방향(위쪽)을 얻는다.
+function poseFromH(H, fx, fy, cx, cy){
+  function Kinv(c0, c1, c2){ return [ (c0 - cx*c2)/fx, (c1 - cy*c2)/fy, c2 ]; }
+  var a = Kinv(H[0][0], H[1][0], H[2][0]);
+  var b = Kinv(H[0][1], H[1][1], H[2][1]);
+  var t = Kinv(H[0][2], H[1][2], H[2][2]);
+
+  var na = Math.hypot(a[0],a[1],a[2]), nb = Math.hypot(b[0],b[1],b[2]);
+  if (!na || !nb) return null;
+  var lam = 2 / (na + nb);              // 두 축 길이의 평균으로 크기를 맞춤 (흔들림 줄이기)
+  var r1 = [a[0]*lam, a[1]*lam, a[2]*lam];
+  var r2 = [b[0]*lam, b[1]*lam, b[2]*lam];
+  var tv = [t[0]*lam, t[1]*lam, t[2]*lam];
+  if (tv[2] < 0){                       // 카드는 카메라 앞에 있어야 하니까 뒤집혔으면 되돌림
+    r1 = r1.map(function(v){return -v;});
+    r2 = r2.map(function(v){return -v;});
+    tv = tv.map(function(v){return -v;});
+  }
+  // 두 축이 서로 정확히 직각이 되도록 살짝 보정
+  var d = r1[0]*r2[0] + r1[1]*r2[1] + r1[2]*r2[2];
+  var c1 = [r1[0] - d*r2[0]*0.5, r1[1] - d*r2[1]*0.5, r1[2] - d*r2[2]*0.5];
+  var c2 = [r2[0] - d*r1[0]*0.5, r2[1] - d*r1[1]*0.5, r2[2] - d*r1[2]*0.5];
+  var l1 = Math.hypot(c1[0],c1[1],c1[2]), l2 = Math.hypot(c2[0],c2[1],c2[2]);
+  c1 = [c1[0]/l1, c1[1]/l1, c1[2]/l1];
+  c2 = [c2[0]/l2, c2[1]/l2, c2[2]/l2];
+  // 곱하는 순서 주의: c1×c2가 아니라 c2×c1이어야 함.
+  // 카드의 가로축(X)은 오른쪽, 세로축(Z)은 색 띠 쪽인 아래로 향한다.
+  // 순서를 반대로 하면 그림은 맞아 보여도 위아래가 뒤집혀서
+  // 거북이가 테이블 아래로 헤엄치게 된다.
+  var c3 = [ c2[1]*c1[2] - c2[2]*c1[1],
+             c2[2]*c1[0] - c2[0]*c1[2],
+             c2[0]*c1[1] - c2[1]*c1[0] ];
+  return { r1:c1, r2:c2, n:c3, t:tv };
+}
+
+/* ───────────────────────── 4. 화면 그리기 준비 ──────────────────────────── */
+
+var video   = document.getElementById('cam');
+var glc     = document.getElementById('gl');
+var bubbles = document.getElementById('bubbles');
+var gate    = document.getElementById('gate');
+var hud     = document.getElementById('hud');
+var tip     = document.getElementById('tip');
+var trackEl = document.getElementById('track');
+var sceneEl = document.getElementById('scene');
+
+var renderer = new THREE.WebGLRenderer({canvas:glc, alpha:true, antialias:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+
+var scene  = new THREE.Scene();
+var camera = new THREE.PerspectiveCamera(60, 1, 1, 4000);
+camera.matrixAutoUpdate = false;   // 카메라 위치는 카드에서 계산해서 직접 넣음
+
+// 단위는 cm이고, 카드는 y=0인 바닥면에 놓여 있다고 본다
+var world = new THREE.Group();
+scene.add(world);
+
+// 조명 세 개 (하늘빛, 메인 빛, 보조 빛)
+var hemi = new THREE.HemisphereLight(0xE8EFFF, 0xFFE6D6, 0.62);
+var key  = new THREE.DirectionalLight(0xFFFFFF, 0.58);
+key.position.set(1.0, 1.5, 0.9);
+var fill = new THREE.DirectionalLight(0xD2DEFF, 0.26);
+fill.position.set(-1.1, -0.3, -0.8);
+scene.add(hemi); scene.add(key); scene.add(fill);
+
+// 거북이 아래 깔리는 흐릿한 그림자.
+// 간단하지만 바닥에 붙어 있는 느낌이 훨씬 잘 난다
+var shadowTex = (function(){
+  var s = 128, cv = document.createElement('canvas');
+  cv.width = cv.height = s;
+  var g = cv.getContext('2d').createRadialGradient(s/2, s/2, 0, s/2, s/2, s/2);
+  g.addColorStop(0, 'rgba(0,0,0,0.42)');
+  g.addColorStop(0.55, 'rgba(0,0,0,0.16)');
+  g.addColorStop(1, 'rgba(0,0,0,0)');
+  var c = cv.getContext('2d'); c.fillStyle = g; c.fillRect(0,0,s,s);
+  return new THREE.CanvasTexture(cv);
+})();
+
+var CFG = null, turtles = [], picks = [];
+
+/* 카드는 한쪽 면에만 인쇄되어 있으니 그쪽 면에서만 거북이가 보인다.
+   헤엄치는 길은 인쇄된 면에서 최소 이만큼(cm) 떨어뜨려 놓고,
+   카드나 벽 뒤쪽에는 아무것도 두지 않는다. */
+var WALL = false;
+var CEILING = false;
+var CLEAR = 6;
+
+// 설정값대로 거북이들을 만들어서 장면에 올림
+function buildScene(cfg){
+  CFG = cfg;
+  WALL = !!cfg.wall;
+  CEILING = !WALL && !!cfg.ceiling;
+  sceneEl.innerHTML = '<b>' + (cfg.name || 'reef') + '</b>';
+  while (world.children.length) world.remove(world.children[0]);
+  turtles = []; picks = [];
+
+  /* 테이블 위에 놓은 카드는 위쪽이 그대로 '위'라서 손댈 게 없다.
+     벽에 붙인 카드는 위쪽이 사람 쪽을 향하므로, 공간을 90도 눕혀서
+     거북이가 벽을 타고 기어오르지 않고 벽 앞을 가로질러 헤엄치게 한다.
+
+     천장에 붙인 카드는 위쪽이 아래를 향하므로, 거북이가 천장 아래에
+     자연스럽게 놓인다 (아래 place() 참고). 다만 모델이 '카드에서 멀어지는
+     방향 = 위'로 만들어져 있어서 그대로 두면 배를 위로 하고 뜨게 된다.
+     그래서 거북이마다 180도 돌려주는데, 이건 공간이 아니라 모델의
+     문제라서 아래 반복문 안에서 처리한다. */
+  world.rotation.x = cfg.wall ? -Math.PI / 2 : 0;
+
+  (cfg.turtles || cfg.swimmers || []).forEach(function(spec, i){
+    var t = buildTurtle(spec);
+    if (!t) return;   // reef-data.json을 아직 못 읽었으면 이번엔 건너뜀 (데이터 오면 다시 그림)
+    // 모델은 코부터 꼬리까지 약 14칸. 실제 바다거북은 90cm쯤인데
+    // 그 크기로 하면 책상이 꽉 차니까 크기는 만드는 사람이 정하게 함
+    var s = (0.30 / 0.52) * (spec.sc || 1);
+    t.userData.spec = spec;
+    t.userData.said = 0;
+    world.add(t);
+    turtles.push(t);
+
+    var sh = null;
+    if (!cfg.wall && !CEILING){           // 벽이나 천장에는 그림자가 질 곳이 없음
+      sh = new THREE.Mesh(
+        new THREE.PlaneBufferGeometry(26*s, 26*s),
+        new THREE.MeshBasicMaterial({map:shadowTex, transparent:true, depthWrite:false})
+      );
+      sh.rotation.x = -Math.PI/2;
+      sh.position.y = 0.12;
+      sh.renderOrder = -1;
+      world.add(sh);
+    }
+    t.userData.shadow = sh;
+
+    // 터치 확인용으로 거북이마다 보이지 않는 상자를 하나씩 둠.
+    // 블록 수천 개를 일일이 검사하는 것보다 훨씬 가볍고 누르기도 쉽다
+    var hit = new THREE.Mesh(
+      new THREE.BoxBufferGeometry(17*s, 12*s, 15*s),
+      new THREE.MeshBasicMaterial({visible:false})
+    );
+    hit.userData.turtle = t;
+    world.add(hit);
+    t.userData.hit = hit;
+  });
+}
+
+/* ────────────────────────── 5. QR 찾기 반복 ───────────────────────── */
+
+var det = document.createElement('canvas');
+var dctx = det.getContext('2d', {willReadFrequently:true});
+var DET_W = 360;   // QR 찾을 때는 가로 360px로 줄여서 봄 (빠르게 하려고)
+
+var pose = null, poseAge = 1e9, lastDetect = 0;
+var smooth = { t:null, r1:null, r2:null, n:null };
+var wbGain = new THREE.Color(1,1,1), wbExposure = 1, wbSaturation = 1;
+
+// 두 값 사이를 k 비율만큼 섞음
+function lerp3(a, b, k){
+  return [a[0]+(b[0]-a[0])*k, a[1]+(b[1]-a[1])*k, a[2]+(b[2]-a[2])*k];
+}
+
+// 카메라 화면 한 장에서 QR을 찾고 카드 위치를 갱신함
+function detect(){
+  var vw = video.videoWidth, vh = video.videoHeight;
+  if (!vw || !vh) return;
+  var scale = DET_W / vw;
+  det.width = DET_W; det.height = Math.round(vh * scale);
+  dctx.drawImage(video, 0, 0, det.width, det.height);
+  var img = dctx.getImageData(0, 0, det.width, det.height);
+  var code = null;
+  try { code = jsQR(img.data, img.width, img.height, {inversionAttempts:'dontInvert'}); }
+  catch(e){ return; }
+  if (!code || !code.location) return;
+
+  var L = code.location;
+  var q = (CFG && CFG.qr ? CFG.qr : 8.0);      // 인쇄된 QR 한 변 길이 (cm)
+  var half = q / 2;
+  // 카드 위 모서리 좌표와, 사진에서 찾은 같은 모서리 좌표 (순서 맞춰서)
+  var srcPts = [[-half,-half],[half,-half],[half,half],[-half,half]];
+  var dstPts = [
+    [L.topLeftCorner.x,     L.topLeftCorner.y],
+    [L.topRightCorner.x,    L.topRightCorner.y],
+    [L.bottomRightCorner.x, L.bottomRightCorner.y],
+    [L.bottomLeftCorner.x,  L.bottomLeftCorner.y]
+  ];
+
+  var H = homography(srcPts, dstPts);
+  if (!H) return;
+
+  var fovDeg = (CFG && CFG.fov) ? CFG.fov : 63;
+  var f = (det.width / 2) / Math.tan(fovDeg * Math.PI / 360);
+  var p = poseFromH(H, f, f, det.width / 2, det.height / 2);
+  if (!p || !isFinite(p.t[2])) return;
+
+  // 이전 값과 섞어서 부드럽게 만듦. 프레임마다 나온 값을 그대로 쓰면
+  // 10cm짜리 카드에서는 화면이 떨려 보인다
+  if (!smooth.t){ smooth.t = p.t; smooth.r1 = p.r1; smooth.r2 = p.r2; smooth.n = p.n; }
+  else {
+    var k = 0.35;
+    smooth.t  = lerp3(smooth.t,  p.t,  k);
+    smooth.r1 = lerp3(smooth.r1, p.r1, k);
+    smooth.r2 = lerp3(smooth.r2, p.r2, k);
+    smooth.n  = lerp3(smooth.n,  p.n,  k);
+  }
+  pose = smooth; poseAge = 0;
+
+  sampleCard(img, H);
+  if (CFG) CFG._detW = det.width;
+}
+
+/* 색 칸은 QR에서 정해진 거리에 있어서, 카드 위치만 알면 찾아다닐 필요 없이
+   사진 속 어느 픽셀인지 바로 계산된다.
+   칸은 왼쪽부터 순서대로 빨강 초록 파랑 하늘 자홍 노랑, 흰색, 회색(50%), 검정 총 9개. */
+var PATCH_REF = [
+  [255,0,0],[0,255,0],[0,0,255],[0,255,255],[255,0,255],[255,255,0],
+  [255,255,255],[128,128,128],[0,0,0]
+];
+// 9개 색 칸을 읽어서 조명의 색·밝기·색감을 알아냄
+function sampleCard(img, H){
+  var q = (CFG && CFG.qr ? CFG.qr : 8.0);
+  var read = [], i;
+  for (i = 0; i < 9; i++){
+    var X = (-0.64 + i * 0.16) * q, Z = 0.78 * q;
+    var w = H[2][0]*X + H[2][1]*Z + 1;
+    var u = Math.round((H[0][0]*X + H[0][1]*Z + H[0][2]) / w);
+    var v = Math.round((H[1][0]*X + H[1][1]*Z + H[1][2]) / w);
+    if (u < 1 || v < 1 || u >= img.width-1 || v >= img.height-1) return;   // 카드가 화면 밖으로 잘렸으면 그만둠
+    var r=0,g=0,b=0,n=0;
+    // 그 픽셀 주변 3x3칸의 평균 색을 씀
+    for (var dy=-1; dy<=1; dy++) for (var dx=-1; dx<=1; dx++){
+      var o = ((v+dy)*img.width + (u+dx))*4;
+      r += img.data[o]; g += img.data[o+1]; b += img.data[o+2]; n++;
+    }
+    read.push([r/n, g/n, b/n]);
+  }
+  var white = read[6], black = read[8];
+  var rr = Math.max(1, white[0]-black[0]), gg = Math.max(1, white[1]-black[1]), bb = Math.max(1, white[2]-black[2]);
+  var avg = (rr+gg+bb)/3;
+  // 잘못 읽었을 때 거북이가 너무 밝거나 어두워지지 않게 범위를 제한함
+  var gr = Math.min(1.35, Math.max(0.74, avg/rr));
+  var gg2= Math.min(1.35, Math.max(0.74, avg/gg));
+  var gb = Math.min(1.35, Math.max(0.74, avg/bb));
+  wbGain.setRGB(gr, gg2, gb);
+  var grey = (read[7][0]+read[7][1]+read[7][2])/3;
+  wbExposure = Math.min(1.25, Math.max(0.6, grey / 118));
+
+  /* 흰색, 검정, 회색 칸은 밝기 범위만 알려준다. 색이 없는 칸이라
+     컬러로 인쇄했든 흑백으로 복사했든 똑같이 읽히기 때문이다.
+     빨강~노랑 여섯 칸은 위에서 read[0]~read[5]에 읽어만 두고
+     지금까지 쓰지 않았다. 진짜 색으로 인쇄됐으면 R, G, B 값의 차이가 크게 나고,
+     회색으로 인쇄됐으면 아무리 밝게 비춰도 세 값이 거의 같다.
+     여섯 칸의 이 차이를 평균 내면 카드에 색이 실제로 있는지 알 수 있다. */
+  var chroma = 0;
+  for (i = 0; i < 6; i++){
+    var p = read[i];
+    chroma += (Math.max(p[0],p[1],p[2]) - Math.min(p[0],p[1],p[2])) / avg;
+  }
+  chroma /= 6;
+  var EXPECTED_CHROMA = 0.5;    // 잘 인쇄된 컬러 카드를 밝은 곳에서 보면 대략 이 값 정도
+  wbSaturation = Math.min(1, Math.max(0.12, chroma / EXPECTED_CHROMA));
+}
+
+// 읽어낸 값으로 조명 색과 밝기를 바꿈
+function applyLighting(){
+  hemi.color.setRGB(0.91*wbGain.r, 0.937*wbGain.g, 1.0*wbGain.b);
+  hemi.intensity = 0.62 * wbExposure;
+  key.color.setRGB(wbGain.r, wbGain.g, wbGain.b);
+  key.intensity = 0.58 * wbExposure;
+  fill.intensity = 0.26 * wbExposure;
+  // 실제 카메라 영상이 아니라 거북이만 흐리게 함.
+  // 카메라 영상 위에 겹친 투명한 3D 캔버스에만 필터를 씌우기 때문
+  glc.style.filter = wbSaturation >= 0.97 ? '' : 'saturate(' + Math.round(wbSaturation*100) + '%)';
+}
+
+/* ────────────────────────── 6. 카드 위치로 카메라 맞추기 ───────────────────────────── */
+
+var M = new THREE.Matrix4();
+// 계산한 카드 위치를 3D 카메라에 넣음
+function applyPose(){
+  if (!pose) return;
+  var r1 = pose.r1, up = pose.n, r2 = pose.r2, t = pose.t;
+  // 세계 좌표를 카메라 기준 좌표로 바꾸는 행렬 (열은 X, 위쪽, Z 순서)
+  M.set(
+    r1[0], up[0], r2[0], t[0],
+    r1[1], up[1], r2[1], t[1],
+    r1[2], up[2], r2[2], t[2],
+    0, 0, 0, 1
+  );
+  // 계산에 쓴 좌표 방향(y 아래, z 앞)을 three.js 방향(y 위, z 뒤)으로 바꿈
+  var flip = new THREE.Matrix4().makeScale(1, -1, -1);
+  M.premultiply(flip);
+  camera.matrixWorld.copy(M).invert();
+  camera.matrixWorldInverse.copy(M);
+  camera.matrix.copy(camera.matrixWorld);
+  camera.matrixWorldNeedsUpdate = false;
+}
+
+// 화면 크기에 맞춰 카메라 시야를 조정함
+function fitCamera(){
+  var vw = video.videoWidth || 1280, vh = video.videoHeight || 720;
+  var sw = window.innerWidth, sh = window.innerHeight;
+  renderer.setSize(sw, sh, false);
+
+  var fovDeg = (CFG && CFG.fov) ? CFG.fov : 63;
+  var fFull = (vw / 2) / Math.tan(fovDeg * Math.PI / 360);
+  camera.fov = 2 * Math.atan(vh / (2 * fFull)) * 180 / Math.PI;
+  camera.aspect = vw / vh;
+
+  // 영상은 화면을 꽉 채우게(object-fit:cover) 잘려서 보이므로,
+  // 3D 화면도 카메라 영상 중 실제로 보이는 부분만 그리도록 알려줌
+  var scale = Math.max(sw / vw, sh / vh);
+  var cw = sw / scale, ch = sh / scale;
+  camera.setViewOffset(vw, vh, (vw - cw) / 2, (vh - ch) / 2, cw, ch);
+  camera.updateProjectionMatrix();
+}
+
+/* ─────────────────────────── 7. 터치 / 말풍선 ──────────────────────── */
+
+var ray = new THREE.Raycaster();
+var ndc = new THREE.Vector2();
+var lastTap = 0, lastTapXY = null;
+
+// 화면을 두 번 빠르게 같은 자리에서 눌렀는지 확인함
+function onTap(x, y){
+  var now = performance.now();
+  var near = lastTapXY && Math.hypot(x - lastTapXY[0], y - lastTapXY[1]) < 48;
+  if (now - lastTap < 340 && near){
+    lastTap = 0;
+    speakAt(x, y);
+  } else {
+    lastTap = now; lastTapXY = [x, y];
+  }
+}
+
+// 누른 자리에 거북이가 있으면 말하게 함
+function speakAt(x, y){
+  ndc.x = (x / window.innerWidth) * 2 - 1;
+  ndc.y = -(y / window.innerHeight) * 2 + 1;
+  ray.setFromCamera(ndc, camera);
+  var hits = ray.intersectObjects(turtles.map(function(t){ return t.userData.hit; }), false);
+  if (!hits.length) return;
+  say(hits[0].object.userData.turtle);
+}
+
+// 말풍선 하나 관리자. 말풍선 생김새(글꼴, 색, 유지 시간)는
+// All Reefs의 "말풍선·글꼴" 설정을 그대로 따른다 (아래 9번에서 적용)
+var talk = kit.Talk(bubbles, camera, {});
+
+// 거북이 대사를 차례대로 하나 골라 말풍선으로 띄움.
+// scene에 따로 적힌 대사가 있으면 그걸 쓰고, 없으면 물고기 기본 대사를 씀
+function say(t){
+  var spec = t.userData.spec, built = t.userData.built;
+  var lines = (spec.say || []).filter(Boolean);
+  var line = lines.length ? lines[t.userData.said++ % lines.length] : kit.nextLine(built);
+  talk.say(built, line);
+}
+
+/* ───────────────────────────── 8. 움직임 ───────────────────────────────── */
+
+var clock = new THREE.Clock();
+var t = 0, tmpA = new THREE.Vector3(), tmpB = new THREE.Vector3();
+
+/* 거북이는 항상 타원을 그리며 도는데, 카드가 놓인 방식에 따라
+   '카드에서 떨어져야 하는 방향'만 다르다. 벽이면 벽에서 앞으로,
+   테이블이면 바닥에서 위로 떨어진다. 점마다 잘라내면 길이 납작해지므로
+   경로 전체를 한꺼번에 밀어서 띄운다. */
+function place(sp, time, out){
+  var a = time * sp.sp + sp.ph;
+  var bob = Math.sin(a * 1.7 + sp.ph) * 1.4;
+  var swing = Math.cos(a * 0.82) * sp.rz;
+  if (WALL){
+    var depth = Math.max(+sp.cz || 0, Math.abs(+sp.rz || 0) + CLEAR);
+    return out.set(sp.cx + Math.sin(a) * sp.rx, (+sp.h || 0) + bob, depth + swing);
+  }
+  var high = Math.max(+sp.h || 0, CLEAR) + bob;
+  return out.set(sp.cx + Math.sin(a) * sp.rx, high, sp.cz + swing);
+}
+
+// 매 프레임 실행: QR 찾기, 카메라 맞추기, 거북이 움직이기, 그리기
+function frame(){
+  requestAnimationFrame(frame);
+  var dt = Math.min(clock.getDelta(), 0.05);
+  t += dt;
+  poseAge += dt;
+
+  var now = performance.now();
+  if (now - lastDetect > 70){ lastDetect = now; detect(); }
+
+  // 1.2초 안에 QR을 읽었으면 '찾은 상태'로 봄. 못 찾으면 거북이를 숨김
+  var locked = poseAge < 1.2;
+  trackEl.textContent = locked ? 'LOCKED' : 'SEARCHING';
+  trackEl.className = 'chip' + (locked ? ' lock' : '');
+  world.visible = locked;
+
+  if (pose) applyPose();
+  applyLighting();
+  kit.tick(t);   // 전기 이펙트 같은, 시간이 지나야 움직이는 그림들을 한 번에 갱신
+
+  for (var i = 0; i < turtles.length; i++){
+    var tt = turtles[i], sp = tt.userData.spec;
+    // 지금 위치와 아주 조금 뒤 위치를 구해서, 가는 방향을 바라보게 함
+    place(sp, t, tmpA);
+    place(sp, t + 0.05, tmpB);
+    tt.position.copy(tmpA);
+    var d = tmpB.sub(tmpA);
+    var flat = Math.hypot(d.x, d.z) || 1e-4;
+    tt.rotation.y = Math.atan2(-d.z, d.x);
+    tt.rotation.z = Math.atan2(d.y, flat) * 0.6;
+
+    // 몸 흔들기, 발 젓기는 reef-kit이 물고기 데이터(유영 설정)를 보고 알아서 함
+    kit.animate(tt.userData.built, t);
+
+    tt.updateMatrixWorld();
+    // 그림자는 거북이 바로 아래로, 높이 뜰수록 연해지게 함
+    var sh = tt.userData.shadow;
+    if (sh){
+      sh.position.x = tt.position.x; sh.position.z = tt.position.z;
+      sh.material.opacity = Math.max(0.15, 1 - tt.position.y / 40);
+    }
+    // 터치용 상자도 거북이를 따라 움직임
+    var hit = tt.userData.hit;
+    hit.position.copy(tt.position);
+    hit.rotation.y = tt.rotation.y;
+  }
+
+  talk.update();
+  renderer.render(scene, camera);
+}
+
+/* ─────────────────────────────── 9. 시작 ──────────────────────────────────── */
+
+// 카메라를 못 쓸 때 시작 화면에 안내 문구를 보여줌
+function fail(msg, fine){
+  gate.classList.remove('hidden');
+  document.getElementById('gatemsg').textContent = msg;
+  document.getElementById('go').classList.add('hidden');
+  if (fine) document.getElementById('gatefine').textContent = fine;
+}
+
+// 시작 버튼을 누르면 카메라를 켜고 화면 전환
+document.getElementById('go').addEventListener('click', function(){
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+    fail('This browser will not hand over the camera. Open the link in Safari or Chrome.',
+         'a page served over https is required');
+    return;
+  }
+  navigator.mediaDevices.getUserMedia({
+    video: { facingMode: {ideal:'environment'}, width:{ideal:1280}, height:{ideal:720} },
+    audio: false
+  }).then(function(stream){
+    video.srcObject = stream;
+    return video.play();
+  }).then(function(){
+    gate.classList.add('hidden');
+    hud.classList.remove('hidden');
+    tip.classList.remove('hidden');
+    fitCamera();
+    setTimeout(function(){ tip.classList.add('hidden'); }, 6000);   // 안내 문구는 6초 뒤 사라짐
+  }).catch(function(err){
+    fail('Camera was refused (' + (err && err.name ? err.name : 'error') + '). ' +
+         'Check the site permission and that the page is on https.',
+         'nothing works without the camera on this page');
+  });
+});
+
+// 화면을 누르면 터치 확인
+['pointerdown'].forEach(function(ev){
+  document.getElementById('stage').addEventListener(ev, function(e){
+    onTap(e.clientX, e.clientY);
+  });
+});
+window.addEventListener('resize', fitCamera);
+video.addEventListener('loadedmetadata', fitCamera);
+
+// 물고기 데이터(reef-data.json)와 장면(scenes.json)을 같이 불러온 다음 만들고 움직이기 시작.
+// reef-data.json이 없거나 못 읽으면 REEF_DATA는 null로 남고, 거북이 없이 카드 인식만 동작함
+Promise.all([
+  kit.loadData().catch(function(){ return null; }),
+  loadScene()
+]).then(function(res){
+  REEF_DATA = res[0];
+  if (REEF_DATA){ kit.applyStyle(REEF_DATA.style); talk.setStyle(REEF_DATA.style); }
+  buildScene(res[1]);
+  fitCamera();
+  frame();
+  watchScene();
+
+  // All Reefs에서 물고기 모양이나 말풍선·글꼴 설정을 고치면,
+  // 켜져 있는 이 페이지도 20초마다 확인해서 스스로 다시 그림
+  kit.watchData(REEF_DATA && REEF_DATA.updated, function(d){
+    REEF_DATA = d;
+    kit.applyStyle(d.style);
+    talk.setStyle(d.style);
+    if (CFG) buildScene(CFG);
+  }, 20000);
+});
+
+})();
+</script>
+</body>
+</html>
