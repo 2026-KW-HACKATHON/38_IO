@@ -1,0 +1,482 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>나의 공간</title>
+<style>@font-face{font-family:"Galmuri11";src:url("assets/fonts/Galmuri11.woff2") format("woff2");font-weight:400}@font-face{font-family:"Galmuri11";src:url("assets/fonts/Galmuri11-Bold.woff2") format("woff2");font-weight:700}
+/* 나의 공간: 물 배경 위에 옛날 컴퓨터 창이 떠 있는 화면 */
+:root{
+  --line:#8b8b8b;        /* 테두리 회색 */
+  --gray:#D2D2D4;        /* 창 바탕 회색 (조금 밝게) */
+  --gray-2:#E4E4E6;      /* 더 밝은 회색 */
+  --title:linear-gradient(90deg,#4A43E2,#32A4FD);   /* 제목줄 색 */
+  --shadow:rgba(70,80,100,.4);
+}
+html,body{height:100%;margin:0;overflow:hidden}
+body{background:#8CCFD8 url("assets/space/aero/bg.jpg") center/cover no-repeat;color:#1c2438;font-family:"Galmuri11",monospace}
+button{font:inherit;color:inherit;cursor:pointer}
+#desk{position:fixed;inset:0}
+
+
+/* 위쪽 버튼과 안내 글: 회색 판 위에 글씨를 올림 */
+#back{position:fixed;left:10px;top:calc(10px + env(safe-area-inset-top,0px));z-index:9000;
+  background:var(--gray);color:#1c2438;border:2px solid var(--line);box-shadow:inset 1px 1px 0 #fff,3px 3px 0 var(--shadow);
+  padding:5px 10px;font-size:13px;text-decoration:none}
+#hint{position:fixed;left:130px;top:calc(10px + env(safe-area-inset-top,0px));z-index:9000;margin:0;text-align:left;
+  font-size:12px;color:#3b3b40;background:var(--gray);border:2px solid var(--line);box-shadow:inset 1px 1px 0 #fff,3px 3px 0 var(--shadow);
+  pointer-events:none;padding:6px 10px;max-width:calc(100vw - 150px);box-sizing:border-box}
+
+/* 창 */
+.win{position:absolute;background:var(--gray);border:2px solid var(--line);box-shadow:inset 1px 1px 0 #fff,5px 5px 0 var(--shadow);
+  -webkit-user-select:none;user-select:none}
+.win.slide{transition:left .25s steps(6),top .25s steps(6)}
+.win .bar{height:28px;background:var(--title);display:flex;align-items:center;
+  gap:3px;padding:0 4px 0 8px;cursor:move;touch-action:none;margin:2px 2px 0}
+.win .ttl{flex:1;text-align:left;font-size:13px;font-weight:700;color:#fff;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.win .btn{width:18px;height:18px;border:2px solid var(--line);background:var(--gray);box-shadow:inset 1px 1px 0 #fff;display:flex;align-items:center;
+  justify-content:center;font-size:11px;line-height:1;color:#3b3b40;cursor:default}
+.win .body{position:relative;margin:4px;border:2px solid var(--line);background:#fff;overflow:hidden;box-shadow:inset 1px 1px 0 #6f6f73}
+.win iframe{display:block;width:100%;height:100%;border:0;background:#A0D6D5}
+.win .shield{position:absolute;inset:0;z-index:2}   /* 맨 앞이 아닌 창의 내용을 덮어서 두 번 눌러 앞으로 보내게 함 */
+.win.front .shield{display:none}
+
+.win.fish .body{width:min(340px,calc(100vw - 40px));height:250px}
+.win.friends .body{width:min(300px,calc(100vw - 40px));height:170px;background:#fff;padding:14px;box-sizing:border-box;
+  font-size:13px;line-height:1.7;color:#4a4658}
+.win.gift .body{width:min(300px,calc(100vw - 40px));height:104px;background:var(--gray);box-sizing:border-box;padding:10px 14px;
+  display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:6px;box-shadow:none}
+.glabel{align-self:flex-start;font-size:12px;color:#3b3b40}
+.gin{width:100%;box-sizing:border-box;border:2px solid var(--line);background:#fff;color:#1c2438;font:inherit;font-size:13px;padding:5px 7px;
+  border-radius:0;outline:none;-webkit-user-select:text;user-select:text;box-shadow:inset 1px 1px 0 #6f6f73}
+.gin:focus{border-color:#4A43E2}
+.gok{min-width:64px;padding:3px 14px;font-size:12px;color:#1c2438;background:var(--gray);border:2px solid #5f5f66;border-radius:0;
+  box-shadow:inset -2px -2px 0 #a4a4a8,inset 2px 2px 0 #fff}
+.gok:active{box-shadow:inset 2px 2px 0 #a4a4a8,inset -2px -2px 0 #fff}
+.win.picture.cover .body{width:min(360px,calc(100vw - 40px));height:auto;aspect-ratio:420/215;background:#0a3d6b}
+.pic.cover{inset:0;width:100%;height:100%;object-fit:cover;image-rendering:auto;animation:none}
+.win.picture .body{width:min(300px,calc(100vw - 40px));height:250px;background:#EAF6FB}
+.pic{position:absolute;inset:6px;width:calc(100% - 12px);height:calc(100% - 12px);object-fit:contain;image-rendering:pixelated;
+  animation:bob 2.4s steps(4) infinite}
+@keyframes bob{50%{transform:translateY(-4px)}}
+.win.map .body{width:min(440px,calc(100vw - 40px));aspect-ratio:1111/862}   /* 지도 그림 비율 그대로 (별 위치가 맞게) */
+
+/* 지도와 별 */
+.mapimg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+/* 가게 별: 한 칸씩 위아래로 흔들리고 주변에 노란 빛 (가게 이름 글씨는 안 가리게 작게) */
+.star{position:absolute;width:26px;height:26px;transform:translate(-50%,-50%);image-rendering:pixelated;cursor:pointer;z-index:1;
+  filter:drop-shadow(0 0 3px rgba(255,214,64,.95)) drop-shadow(0 0 7px rgba(255,200,40,.55));
+  animation:starBob 1.4s steps(1) infinite}
+@keyframes starBob{0%{transform:translate(-50%,-50%)}25%{transform:translate(-50%,calc(-50% - 2px))}
+  50%{transform:translate(-50%,calc(-50% - 4px))}75%{transform:translate(-50%,calc(-50% - 2px))}}
+
+/* 픽셀 말풍선: 테두리 네 변을 그림자로 그려서 모서리가 깎인 모양이 됨 */
+.pbubble{position:absolute;z-index:3;background:#FFFDF8;color:#3B3350;font-size:13px;font-weight:700;white-space:nowrap;
+  padding:6px 10px;box-shadow:0 -3px 0 0 #3B3350,0 3px 0 0 #3B3350,-3px 0 0 0 #3B3350,3px 0 0 0 #3B3350;
+  animation:pop .24s steps(4,end);pointer-events:none}
+.pbubble::after{content:"";position:absolute;left:var(--tail,14px);bottom:-9px;width:6px;height:6px;background:#FFFDF8;
+  box-shadow:-3px 0 0 #3B3350,3px 0 0 #3B3350,0 3px 0 #3B3350}
+@keyframes pop{from{transform:scale(.5);opacity:0}to{transform:none;opacity:1}}
+
+/* 아이콘 줄: 컴퓨터는 오른쪽 아래, 모바일은 아래쪽 전체 */
+#dock{position:fixed;z-index:9000;display:flex;gap:6px;right:16px;bottom:calc(14px + env(safe-area-inset-bottom,0px))}
+.dk{appearance:none;background:transparent;border:0;padding:4px;width:84px;display:flex;flex-direction:column;align-items:center;gap:5px}
+.dk .ic{height:64px;display:flex;align-items:center;justify-content:center}
+.dk .ic img{width:64px;height:64px;object-fit:contain;display:block;image-rendering:pixelated}
+.dk .nm{font-size:12px;line-height:1.25;color:#fff;text-align:center;text-shadow:1px 1px 0 #2b5a66,-1px 1px 0 #2b5a66,1px -1px 0 #2b5a66,-1px -1px 0 #2b5a66}
+.dk:hover .nm,.dk:focus-visible .nm{background:#2b5a66}
+.dk:active .ic{transform:translateY(2px)}
+@media (max-width:700px){
+  #dock{left:0;right:0;bottom:0;gap:0;justify-content:space-around;padding:6px 4px calc(6px + env(safe-area-inset-bottom,0px));
+    background:rgba(210,210,212,.94);border-top:2px solid var(--line)}
+  .dk{width:auto;flex:1;min-width:0;padding:2px}
+  .dk .ic{height:32px}.dk .ic img{width:32px;height:32px}
+  .dk .nm{font-size:10.5px;color:#3b3b40;text-shadow:none}
+  .dk:hover .nm,.dk:focus-visible .nm{background:transparent}
+}
+
+#hint{left:0}</style>
+</head>
+<body>
+<div id="desk"></div>
+<p id="hint">제목줄을 끌면 창이 움직여요 · 창을 두 번 누르면 맨 앞으로 와요</p>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
+<script src="js/core.js"></script>
+<script>
+/* 나의 공간: 끌어서 옮기는 가짜 창들, 두 번 누르면 맨 앞으로, 지도의 별 */
+(function () {
+  "use strict";
+  var desk = document.getElementById('desk');
+  var KEY = 'reef-space-v1';
+  var saved = {};
+  try { saved = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch (e) {} }
+
+  /* ── 만들 창 목록 (위에서부터 순서대로 쌓임, 마지막이 맨 앞) ── */
+  var WINDOWS = [
+    { id: 'fish',    title: '나의 어항',   kind: 'reef',    page: 'marker-test.html#preview-space', icon: "assets/space/aero/icon-fish.png",   at: [0.03, 0.37] },
+    { id: 'map',     title: '월계 지도', kind: 'map',     icon: "assets/space/aero/icon-map.png",    at: [0.29, 0.06] },
+    { id: 'friends', title: '친구 관리',   kind: 'friends', icon: "assets/space/aero/icon-friends.png", at: [0.72, 0.10] },
+    { id: 'stock',   title: '재고 관리',   kind: 'picture', img: "assets/space/stock.webp", cover: true, icon: "assets/space/aero/icon-stock.png", at: [0.07, 0.62] },
+    { id: 'review',  title: '리뷰 관리',   kind: 'reef',    page: 'cord-jr-reef.html',        icon: "assets/space/aero/icon-review.png", at: [0.36, 0.60] },
+    { id: 'gift',    title: '선물 코드',   kind: 'gift',    icon: "assets/space/aero/icon-gift.png",    at: [0.72, 0.52] }
+  ];
+
+  var wins = [];       // 화면에 있는 창들
+  var zTop = 10;
+
+  /* ── 두 번 누르기 감지: 마우스와 터치 모두 (조금이라도 끌었으면 세지 않음) ── */
+  function onDouble(el, fn) {
+    var last = 0, lx = 0, ly = 0, dx = 0, dy = 0;
+    el.addEventListener('pointerdown', function (e) { dx = e.clientX; dy = e.clientY; });
+    el.addEventListener('pointerup', function (e) {
+      if (e.button > 0 || Math.hypot(e.clientX - dx, e.clientY - dy) > 6) { last = 0; return; }
+      var now = performance.now();
+      if (now - last < 350 && Math.hypot(e.clientX - lx, e.clientY - ly) < 24) { last = 0; fn(e); }
+      else { last = now; lx = e.clientX; ly = e.clientY; }
+    });
+  }
+
+  /* ── 창 하나 만들기 ── */
+  function makeWindow(def) {
+    var w = document.createElement('div');
+    w.className = 'win ' + (def.kind === 'reef' ? 'fish' : def.kind) + (def.cover ? ' cover' : '');
+    var bar = document.createElement('div'); bar.className = 'bar';
+    var ttl = document.createElement('span'); ttl.className = 'ttl'; ttl.textContent = def.title;
+    bar.appendChild(ttl);
+    ['_', '□', '×'].forEach(function (g) {
+      var b = document.createElement('span'); b.className = 'btn'; b.textContent = g; bar.appendChild(b);
+    });
+    var body = document.createElement('div'); body.className = 'body';
+    w.appendChild(bar); w.appendChild(body);
+
+    if (def.kind === 'reef') {
+      var fr = document.createElement('iframe');
+      fr.src = def.page; fr.title = def.title; fr.setAttribute('loading', 'lazy');
+      var sh = document.createElement('div'); sh.className = 'shield';
+      body.appendChild(fr); body.appendChild(sh);
+    } else if (def.kind === 'picture') {
+      // 그림 한 장 띄우기 (cover면 창을 꽉 채움)
+      var pic = document.createElement('img'); pic.className = 'pic' + (def.cover ? ' cover' : ''); pic.src = def.img; pic.alt = def.title; pic.draggable = false;
+      body.appendChild(pic);
+    } else if (def.kind === 'gift') {
+      // 코드 입력 창 (아직 기능은 없음)
+      body.innerHTML = '<label class="glabel" for="gift-code">코드 입력</label>' +
+        '<input id="gift-code" class="gin" type="text" maxlength="24" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="선물 코드를 입력하세요">' +
+        '<button class="gok" type="button">OK</button>';
+    } else if (def.kind === 'friends') {
+      body.innerHTML = '친구 목록이 비어 있어요.<br>친구 관리 기능은 준비 중이에요.';
+    } else if (def.kind === 'map') {
+      buildMap(body);
+    }
+
+    desk.appendChild(w);
+    var entry = { def: def, el: w, bar: bar };
+    wins.push(entry);
+    dragSetup(entry);
+    onDouble(w, function () { bringFront(entry); });
+    return entry;
+  }
+
+  /* ── 지도: 별 세 개를 아무 데나 놓고, 두 번 누르면 가게 이름 말풍선 ── */
+  function buildMap(body) {
+    var img = document.createElement('img'); img.className = 'mapimg'; img.src = "assets/space/map.png"; img.alt = '월계 지도';
+    img.draggable = false; body.appendChild(img);
+    // 가게 별: 지도 그림 위의 자리(퍼센트)에 고정
+    var SHOPS = [ { name: 'CORD Jr.', x: 70.4, y: 38.6 } ];
+    SHOPS.forEach(function (shop) {
+      var name = shop.name;
+      var s = document.createElement('img'); s.className = 'star'; s.src = "assets/space/aero/star.png"; s.alt = name;
+      s.draggable = false;
+      s.style.left = shop.x + '%'; s.style.top = shop.y + '%';
+      body.appendChild(s);
+      var bubble = null, timer = null;
+      onDouble(s, function () {
+        if (bubble) bubble.remove();
+        clearTimeout(timer);
+        bubble = document.createElement('div'); bubble.className = 'pbubble'; bubble.textContent = name;
+        body.appendChild(bubble);
+        // 별 위쪽에 놓되 지도 밖으로 나가지 않게 조정
+        var cw = body.clientWidth, sx = s.offsetLeft, bw = bubble.offsetWidth, bh = bubble.offsetHeight;
+        var left = Math.max(6, Math.min(cw - bw - 6, sx - 14));
+        bubble.style.left = left + 'px';
+        bubble.style.top = Math.max(6, s.offsetTop - 17 - bh - 12) + 'px';
+        bubble.style.setProperty('--tail', Math.max(6, Math.min(bw - 14, sx - left - 3)) + 'px');
+        timer = setTimeout(function () { bubble.remove(); bubble = null; }, 2200);
+      });
+    });
+  }
+
+  /* ── 맨 앞으로 ── */
+  function bringFront(entry) {
+    entry.el.style.zIndex = ++zTop;
+    wins.forEach(function (o) { o.el.classList.toggle('front', o === entry); });
+    saveOrder();
+  }
+  function saveOrder() {
+    saved.order = wins.slice().sort(function (a, b) { return (+a.el.style.zIndex || 0) - (+b.el.style.zIndex || 0); })
+      .map(function (o) { return o.def.id; });
+    save();
+  }
+
+  /* ── 제목줄을 끌어서 옮기기 (화면 밖으로는 못 나감) ── */
+  // 모바일에서는 아래쪽 아이콘 줄에 창이 가리지 않도록 그만큼 비워 둠
+  function bottomGap() { return window.innerWidth < 700 && dock ? dock.offsetHeight : 0; }
+  function clampPos(entry, x, y) {
+    var r = entry.el.getBoundingClientRect();
+    var maxY = window.innerHeight - bottomGap() - r.height;
+    return [Math.max(0, Math.min(window.innerWidth - r.width, x)), Math.max(0, Math.min(maxY, y))];
+  }
+  function place(entry, x, y) {
+    var p = clampPos(entry, x, y);
+    entry.el.style.left = p[0] + 'px'; entry.el.style.top = p[1] + 'px';
+    return p;
+  }
+  function dragSetup(entry) {
+    var drag = null;
+    entry.bar.addEventListener('pointerdown', function (e) {
+      if (e.button > 0) return;
+      var r = entry.el.getBoundingClientRect();
+      drag = { ox: e.clientX - r.left, oy: e.clientY - r.top };
+      try { entry.bar.setPointerCapture(e.pointerId); } catch (er) {}
+    });
+    entry.bar.addEventListener('pointermove', function (e) {
+      if (!drag) return;
+      place(entry, e.clientX - drag.ox, e.clientY - drag.oy);
+    });
+    function end() {
+      if (!drag) return;
+      drag = null;
+      saved[entry.def.id] = [parseFloat(entry.el.style.left) || 0, parseFloat(entry.el.style.top) || 0];
+      save();
+    }
+    entry.bar.addEventListener('pointerup', end);
+    entry.bar.addEventListener('pointercancel', end);
+  }
+
+  /* ── 처음 배치: 저장된 위치가 있으면 그대로, 없으면 기본 위치 ── */
+  function layout() {
+    var narrow = window.innerWidth < 700;
+    WINDOWS.forEach(function (def, i) {
+      var e = wins[i], pos = saved[def.id];
+      var x, y;
+      if (pos) { x = pos[0]; y = pos[1]; }
+      else if (narrow) { x = 10 + i * 14; y = 56 + i * 48; }
+      else { x = def.at[0] * window.innerWidth; y = def.at[1] * window.innerHeight; }
+      place(e, x, y);
+    });
+  }
+
+  /* ── 아이콘 줄: 누르면 그 창이 맨 앞으로 오고 화면 가운데로 옴 ── */
+  var dock = document.createElement('div'); dock.id = 'dock';
+  document.body.appendChild(dock);
+  function bringCenter(entry) {
+    bringFront(entry);
+    var r = entry.el.getBoundingClientRect();
+    var x = (window.innerWidth - r.width) / 2, y = (window.innerHeight - bottomGap() - r.height) / 2;
+    entry.el.classList.add('slide');
+    var p = place(entry, x, y);
+    saved[entry.def.id] = p; save();
+    setTimeout(function () { entry.el.classList.remove('slide'); }, 320);
+  }
+  function makeDock() {
+    // 나의 계정: 아이콘만 먼저 있음 (창은 나중에 만들 예정)
+    var acc = document.createElement('button'); acc.type = 'button'; acc.className = 'dk'; acc.title = '나의 계정 (준비 중)';
+    acc.innerHTML = '<span class="ic"><img src="' + "assets/space/aero/icon-account.png" + '" alt="" draggable="false"></span><span class="nm">나의 계정</span>';
+    dock.appendChild(acc);
+    WINDOWS.forEach(function (def, i) {
+      var b = document.createElement('button'); b.type = 'button'; b.className = 'dk'; b.title = def.title;
+      var ic = document.createElement('span'); ic.className = 'ic';
+      var im = document.createElement('img'); im.src = def.icon; im.alt = ''; im.draggable = false;
+      ic.appendChild(im);
+      var nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = def.title;
+      b.appendChild(ic); b.appendChild(nm);
+      b.addEventListener('click', function () { bringCenter(wins[i]); });
+      dock.appendChild(b);
+    });
+  }
+
+  WINDOWS.forEach(makeWindow);
+  makeDock();
+  layout();
+  // 저장된 쌓임 순서 복원, 없으면 마지막 창이 맨 앞
+  var order = saved.order && saved.order.length === WINDOWS.length ? saved.order : WINDOWS.map(function (d) { return d.id; });
+  order.forEach(function (id) {
+    var e = wins.filter(function (o) { return o.def.id === id; })[0];
+    if (e) { e.el.style.zIndex = ++zTop; }
+  });
+  var topId = order[order.length - 1];
+  wins.forEach(function (o) { o.el.classList.toggle('front', o.def.id === topId); });
+  window.addEventListener('resize', function () {
+    wins.forEach(function (e) { place(e, parseFloat(e.el.style.left) || 0, parseFloat(e.el.style.top) || 0); });
+  });
+
+  /* ── 로그인한 경우에만 방문 기록을 남김 (로그인은 필요 없음) ── */
+  var logged = false;
+  if (window.Core) {
+    Core.onChange(function (s) { if (s.user && !logged) { logged = true; Core.log('my_space'); } });
+    Core.start();
+  }
+})();
+
+/* 하늘에 떠다니는 비눗방울 (창보다 뒤, 배경 사진보다 앞)
+   - 방울 한 개마다 그림을 미리 한 번 그려 두고, 매 프레임에는 옮기고 살짝 늘였다 줄이기만 함
+   - 무지갯빛 막 + 가장자리일수록 진해지는 색 + 창문 모양 반사광 + 작은 반짝임
+   - 멀리 있는 작은 방울은 흐리게, 가까운 큰 방울은 살짝 번지게 해서 거리감을 줌 */
+(function () {
+  "use strict";
+  var desk = document.getElementById('desk');
+  if (!desk) return;
+  var cv = document.createElement('canvas'); cv.id = 'skyBubbles';
+  cv.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0';
+  desk.insertBefore(cv, desk.firstChild);
+  var ctx = cv.getContext('2d');
+  var DPR = Math.min(window.devicePixelRatio || 1, 2);
+  var W = 0, H = 0;
+  var still = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;   // 움직임 줄이기 설정이면 멈춘 그림만
+
+  function rnd(a, b) { return a + Math.random() * (b - a); }
+
+  /* ── 방울 한 개 그림 만들기 ──
+     진짜 비눗방울처럼: 가운데는 뒤 하늘이 살짝 어둡게 비치고,
+     얇은 테두리에만 청록·보라빛 무지개가 진하게 돌고, 하얀 반짝점이 또렷하게 찍힘 */
+  function makeSprite(r, blur, hue0) {
+    var pad = Math.ceil(r * 0.35 + blur * 2 + 3);
+    var S = Math.ceil((r + pad) * 2);
+    var c = document.createElement('canvas'); c.width = c.height = S;
+    var g = c.getContext('2d');
+    var cx = S / 2, cy = S / 2, TAU = Math.PI * 2;
+
+    // 1) 안쪽: 둥근 유리처럼 가운데는 거의 투명, 가장자리 쪽으로 살짝 어두운 파랑
+    var inner = g.createRadialGradient(cx - r * 0.15, cy - r * 0.15, 0, cx, cy, r);
+    inner.addColorStop(0.00, 'rgba(10,30,90,0.02)');
+    inner.addColorStop(0.70, 'rgba(8,24,80,0.10)');
+    inner.addColorStop(0.92, 'rgba(6,18,70,0.20)');
+    inner.addColorStop(1.00, 'rgba(6,18,70,0)');
+    g.fillStyle = inner; g.beginPath(); g.arc(cx, cy, r, 0, TAU); g.fill();
+
+    // 2) 테두리 무지개: 색 바퀴를 칠한 뒤, 얇은 고리 모양만 남김
+    var ring = document.createElement('canvas'); ring.width = ring.height = S;
+    var q = ring.getContext('2d');
+    var hues = [180, 195, 285, 320, 200, 170, 260, 300, 180];   // 청록 · 보라 · 분홍 위주 (사진 속 방울 색)
+    if (q.createConicGradient) {
+      var cg = q.createConicGradient(rnd(0, TAU), cx, cy);
+      hues.forEach(function (h, i) {
+        cg.addColorStop(i / (hues.length - 1), 'hsla(' + ((h + hue0) % 360) + ',100%,' + (i % 2 ? 72 : 62) + '%,1)');
+      });
+      q.fillStyle = cg;
+    } else q.fillStyle = 'hsl(' + (180 + hue0) % 360 + ',100%,65%)';
+    q.fillRect(0, 0, S, S);
+    q.globalCompositeOperation = 'destination-in';
+    var band = q.createRadialGradient(cx, cy, 0, cx, cy, r * 1.02);
+    band.addColorStop(0.00, 'rgba(0,0,0,0)');
+    band.addColorStop(0.72, 'rgba(0,0,0,0)');
+    band.addColorStop(0.80, 'rgba(0,0,0,.12)');   // 뒤쪽 벽이 비친 옅은 안쪽 고리
+    band.addColorStop(0.85, 'rgba(0,0,0,.05)');
+    band.addColorStop(0.92, 'rgba(0,0,0,.55)');
+    band.addColorStop(0.965, 'rgba(0,0,0,.95)');
+    band.addColorStop(1.00, 'rgba(0,0,0,0)');
+    q.fillStyle = band; q.fillRect(0, 0, S, S);
+    g.globalCompositeOperation = 'lighter';       // 빛이 더해지듯 밝게 얹음
+    g.globalAlpha = 0.85;
+    g.drawImage(ring, 0, 0);
+    g.globalAlpha = 1;
+
+    // 3) 테두리 바깥에 번지는 아주 옅은 청록 빛
+    var halo = g.createRadialGradient(cx, cy, r * 0.95, cx, cy, r * 1.25);
+    halo.addColorStop(0, 'rgba(120,220,255,.18)'); halo.addColorStop(1, 'rgba(120,220,255,0)');
+    g.fillStyle = halo; g.beginPath(); g.arc(cx, cy, r * 1.25, 0, TAU); g.fill();
+
+    // 4) 반짝점: 왼쪽 위 큰 점 하나 + 오른쪽 아래 작은 점 (가운데 하양, 둘레로 번짐)
+    function glint(x, y, core, glow, a) {
+      var gl = g.createRadialGradient(x, y, 0, x, y, glow);
+      gl.addColorStop(0, 'rgba(255,255,255,' + a + ')');
+      gl.addColorStop(core / glow, 'rgba(255,250,240,' + (a * 0.85) + ')');
+      gl.addColorStop(Math.min(0.99, core / glow * 2.2), 'rgba(255,240,230,' + (a * 0.25) + ')');
+      gl.addColorStop(1, 'rgba(255,255,255,0)');
+      g.fillStyle = gl; g.beginPath(); g.arc(x, y, glow, 0, TAU); g.fill();
+    }
+    var ang = rnd(-2.6, -2.0);                     // 빛이 왼쪽 위에서 옴 (방울마다 조금씩 다름)
+    glint(cx + Math.cos(ang) * r * 0.78, cy + Math.sin(ang) * r * 0.78, Math.max(0.9, r * 0.07), Math.max(3, r * 0.3), 1);
+    glint(cx - Math.cos(ang) * r * 0.8, cy - Math.sin(ang) * r * 0.8, Math.max(0.6, r * 0.04), Math.max(2, r * 0.18), 0.75);
+    g.globalCompositeOperation = 'source-over';
+
+    if (blur > 0.3) {                              // 초점이 안 맞은 방울은 번지게
+      var b = document.createElement('canvas'); b.width = b.height = S;
+      var bg = b.getContext('2d');
+      if (!('filter' in bg)) return { c: c, S: S };
+      bg.filter = 'blur(' + blur + 'px)'; bg.drawImage(c, 0, 0);
+      return { c: b, S: S };
+    }
+    return { c: c, S: S };
+  }
+
+  /* ── 방울 여러 개 만들기 ── */
+  var bubbles = [];
+  function spawn(fromBottom) {
+    var depth = Math.random();                                     // 0 = 멀리, 1 = 가까이
+    // 사진처럼 대부분 작은 방울, 가끔 중간 크기
+    var r = depth < 0.35 ? rnd(5, 10) : depth < 0.85 ? rnd(10, 20) : depth < 0.97 ? rnd(20, 30) : rnd(30, 40);
+    var blur = depth < 0.12 ? 1.2 : depth > 0.97 ? 1.4 : 0;
+    var sp = makeSprite(r * DPR, blur * DPR, rnd(-20, 20));
+    // 방울이 몇 개씩 몰려다니도록, 가끔은 바로 전 방울 근처에 만듦
+    var prev = bubbles.length && Math.random() < 0.45 ? bubbles[Math.floor(Math.random() * bubbles.length)] : null;
+    var x = rnd(-0.05, 1.05) * W, y = fromBottom ? H + r * 2 + rnd(0, H * 0.3) : rnd(-0.05, 1.05) * H;
+    if (prev && !fromBottom) { x = prev.x + rnd(-70, 70); y = prev.y + rnd(-70, 70); }
+    return {
+      sp: sp, r: r, depth: depth, x: x, y: y,
+      vx: rnd(6, 20) * (0.5 + depth), vy: -rnd(5, 16) * (0.5 + depth),
+      ph: rnd(0, 6.28), wob: rnd(0.6, 1.4), alpha: depth < 0.12 ? 0.75 : 1
+    };
+  }
+  function count() { return Math.round(Math.min(90, Math.max(30, W * H / 13000))); }
+
+  function resize() {
+    W = desk.clientWidth || innerWidth; H = desk.clientHeight || innerHeight;
+    cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
+    var want = count();
+    while (bubbles.length < want) bubbles.push(spawn(false));
+    if (bubbles.length > want) bubbles.length = want;
+    bubbles.sort(function (a, b) { return a.depth - b.depth; });  // 먼 것부터 그려서 가까운 게 위로
+  }
+
+  /* ── 매 프레임: 바람 따라 오른쪽 위로 흘러가며 모양이 살짝 출렁임 ── */
+  var last = performance.now(), t = 0;
+  function frame(now) {
+    var dt = Math.min(0.05, (now - last) / 1000); last = now; t += dt;
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    var gust = 1 + 0.35 * Math.sin(t * 0.23);
+    for (var i = 0; i < bubbles.length; i++) {
+      var b = bubbles[i];
+      if (!still) {
+        b.x += (b.vx * gust + Math.sin(t * 0.7 + b.ph) * 6) * dt;
+        b.y += (b.vy + Math.cos(t * 0.9 + b.ph) * 4) * dt;
+      }
+      var m = b.r * 2.4;
+      if (b.x - m > W || b.y + m < 0) {                             // 화면 밖으로 나가면 왼쪽 아래에서 새로 나옴
+        var n = spawn(true);
+        n.x = rnd(-0.3, 0.9) * W;
+        bubbles[i] = n; continue;
+      }
+      var sx = 1 + 0.035 * Math.sin(t * 2.1 * b.wob + b.ph);      // 막이 출렁여서 가로세로가 번갈아 늘어남
+      var sy = 1 - 0.035 * Math.sin(t * 2.1 * b.wob + b.ph);
+      ctx.globalAlpha = b.alpha * 0.8;   // 방울 전체를 20% 더 투명하게
+      ctx.setTransform(sx * 1, 0, 0, sy * 1, b.x * DPR, b.y * DPR);
+      ctx.rotate(Math.sin(t * 0.3 + b.ph) * 0.25);                 // 천천히 돌면서 무늬가 바뀌어 보임
+      ctx.drawImage(b.sp.c, -b.sp.S / 2, -b.sp.S / 2);
+    }
+    ctx.globalAlpha = 1;
+    if (!still) requestAnimationFrame(frame);
+  }
+
+  resize();
+  window.addEventListener('resize', resize);
+  requestAnimationFrame(frame);
+})();
+
+</script>
+</body>
+</html>

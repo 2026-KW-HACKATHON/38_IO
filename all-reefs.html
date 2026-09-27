@@ -1918,7 +1918,9 @@ const KIND_INFO = {
   marker: { ko: '마커 AR', tpl: 'marker-test.html', about: '벽에 붙인 4cm 형광 큐브 하나를 찾아서 거리·각도를 계산하고, 그 앞에 물고기 떼를 띄워요.' },
   console: { ko: '카드 콘솔', tpl: 'reef-console.html', about: 'QR 카드와 viewer.html용 scenes.json을 만드는 편집기. 여기서는 기본 목록을 정해요.' }
 };
-const BUNDLED = ['voxel-reef.html', 'charged-reef.html', 'reef-console.html', 'marker-test.html'];
+const BUNDLED = ['voxel-reef.html', 'charged-reef.html', 'reef-console.html', 'marker-test.html', 'cord-jr-reef.html'];
+// 자기만의 모양이 있는 페이지: 틀로 다시 만들지 않음 (덮어쓰면 모양이 사라짐)
+const OWN_LOOK = ['cord-jr-reef.html'];
 const fileExists = {};
 function reefSrc(r){
   const tpl = KIND_INFO[r.kind] ? KIND_INFO[r.kind].tpl : 'voxel-reef.html';
@@ -2414,7 +2416,7 @@ async function bundleFiles(){
   }
   files['reef-data.json'] = dataText();
   for (const r of D.reefs){
-    if (!KIND_INFO[r.kind]) continue;
+    if (!KIND_INFO[r.kind] || OWN_LOOK.indexOf(r.file) >= 0) continue;
     try { files[r.file] = await reefFileText(r); } catch(e){ miss.push(r.file); }
   }
   if (miss.length) throw new Error('같은 폴더에서 이 파일을 못 찾았어요: ' + miss.join(', '));

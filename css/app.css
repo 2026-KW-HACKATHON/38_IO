@@ -47,6 +47,8 @@ button:focus-visible,a:focus-visible{outline:2px solid #fff;outline-offset:2px}
 #gate h1{margin:0;font-size:24px}
 #gate p{margin:0;max-width:36ch;color:var(--dim);font-size:13.5px;line-height:1.6}
 #gate .fine{font-family:ui-monospace,monospace;font-size:10.5px;color:#7E759B}
+#gate .modes{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+#gate .modes a{text-decoration:none}
 .reef-layer{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:4}
 
 /* 관리자·QR 화면 */

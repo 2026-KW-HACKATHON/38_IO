@@ -1,0 +1,388 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>나의 공간</title>
+<style>@font-face{font-family:"Galmuri11";src:url("assets/fonts/Galmuri11.woff2") format("woff2");font-weight:400}@font-face{font-family:"Galmuri11";src:url("assets/fonts/Galmuri11-Bold.woff2") format("woff2");font-weight:700}
+/* 나의 공간 — 에어로 하늘 위 레트로 미디어 플레이어 창 */
+:root{
+  --ink:#24306a; --ink-2:#44508a;
+  --frame:linear-gradient(180deg,#f6f8fe 0%,#e2e8f8 20%,#cbd5f1 62%,#b8c4ea 100%);
+  --edge:#8491c8;
+  --shadow:rgba(20,30,90,.45);
+}
+html,body{height:100%;margin:0;overflow:hidden}
+body{color:var(--ink);font-family:"Galmuri11",monospace;
+  background:#4fb3f5 url("assets/space/y2k/bg.webp") center/cover no-repeat}
+@media (max-aspect-ratio:4/5){body{background-image:url("assets/space/y2k/bg-tall.webp")}}
+button,input{font-family:"Galmuri11",monospace}
+button{font:inherit;color:inherit;cursor:pointer}
+#desk{position:fixed;inset:0}
+
+/* 위쪽 안내 글 */
+#back,#hint{position:fixed;top:calc(10px + env(safe-area-inset-top,0px));z-index:9000;margin:0;
+  font-size:12px;color:var(--ink);border-radius:10px;padding:6px 12px;background:var(--frame);border:1px solid var(--edge);
+  box-shadow:inset 0 1px 0 #fff,0 6px 14px -6px var(--shadow)}
+#back{left:10px;text-decoration:none}
+#hint{left:10px;pointer-events:none;text-align:left;max-width:calc(100vw - 20px);box-sizing:border-box}
+
+/* ── 창: 옛날 미디어 플레이어 ── */
+.win{position:absolute;border-radius:14px 14px 20px 20px;background:var(--frame);border:1px solid var(--edge);
+  box-shadow:inset 0 1px 0 #fff,inset 0 0 0 2px rgba(255,255,255,.35),inset 0 -4px 8px rgba(70,80,150,.22),0 16px 30px -10px var(--shadow);
+  -webkit-user-select:none;user-select:none}
+/* 왼쪽 파란 손잡이 */
+.win::before{content:"";position:absolute;left:-9px;top:30px;bottom:56px;width:12px;z-index:-1;border-radius:9px 0 0 9px;
+  border:1px solid #3c55b8;border-right:0;
+  background:radial-gradient(circle,rgba(220,230,255,.9) 0 1px,rgba(220,230,255,0) 1.6px) 4px 50%/5px 5px repeat-y,
+    linear-gradient(90deg,#4766d9,#86a3f3);background-clip:padding-box}
+.win.front{box-shadow:inset 0 1px 0 #fff,inset 0 0 0 2px rgba(255,255,255,.35),inset 0 -4px 8px rgba(70,80,150,.22),
+  0 0 0 3px rgba(140,170,255,.45),0 22px 40px -10px rgba(20,30,90,.6)}
+.win.slide{transition:left .3s cubic-bezier(.3,1.3,.5,1),top .3s cubic-bezier(.3,1.3,.5,1)}
+
+/* 제목줄 + 위로 솟은 둥근 버튼 탭 */
+.win .bar{position:relative;height:30px;display:flex;align-items:center;gap:2px;padding:0 8px 0 14px;cursor:move;touch-action:none}
+.win .bar::before{content:"";position:absolute;left:50%;top:3px;width:100px;height:24px;transform:translateX(-50%);pointer-events:none;
+  background:url("assets/space/y2k/player-bar.svg") center/100px 24px no-repeat}
+.win .ttl{flex:0 1 auto;max-width:calc(50% - 64px);text-align:left;font-size:12px;font-weight:700;color:var(--ink);
+  text-shadow:0 1px 0 rgba(255,255,255,.8);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.win.front .ttl{color:#2448c8}
+.win .btn{margin-left:auto;width:18px;height:18px;display:flex;align-items:center;justify-content:center;
+  font-size:15px;font-weight:700;line-height:1;color:#2b3670;cursor:default;background:none;border:0}
+.win .btn + .btn{margin-left:0}
+.win .btn:nth-child(3){display:none}
+
+/* 화면 */
+.win .body{position:relative;margin:2px 10px 0;border:2px solid #7886c2;border-radius:3px;background:#fff;overflow:hidden;
+  box-shadow:0 0 0 2px #eef1fb,0 0 0 3px #a6b1dc}
+.win iframe{display:block;width:100%;height:100%;border:0;background:#A0D6D5}
+.win .shield{position:absolute;inset:0;z-index:2}
+.win.front .shield{display:none}
+
+/* 아래 재생 버튼 줄 (꾸밈) */
+.ctl{margin:9px 10px 9px;display:flex;flex-direction:column;gap:6px;pointer-events:none}
+.ctl .seek{display:flex;align-items:center;gap:5px;height:14px}
+.ctl .cap{width:30px;height:12px;border-radius:7px;background:linear-gradient(180deg,#fff,#d3daf1);border:1px solid #939fd0;
+  display:flex;align-items:center;justify-content:center}
+.ctl .cap svg{width:12px;height:7px;fill:#56639f}
+.ctl .trk{flex:1;position:relative;height:7px;border-radius:5px;background:linear-gradient(180deg,#aebae3,#eef1fb);border:1px solid #8793c8}
+.ctl .trk b,.ctl .vol b{position:absolute;top:-4px;left:7%;width:22px;height:13px;border-radius:4px;border:1px solid #2e8b22;
+  background:linear-gradient(180deg,#eaffdc 0%,#8fe46a 48%,#43b22c 52%,#93e36f 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.8)}
+.ctl .row{display:flex;align-items:center;gap:4px}
+.ctl .rb{flex:none;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(circle at 35% 28%,#fff 0,#e6eaf8 45%,#b1bde3 100%);border:1px solid #8490c6;
+  box-shadow:inset 0 -2px 3px rgba(80,90,160,.22),0 1px 0 rgba(255,255,255,.9)}
+.ctl .rb svg{width:10px;height:10px;fill:#3a4789}
+.ctl .rb.big{width:32px;height:32px;margin-right:3px}
+.ctl .rb.big svg{width:13px;height:13px;fill:#2a4fc4}
+.ctl .vol{position:relative;flex:1;max-width:96px;height:4px;margin:0 8px 0 auto;border-radius:3px;background:linear-gradient(180deg,#9ea9d6,#eef1fb);border:1px solid #8793c8}
+.ctl .vol b{left:auto;right:6%;width:10px;height:15px;top:-7px;border-radius:4px}
+.ctl .stat{font-size:11px;color:#3aa12a;text-shadow:0 1px 0 #fff;white-space:nowrap}
+
+.win.fish .body{width:min(340px,calc(100vw - 44px));height:250px}
+.win.friends .body{width:min(300px,calc(100vw - 44px));height:170px;padding:14px;box-sizing:border-box;font-size:12px;line-height:1.8;color:var(--ink-2);
+  background:linear-gradient(180deg,#fff,#f1f5ff)}
+.win.gift .body{width:min(300px,calc(100vw - 44px));height:108px;box-sizing:border-box;padding:10px 14px;
+  display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:6px;background:linear-gradient(180deg,#fff,#eef2fd)}
+.glabel{align-self:flex-start;font-size:12px;color:var(--ink-2)}
+.gin{width:100%;box-sizing:border-box;border:1px solid #8793c8;background:#fff;color:var(--ink);font:inherit;font-size:12px;padding:6px 9px;
+  border-radius:4px;outline:none;-webkit-user-select:text;user-select:text;box-shadow:inset 0 1px 2px rgba(40,50,120,.25)}
+.gin:focus{border-color:#2a4fc4;box-shadow:inset 0 1px 2px rgba(40,50,120,.25),0 0 0 2px rgba(120,150,255,.35)}
+.gok{min-width:72px;padding:4px 16px;font-size:12px;font-weight:700;color:var(--ink);border-radius:999px;border:1px solid #8490c6;
+  background:linear-gradient(180deg,#fff 0%,#e8ecf9 48%,#cdd5f0 52%,#e4e9f8 100%);box-shadow:inset 0 1px 0 #fff,0 2px 4px -1px var(--shadow)}
+.gok:active{background:linear-gradient(180deg,#cdd5f0,#e8ecf9)}
+.win.picture.cover .body{width:min(360px,calc(100vw - 44px));height:auto;aspect-ratio:420/215;background:#0a3d6b}
+.pic.cover{inset:0;width:100%;height:100%;object-fit:cover;image-rendering:auto;animation:none}
+.win.picture .body{width:min(300px,calc(100vw - 44px));height:250px;background:#EAF6FB}
+.pic{position:absolute;inset:6px;width:calc(100% - 12px);height:calc(100% - 12px);object-fit:contain;animation:bob 2.4s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-4px)}}
+.win.map .body{width:min(440px,calc(100vw - 44px));aspect-ratio:1111/862}
+
+/* 지도와 별 */
+.mapimg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.star{position:absolute;width:38px;height:38px;transform:translate(-50%,-50%);cursor:pointer;z-index:1;image-rendering:pixelated;
+  filter:drop-shadow(0 0 3px rgba(255,236,120,.95)) drop-shadow(0 0 6px rgba(255,255,255,.8));animation:starBob 1.2s steps(1) infinite}
+/* 나비: 한 칸씩 위아래로 날면서 날개를 접었다 폄 */
+@keyframes starBob{0%{transform:translate(-50%,-50%)}25%{transform:translate(-50%,calc(-50% - 2px)) scaleX(.8)}50%{transform:translate(-50%,calc(-50% - 4px))}75%{transform:translate(-50%,calc(-50% - 2px)) scaleX(.8)}}
+
+/* 말풍선 */
+.pbubble{position:absolute;z-index:3;white-space:nowrap;font-size:12px;font-weight:700;color:var(--ink);
+  padding:6px 11px;border-radius:8px;background:var(--frame);border:1px solid var(--edge);
+  box-shadow:inset 0 1px 0 #fff,0 6px 14px -4px var(--shadow);animation:pop .26s cubic-bezier(.3,1.6,.5,1);pointer-events:none}
+.pbubble::after{content:"";position:absolute;left:var(--tail,14px);bottom:-6px;width:10px;height:10px;background:#bfcaec;
+  border-right:1px solid var(--edge);border-bottom:1px solid var(--edge);transform:rotate(45deg)}
+@keyframes pop{from{transform:scale(.5);opacity:0}to{transform:none;opacity:1}}
+
+/* ── 아이콘 줄: 플레이어와 같은 은색 판 ── */
+#dock{position:fixed;z-index:9000;display:flex;gap:2px;right:16px;bottom:calc(14px + env(safe-area-inset-bottom,0px));
+  padding:8px 10px 7px;border-radius:18px;background:linear-gradient(180deg,#eef2fd 0%,#c3cef1 45%,#a2b2e8 100%);border:1px solid var(--edge);
+  box-shadow:inset 0 1px 0 #fff,inset 0 -3px 6px rgba(70,80,150,.2),0 14px 28px -10px var(--shadow)}
+.dk{appearance:none;background:transparent;border:0;padding:2px;width:66px;display:flex;flex-direction:column;align-items:center;gap:3px}
+.dk .ic{height:48px;display:flex;align-items:center;justify-content:center}
+.dk .ic img{width:48px;height:48px;object-fit:contain;display:block;image-rendering:pixelated;transition:transform .18s steps(3)}
+.dk:hover .ic img,.dk:focus-visible .ic img{transform:translateY(-4px)}
+.dk:active .ic img{transform:translateY(2px)}
+.dk .nm{font-size:12px;line-height:1.35;color:var(--ink);text-align:center;padding:1px 6px;border-radius:4px;white-space:nowrap;
+  text-shadow:0 1px 0 rgba(255,255,255,.9)}
+.dk:hover .nm,.dk:focus-visible .nm{background:#2a4fc4;color:#fff;text-shadow:none}
+.dk:focus-visible{outline:none}
+@media (max-width:700px){
+  #dock{left:0;right:0;bottom:0;gap:0;justify-content:space-around;padding:7px 2px calc(6px + env(safe-area-inset-bottom,0px));border-radius:16px 16px 0 0;border-bottom:0}
+  .dk{width:auto;flex:1;min-width:0;padding:1px}
+  .dk .ic{height:30px}.dk .ic img{width:30px;height:30px}
+  .dk:hover .ic img{transform:none}
+  .dk .nm{font-size:11px;padding:0;letter-spacing:-.09em}
+  #hint{font-size:11px;letter-spacing:-.04em;padding:5px 9px}
+  .dk:hover .nm{background:transparent;color:var(--ink);text-shadow:0 1px 0 #fff}
+  .ctl .vol{max-width:60px}
+}
+</style>
+</head>
+<body>
+<div id="desk"></div>
+<p id="hint">제목줄을 끌면 창이 움직여요 · 창을 두 번 누르면 맨 앞으로 와요</p>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
+<script src="js/core.js"></script>
+<script>
+/* 나의 공간: 끌어서 옮기는 가짜 창들, 두 번 누르면 맨 앞으로, 지도의 별 */
+(function () {
+  "use strict";
+  var desk = document.getElementById('desk');
+  var KEY = 'reef-space-v1';
+  var saved = {};
+  try { saved = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch (e) {} }
+
+  /* ── 만들 창 목록 (위에서부터 순서대로 쌓임, 마지막이 맨 앞) ── */
+  var WINDOWS = [
+    { id: 'fish',    title: '나의 어항',   kind: 'reef',    page: 'marker-test.html#preview-space', icon: "assets/space/y2k/icon-fish.png",   at: [0.03, 0.37] },
+    { id: 'map',     title: '월계 지도', kind: 'map',     icon: "assets/space/y2k/icon-map.png",    at: [0.29, 0.06] },
+    { id: 'friends', title: '친구 관리',   kind: 'friends', icon: "assets/space/y2k/icon-friends.png", at: [0.72, 0.10] },
+    { id: 'stock',   title: '재고 관리',   kind: 'picture', img: "assets/space/stock.webp", cover: true, icon: "assets/space/y2k/icon-stock.png", at: [0.07, 0.62] },
+    { id: 'review',  title: '리뷰 관리',   kind: 'reef',    page: 'cord-jr-reef.html',        icon: "assets/space/y2k/icon-review.png", at: [0.36, 0.60] },
+    { id: 'gift',    title: '선물 코드',   kind: 'gift',    icon: "assets/space/y2k/icon-gift.png",    at: [0.72, 0.52] }
+  ];
+
+  var wins = [];       // 화면에 있는 창들
+  var zTop = 10;
+
+  /* ── 두 번 누르기 감지: 마우스와 터치 모두 (조금이라도 끌었으면 세지 않음) ── */
+  function onDouble(el, fn) {
+    var last = 0, lx = 0, ly = 0, dx = 0, dy = 0;
+    el.addEventListener('pointerdown', function (e) { dx = e.clientX; dy = e.clientY; });
+    el.addEventListener('pointerup', function (e) {
+      if (e.button > 0 || Math.hypot(e.clientX - dx, e.clientY - dy) > 6) { last = 0; return; }
+      var now = performance.now();
+      if (now - last < 350 && Math.hypot(e.clientX - lx, e.clientY - ly) < 24) { last = 0; fn(e); }
+      else { last = now; lx = e.clientX; ly = e.clientY; }
+    });
+  }
+
+  /* ── 창 하나 만들기 ── */
+  function makeWindow(def) {
+    var w = document.createElement('div');
+    w.className = 'win ' + (def.kind === 'reef' ? 'fish' : def.kind) + (def.cover ? ' cover' : '');
+    var bar = document.createElement('div'); bar.className = 'bar';
+    var ttl = document.createElement('span'); ttl.className = 'ttl'; ttl.textContent = def.title;
+    bar.appendChild(ttl);
+    ['_', '□', '×'].forEach(function (g) {
+      var b = document.createElement('span'); b.className = 'btn'; b.textContent = g; bar.appendChild(b);
+    });
+    var body = document.createElement('div'); body.className = 'body';
+    w.appendChild(bar); w.appendChild(body);
+
+    if (def.kind === 'reef') {
+      var fr = document.createElement('iframe');
+      fr.src = def.page; fr.title = def.title; fr.setAttribute('loading', 'lazy');
+      var sh = document.createElement('div'); sh.className = 'shield';
+      body.appendChild(fr); body.appendChild(sh);
+    } else if (def.kind === 'picture') {
+      // 그림 한 장 띄우기 (cover면 창을 꽉 채움)
+      var pic = document.createElement('img'); pic.className = 'pic' + (def.cover ? ' cover' : ''); pic.src = def.img; pic.alt = def.title; pic.draggable = false;
+      body.appendChild(pic);
+    } else if (def.kind === 'gift') {
+      // 코드 입력 창 (아직 기능은 없음)
+      body.innerHTML = '<label class="glabel" for="gift-code">코드 입력</label>' +
+        '<input id="gift-code" class="gin" type="text" maxlength="24" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="선물 코드를 입력하세요">' +
+        '<button class="gok" type="button">OK</button>';
+    } else if (def.kind === 'friends') {
+      body.innerHTML = '친구 목록이 비어 있어요.<br>친구 관리 기능은 준비 중이에요.';
+    } else if (def.kind === 'map') {
+      buildMap(body);
+    }
+
+    desk.appendChild(w);
+    var entry = { def: def, el: w, bar: bar };
+    wins.push(entry);
+    dragSetup(entry);
+    onDouble(w, function () { bringFront(entry); });
+    return entry;
+  }
+
+  /* ── 지도: 별 세 개를 아무 데나 놓고, 두 번 누르면 가게 이름 말풍선 ── */
+  function buildMap(body) {
+    var img = document.createElement('img'); img.className = 'mapimg'; img.src = "assets/space/map.png"; img.alt = '월계 지도';
+    img.draggable = false; body.appendChild(img);
+    // 가게 별: 지도 그림 위의 자리(퍼센트)에 고정
+    var SHOPS = [ { name: 'CORD Jr.', x: 70.4, y: 38.6 } ];
+    SHOPS.forEach(function (shop) {
+      var name = shop.name;
+      var s = document.createElement('img'); s.className = 'star'; s.src = "assets/space/y2k/star.png"; s.alt = name;
+      s.draggable = false;
+      s.style.left = shop.x + '%'; s.style.top = shop.y + '%';
+      body.appendChild(s);
+      var bubble = null, timer = null;
+      onDouble(s, function () {
+        if (bubble) bubble.remove();
+        clearTimeout(timer);
+        bubble = document.createElement('div'); bubble.className = 'pbubble'; bubble.textContent = name;
+        body.appendChild(bubble);
+        // 별 위쪽에 놓되 지도 밖으로 나가지 않게 조정
+        var cw = body.clientWidth, sx = s.offsetLeft, bw = bubble.offsetWidth, bh = bubble.offsetHeight;
+        var left = Math.max(6, Math.min(cw - bw - 6, sx - 14));
+        bubble.style.left = left + 'px';
+        bubble.style.top = Math.max(6, s.offsetTop - 17 - bh - 12) + 'px';
+        bubble.style.setProperty('--tail', Math.max(6, Math.min(bw - 14, sx - left - 3)) + 'px');
+        timer = setTimeout(function () { bubble.remove(); bubble = null; }, 2200);
+      });
+    });
+  }
+
+  /* ── 맨 앞으로 ── */
+  function bringFront(entry) {
+    entry.el.style.zIndex = ++zTop;
+    wins.forEach(function (o) { o.el.classList.toggle('front', o === entry); });
+    saveOrder();
+  }
+  function saveOrder() {
+    saved.order = wins.slice().sort(function (a, b) { return (+a.el.style.zIndex || 0) - (+b.el.style.zIndex || 0); })
+      .map(function (o) { return o.def.id; });
+    save();
+  }
+
+  /* ── 제목줄을 끌어서 옮기기 (화면 밖으로는 못 나감) ── */
+  // 모바일에서는 아래쪽 아이콘 줄에 창이 가리지 않도록 그만큼 비워 둠
+  function bottomGap() { return window.innerWidth < 700 && dock ? dock.offsetHeight : 0; }
+  function clampPos(entry, x, y) {
+    var r = entry.el.getBoundingClientRect();
+    var maxY = window.innerHeight - bottomGap() - r.height;
+    return [Math.max(0, Math.min(window.innerWidth - r.width, x)), Math.max(0, Math.min(maxY, y))];
+  }
+  function place(entry, x, y) {
+    var p = clampPos(entry, x, y);
+    entry.el.style.left = p[0] + 'px'; entry.el.style.top = p[1] + 'px';
+    return p;
+  }
+  function dragSetup(entry) {
+    var drag = null;
+    entry.bar.addEventListener('pointerdown', function (e) {
+      if (e.button > 0) return;
+      var r = entry.el.getBoundingClientRect();
+      drag = { ox: e.clientX - r.left, oy: e.clientY - r.top };
+      try { entry.bar.setPointerCapture(e.pointerId); } catch (er) {}
+    });
+    entry.bar.addEventListener('pointermove', function (e) {
+      if (!drag) return;
+      place(entry, e.clientX - drag.ox, e.clientY - drag.oy);
+    });
+    function end() {
+      if (!drag) return;
+      drag = null;
+      saved[entry.def.id] = [parseFloat(entry.el.style.left) || 0, parseFloat(entry.el.style.top) || 0];
+      save();
+    }
+    entry.bar.addEventListener('pointerup', end);
+    entry.bar.addEventListener('pointercancel', end);
+  }
+
+  /* ── 처음 배치: 저장된 위치가 있으면 그대로, 없으면 기본 위치 ── */
+  function layout() {
+    var narrow = window.innerWidth < 700;
+    WINDOWS.forEach(function (def, i) {
+      var e = wins[i], pos = saved[def.id];
+      var x, y;
+      if (pos) { x = pos[0]; y = pos[1]; }
+      else if (narrow) { x = 10 + i * 14; y = 56 + i * 48; }
+      else { x = def.at[0] * window.innerWidth; y = def.at[1] * window.innerHeight; }
+      place(e, x, y);
+    });
+  }
+
+  /* ── 아이콘 줄: 누르면 그 창이 맨 앞으로 오고 화면 가운데로 옴 ── */
+  var dock = document.createElement('div'); dock.id = 'dock';
+  document.body.appendChild(dock);
+  function bringCenter(entry) {
+    bringFront(entry);
+    var r = entry.el.getBoundingClientRect();
+    var x = (window.innerWidth - r.width) / 2, y = (window.innerHeight - bottomGap() - r.height) / 2;
+    entry.el.classList.add('slide');
+    var p = place(entry, x, y);
+    saved[entry.def.id] = p; save();
+    setTimeout(function () { entry.el.classList.remove('slide'); }, 320);
+  }
+  function makeDock() {
+    // 나의 계정: 아이콘만 먼저 있음 (창은 나중에 만들 예정)
+    var acc = document.createElement('button'); acc.type = 'button'; acc.className = 'dk'; acc.title = '나의 계정 (준비 중)';
+    acc.innerHTML = '<span class="ic"><img src="' + "assets/space/y2k/icon-account.png" + '" alt="" draggable="false"></span><span class="nm">나의 계정</span>';
+    dock.appendChild(acc);
+    WINDOWS.forEach(function (def, i) {
+      var b = document.createElement('button'); b.type = 'button'; b.className = 'dk'; b.title = def.title;
+      var ic = document.createElement('span'); ic.className = 'ic';
+      var im = document.createElement('img'); im.src = def.icon; im.alt = ''; im.draggable = false;
+      ic.appendChild(im);
+      var nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = def.title;
+      b.appendChild(ic); b.appendChild(nm);
+      b.addEventListener('click', function () { bringCenter(wins[i]); });
+      dock.appendChild(b);
+    });
+  }
+
+  WINDOWS.forEach(makeWindow);
+  makeDock();
+  layout();
+  // 저장된 쌓임 순서 복원, 없으면 마지막 창이 맨 앞
+  var order = saved.order && saved.order.length === WINDOWS.length ? saved.order : WINDOWS.map(function (d) { return d.id; });
+  order.forEach(function (id) {
+    var e = wins.filter(function (o) { return o.def.id === id; })[0];
+    if (e) { e.el.style.zIndex = ++zTop; }
+  });
+  var topId = order[order.length - 1];
+  wins.forEach(function (o) { o.el.classList.toggle('front', o.def.id === topId); });
+  window.addEventListener('resize', function () {
+    wins.forEach(function (e) { place(e, parseFloat(e.el.style.left) || 0, parseFloat(e.el.style.top) || 0); });
+  });
+
+  /* ── 로그인한 경우에만 방문 기록을 남김 (로그인은 필요 없음) ── */
+  var logged = false;
+  if (window.Core) {
+    Core.onChange(function (s) { if (s.user && !logged) { logged = true; Core.log('my_space'); } });
+    Core.start();
+  }
+})();
+
+</script>
+<script>
+/* 꾸밈: 창마다 아래에 옛날 플레이어 재생 버튼 줄을 붙임 (동작 없음) */
+(function () {
+  var I = {
+    rew: '<svg viewBox="0 0 12 7"><path d="M6 0v7L0 3.5zM12 0v7L6 3.5z"/></svg>',
+    ff: '<svg viewBox="0 0 12 7"><path d="M0 0v7l6-3.5zM6 0v7l6-3.5z"/></svg>',
+    play: '<svg viewBox="0 0 10 10"><path d="M2 0.5v9l7.5-4.5z"/></svg>',
+    stop: '<svg viewBox="0 0 10 10"><rect x="1.5" y="1.5" width="7" height="7" rx="1"/></svg>',
+    prev: '<svg viewBox="0 0 10 10"><path d="M1 1h1.6v8H1zM9 1v8L3 5z"/></svg>',
+    next: '<svg viewBox="0 0 10 10"><path d="M7.4 1H9v8H7.4zM1 1v8l6-4z"/></svg>',
+    vol: '<svg viewBox="0 0 10 10"><path d="M1 3.5h2L6 1v8L3 6.5H1z"/><path d="M7.3 3.2q1.2 1.8 0 3.6" fill="none" stroke="#3a4789" stroke-width="1"/></svg>'
+  };
+  document.querySelectorAll('#desk .win').forEach(function (w) {
+    var c = document.createElement('div'); c.className = 'ctl'; c.setAttribute('aria-hidden', 'true');
+    c.innerHTML = '<div class="seek"><span class="cap">' + I.rew + '</span><span class="trk"><b></b></span><span class="cap">' + I.ff + '</span></div>' +
+      '<div class="row"><span class="rb big">' + I.play + '</span><span class="rb">' + I.stop + '</span><span class="rb">' + I.prev +
+      '</span><span class="rb">' + I.next + '</span><span class="rb">' + I.vol + '</span><span class="vol"><b></b></span><span class="stat">Ready</span></div>';
+    w.appendChild(c);
+  });
+  window.dispatchEvent(new Event('resize'));   // 창 크기가 커졌으니 화면 안으로 다시 맞춤
+})();
+</script>
+</body>
+</html>

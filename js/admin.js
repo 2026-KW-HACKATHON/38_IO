@@ -7,7 +7,7 @@
 
   var EVENT_NAMES = {
     login: '로그인', logout: '로그아웃', visit: '접속', ar_start: 'AR 시작',
-    reef_switch: 'reef 전환', location: '위치 확인', photo: '촬영 저장'
+    reef_switch: 'reef 전환', location: '위치 확인', photo: '촬영 저장', my_space: '나의 공간'
   };
 
   function el(tag, cls, text) {
