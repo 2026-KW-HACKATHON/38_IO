@@ -1,0 +1,2475 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>All Reefs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Quicksand:wght@600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<style>
+  :root{
+    color-scheme:light;
+    --ground:#F1ECF7; --raised:#FFFFFF; --sunk:#E9E3F3; --sunk-2:#DFD7EC;
+    --edge:rgba(92,74,120,.15); --edge-strong:rgba(92,74,120,.32);
+    --ink:#2F2842; --ink-soft:#625879; --ink-faint:#938BA8;
+    --coral:#D9733A; --coral-ink:#241305; --coral-wash:rgba(217,115,58,.13);
+    --volt:#5A56E0; --volt-wash:rgba(90,86,224,.12);
+    --mint:#2F8F6A; --warn:#C24B31; --warn-wash:rgba(194,75,49,.1);
+    --shadow:0 12px 30px -22px rgba(47,40,66,.7);
+    --check-a:#EFEAF6; --check-b:#E4DDEF; --gridline:rgba(47,40,66,.12);
+    --r:12px;
+    --ui:"IBM Plex Sans KR","Quicksand",system-ui,sans-serif;
+    --mono:"IBM Plex Mono",ui-monospace,monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      color-scheme:dark;
+      --ground:#151229; --raised:#1F1937; --sunk:#110E22; --sunk-2:#191430;
+      --edge:rgba(196,183,228,.14); --edge-strong:rgba(196,183,228,.3);
+      --ink:#EDE7FA; --ink-soft:#B4AAD2; --ink-faint:#7C7398;
+      --coral:#F09A5E; --coral-ink:#241305; --coral-wash:rgba(240,154,94,.15);
+      --volt:#9A96FF; --volt-wash:rgba(154,150,255,.14);
+      --mint:#6FCFA6; --warn:#FF9878; --warn-wash:rgba(255,152,120,.12);
+      --shadow:0 12px 34px -22px rgba(0,0,0,.9);
+      --check-a:#1A1531; --check-b:#221C3C; --gridline:rgba(237,231,250,.1);
+    }
+  }
+  :root[data-theme="dark"]{
+    color-scheme:dark;
+    --ground:#151229; --raised:#1F1937; --sunk:#110E22; --sunk-2:#191430;
+    --edge:rgba(196,183,228,.14); --edge-strong:rgba(196,183,228,.3);
+    --ink:#EDE7FA; --ink-soft:#B4AAD2; --ink-faint:#7C7398;
+    --coral:#F09A5E; --coral-ink:#241305; --coral-wash:rgba(240,154,94,.15);
+    --volt:#9A96FF; --volt-wash:rgba(154,150,255,.14);
+    --mint:#6FCFA6; --warn:#FF9878; --warn-wash:rgba(255,152,120,.12);
+    --shadow:0 12px 34px -22px rgba(0,0,0,.9);
+    --check-a:#1A1531; --check-b:#221C3C; --gridline:rgba(237,231,250,.1);
+  }
+  *{box-sizing:border-box}
+  [hidden]{display:none!important}
+  html,body{height:100%;margin:0}
+  body{background:var(--ground);color:var(--ink);font-family:var(--ui);font-size:13.5px;line-height:1.5}
+  button,input,select,textarea{font:inherit;color:inherit}
+  .mono{font-family:var(--mono)}
+
+  /* ── 틀 ── */
+  #app{min-height:100%;display:grid;grid-template-rows:auto 1fr;grid-template-columns:168px minmax(0,1fr);
+    grid-template-areas:"bar bar" "nav main"}
+  #bar{grid-area:bar;display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+    padding:12px 16px;padding-top:calc(12px + env(safe-area-inset-top,0px));
+    border-bottom:1px solid var(--edge);background:var(--raised);position:sticky;top:0;z-index:20}
+  .brand{display:flex;align-items:center;gap:10px;margin-right:auto}
+  .brand canvas{width:34px;height:20px;image-rendering:pixelated}
+  .brand h1{margin:0;font-family:"Quicksand",var(--ui);font-weight:700;font-size:18px;letter-spacing:.01em}
+  .brand small{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.07em;color:var(--ink-faint);text-transform:uppercase}
+  .chip{font-family:var(--mono);font-size:10.5px;letter-spacing:.04em;color:var(--ink-soft);
+    border:1px solid var(--edge);border-radius:999px;padding:3px 10px;white-space:nowrap}
+  .chip.ok{color:var(--mint);border-color:color-mix(in srgb, var(--mint) 45%, transparent)}
+  .chip.busy{color:var(--coral);border-color:color-mix(in srgb, var(--coral) 45%, transparent)}
+  #nav{grid-area:nav;border-right:1px solid var(--edge);padding:14px 10px;display:flex;flex-direction:column;gap:3px;
+    position:sticky;top:61px;align-self:start;height:calc(100vh - 61px)}
+  #nav button{appearance:none;border:0;background:transparent;text-align:left;padding:8px 11px;border-radius:9px;
+    cursor:pointer;color:var(--ink-soft);font-weight:500;display:flex;justify-content:space-between;align-items:center;gap:6px}
+  #nav button:hover{background:var(--sunk);color:var(--ink)}
+  #nav button[aria-current="true"]{background:var(--coral-wash);color:var(--ink);font-weight:600}
+  #nav button .n{font-family:var(--mono);font-size:10.5px;color:var(--ink-faint)}
+  #nav .sep{height:1px;background:var(--edge);margin:8px 6px}
+  main{grid-area:main;padding:16px;min-width:0}
+  @media (max-width:820px){
+    #app{grid-template-columns:1fr;grid-template-areas:"bar" "nav" "main"}
+    #bar{position:static}
+    #nav{position:static;height:auto;flex-direction:row;overflow-x:auto;border-right:0;border-bottom:1px solid var(--edge);padding:8px 16px}
+    #nav button{white-space:nowrap}
+    #nav .sep{display:none}
+  }
+
+  /* ── 공통 부품 ── */
+  .card{background:var(--raised);border:1px solid var(--edge);border-radius:var(--r);box-shadow:var(--shadow);padding:14px 16px;min-width:0}
+  .card h2{margin:0 0 3px;font-size:14px;font-weight:700}
+  .card h3{margin:14px 0 8px;font-size:11px;font-weight:600;letter-spacing:.08em;color:var(--ink-faint);text-transform:uppercase;font-family:var(--mono)}
+  .card .sub{margin:0 0 12px;font-size:12.5px;color:var(--ink-soft)}
+  .stack{display:grid;gap:14px;align-content:start;min-width:0}
+  .btn{appearance:none;border:1px solid var(--edge-strong);background:var(--raised);border-radius:9px;padding:6px 12px;
+    font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+  .btn:hover{border-color:var(--coral)}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
+  .btn.primary{background:var(--coral);border-color:var(--coral);color:var(--coral-ink)}
+  .btn.volt{background:var(--volt);border-color:var(--volt);color:#fff}
+  .btn.ghost{background:transparent;border-style:dashed;color:var(--ink-soft)}
+  .btn.small{padding:3px 8px;font-size:11.5px;border-radius:7px}
+  .btn.danger:hover{border-color:var(--warn);color:var(--warn)}
+  .btn[aria-pressed="true"]{background:var(--volt-wash);border-color:var(--volt);color:var(--ink)}
+  :focus-visible{outline:2px solid var(--coral);outline-offset:2px}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .grow{flex:1;min-width:0}
+  label.f{display:grid;gap:3px;min-width:0}
+  label.f > span{font-family:var(--mono);font-size:10px;letter-spacing:.06em;color:var(--ink-faint)}
+  input[type=text],input[type=number],input[type=password],select,textarea{width:100%;min-width:0;background:var(--sunk);
+    border:1px solid var(--edge);border-radius:8px;padding:6px 8px;font-size:12.5px}
+  input[type=number]{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  textarea{font-family:var(--mono);font-size:11.5px;line-height:1.45;resize:vertical}
+  input[type=color]{width:34px;height:28px;padding:0;border:1px solid var(--edge);border-radius:7px;background:none;cursor:pointer}
+  input[type=range]{width:100%;accent-color:var(--coral)}
+  input[type=checkbox]{accent-color:var(--coral)}
+  .g2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .g3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+  .g4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+  .hint{font-size:12px;color:var(--ink-faint);margin:6px 0 0}
+  .hint b{color:var(--ink-soft);font-weight:600}
+  .note{padding:9px 12px;border-radius:9px;font-size:12.5px;line-height:1.5;background:var(--sunk);color:var(--ink-soft)}
+  .note.warn{background:var(--warn-wash);color:var(--warn)}
+  .note.ok{background:color-mix(in srgb, var(--mint) 12%, transparent);color:var(--mint)}
+  .slider{display:grid;grid-template-columns:96px 1fr 44px;gap:8px;align-items:center;margin-bottom:6px}
+  .slider span{font-size:12px;color:var(--ink-soft)}
+  .slider output{font-family:var(--mono);font-size:11px;text-align:right;color:var(--ink-soft);font-variant-numeric:tabular-nums}
+  .pill{display:inline-block;font-family:var(--mono);font-size:10px;padding:1px 7px;border-radius:999px;border:1px solid var(--edge);color:var(--ink-soft)}
+  .chips{display:flex;gap:5px;flex-wrap:wrap}
+  .chips .btn{padding:3px 9px;font-size:11.5px;font-weight:500}
+  .empty{padding:18px;text-align:center;color:var(--ink-faint);font-size:12.5px}
+
+  /* ── 물고기 편집 ── */
+  .editor{display:grid;grid-template-columns:200px minmax(0,1fr) minmax(300px,380px);gap:14px;align-items:start}
+  @media (max-width:1260px){ .editor{grid-template-columns:180px minmax(0,1fr)} .editor .side3{grid-column:1 / -1} }
+  @media (max-width:760px){ .editor{grid-template-columns:1fr} }
+  .mlist{display:grid;gap:4px;max-height:70vh;overflow:auto;padding-right:2px}
+  .mitem{appearance:none;border:1px solid transparent;background:transparent;border-radius:10px;padding:7px 8px;cursor:pointer;
+    display:grid;grid-template-columns:44px 1fr;gap:8px;align-items:center;text-align:left}
+  .mitem:hover{background:var(--sunk)}
+  .mitem[aria-current="true"]{background:var(--coral-wash);border-color:color-mix(in srgb, var(--coral) 40%, transparent)}
+  .mitem img{width:44px;height:30px;object-fit:contain;image-rendering:pixelated}
+  .mitem b{display:block;font-size:12.5px;font-weight:600;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .mitem i{display:block;font-style:normal;font-family:var(--mono);font-size:10px;color:var(--ink-faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  @media (max-width:760px){ .mlist{grid-auto-flow:column;grid-auto-columns:150px;max-height:none;overflow-x:auto} }
+
+  .toolbar{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+  .toolbar .sep{width:1px;align-self:stretch;background:var(--edge);margin:0 3px}
+  .seg{display:inline-flex;border:1px solid var(--edge);border-radius:9px;padding:2px;background:var(--sunk);gap:2px}
+  .seg button{appearance:none;border:0;background:transparent;border-radius:7px;padding:4px 9px;font-size:12px;cursor:pointer;color:var(--ink-soft)}
+  .seg button[aria-pressed="true"]{background:var(--raised);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.12);font-weight:600}
+  .palette{display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+  .sw{appearance:none;width:30px;height:30px;border-radius:7px;border:2px solid transparent;cursor:pointer;position:relative;padding:0;
+    box-shadow:inset 0 0 0 1px rgba(0,0,0,.18)}
+  .sw span{position:absolute;right:1px;bottom:0;font-family:var(--mono);font-size:9px;color:#fff;text-shadow:0 0 2px #000,0 0 2px #000}
+  .sw[aria-pressed="true"]{border-color:var(--ink);outline:2px solid var(--raised);outline-offset:-4px}
+  .pxwrap{overflow:auto;border-radius:10px;border:1px solid var(--edge);background:var(--sunk);max-width:100%}
+  #px{display:block;touch-action:none;cursor:crosshair;image-rendering:pixelated}
+  .legend{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+  .legend span{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--ink-soft)}
+  .legend i{width:12px;height:12px;border-radius:3px;display:inline-block}
+
+  .preview3d{position:relative;aspect-ratio:1/1;max-width:100%;border-radius:10px;overflow:hidden;
+    background:radial-gradient(120% 90% at 50% 0%, var(--raised) 0%, var(--sunk) 70%);border:1px solid var(--edge)}
+  .preview3d canvas{width:100%;height:100%;display:block;touch-action:none;cursor:grab}
+  .preview3d .over{position:absolute;left:8px;right:8px;bottom:8px;display:flex;gap:5px;flex-wrap:wrap;z-index:5}
+  .tabs{display:flex;gap:2px;border-bottom:1px solid var(--edge);margin:12px -16px 12px;padding:0 12px;overflow-x:auto}
+  .tabs button{appearance:none;border:0;background:transparent;padding:8px 10px;font-size:12.5px;font-weight:600;color:var(--ink-faint);
+    border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap}
+  .tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--coral)}
+  .plist{display:grid;gap:3px;margin-bottom:10px;max-height:220px;overflow:auto}
+  .pitem{appearance:none;border:1px solid transparent;background:var(--sunk);border-radius:8px;padding:5px 8px;cursor:pointer;
+    display:grid;grid-template-columns:10px 1fr auto;gap:8px;align-items:center;text-align:left;font-size:12.5px}
+  .pitem[aria-current="true"]{border-color:var(--coral);background:var(--coral-wash)}
+  .pitem i{width:10px;height:10px;border-radius:3px}
+  .pitem small{font-family:var(--mono);font-size:10px;color:var(--ink-faint)}
+  .lines{display:grid;gap:5px}
+  .lines .row{flex-wrap:nowrap}
+
+  /* ── reef 설정 ── */
+  .reefs{display:grid;grid-template-columns:220px minmax(0,1fr);gap:14px;align-items:start}
+  @media (max-width:900px){ .reefs{grid-template-columns:1fr} }
+  .frame{position:relative;width:100%;aspect-ratio:16/10;border-radius:10px;overflow:hidden;border:1px solid var(--edge);background:var(--sunk)}
+  .frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+  .lanes{display:grid;gap:8px}
+  .lane{border:1px solid var(--edge);border-radius:10px;padding:10px;background:var(--sunk)}
+  .lane summary{cursor:pointer;display:flex;gap:8px;align-items:center;list-style:none}
+  .lane summary::-webkit-details-marker{display:none}
+  .lane summary img{width:34px;height:22px;object-fit:contain;image-rendering:pixelated}
+  .lane summary b{font-size:12.5px}
+  .lane summary small{font-family:var(--mono);font-size:10.5px;color:var(--ink-faint);margin-left:auto}
+  .lane .body{margin-top:10px;display:grid;gap:8px}
+
+  /* ── 말풍선 미리보기 ── */
+  .bubblestage{position:relative;height:220px;border-radius:10px;border:1px solid var(--edge);overflow:hidden;
+    background:radial-gradient(120% 90% at 50% 0%, #F9F2F3 0%, #EFEAF6 62%)}
+  .bubblestage img{position:absolute;left:50%;top:62%;transform:translate(-50%,-50%);width:150px;image-rendering:pixelated}
+  .bubblestage .reef-say{left:calc(50% - 20px);top:auto;bottom:calc(38% + 30px)}
+
+  /* ── 창(모달) ── */
+  .modal{position:fixed;inset:0;background:rgba(20,16,36,.46);display:flex;align-items:center;justify-content:center;padding:16px;z-index:60}
+  .modal[hidden]{display:none!important}
+  .modal .card{width:min(980px,100%);max-height:calc(100vh - 32px);overflow:auto}
+  .codebox{width:100%;min-height:52vh;font-size:12px;white-space:pre;tab-size:2}
+  .photo{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:14px}
+  @media (max-width:760px){ .photo{grid-template-columns:1fr} }
+  #phCanvas{max-width:100%;display:block;border-radius:8px;background:var(--sunk);touch-action:none;cursor:crosshair}
+  .drop{border:2px dashed var(--edge-strong);border-radius:10px;padding:22px;text-align:center;color:var(--ink-soft);cursor:pointer}
+  .drop.on{border-color:var(--coral);background:var(--coral-wash)}
+  .out{white-space:pre-wrap;font-family:var(--mono);font-size:11px;max-height:160px;overflow:auto;background:var(--sunk);border-radius:8px;padding:8px;color:var(--ink-soft)}
+  .log{font-family:var(--mono);font-size:11px;background:var(--sunk);border-radius:8px;padding:8px 10px;max-height:220px;overflow:auto;white-space:pre-wrap;color:var(--ink-soft)}
+  .files{display:grid;gap:4px;max-height:320px;overflow:auto}
+  .files .row{background:var(--sunk);border-radius:8px;padding:5px 8px}
+  #toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--ground);
+    padding:9px 16px;border-radius:999px;font-size:12.5px;font-weight:600;opacity:0;pointer-events:none;transition:.22s;z-index:90;max-width:calc(100% - 32px)}
+  #toast.on{opacity:1;transform:translateX(-50%)}
+  @media (prefers-reduced-motion: reduce){ *{transition:none!important;animation:none!important} }
+</style>
+</head>
+<body>
+<div id="app">
+  <header id="bar">
+    <div class="brand">
+      <canvas id="logo" width="17" height="10" aria-hidden="true"></canvas>
+      <div><h1>All Reefs</h1><small>fish · items · reefs — one source</small></div>
+    </div>
+    <span class="chip" id="where">—</span>
+    <span class="chip" id="saved">저장됨</span>
+    <button class="btn" id="undo" type="button" title="되돌리기 (Ctrl+Z)">되돌리기</button>
+    <button class="btn" id="zipBtn" type="button">전체 파일 받기</button>
+    <button class="btn primary" id="pushBtn" type="button">깃허브에 올리기</button>
+  </header>
+  <nav id="nav" aria-label="메뉴">
+    <button type="button" data-tab="species">물고기 <span class="n" id="nSpecies"></span></button>
+    <button type="button" data-tab="items">아이템 <span class="n" id="nItems"></span></button>
+    <button type="button" data-tab="effects">이펙트 <span class="n" id="nEffects"></span></button>
+    <button type="button" data-tab="style">말풍선·글꼴</button>
+    <div class="sep"></div>
+    <button type="button" data-tab="reefs">하위 reef <span class="n" id="nReefs"></span></button>
+    <button type="button" data-tab="guide">설계 지침</button>
+    <button type="button" data-tab="github">깃허브</button>
+  </nav>
+  <main id="main"></main>
+</div>
+
+<!-- 사진으로 만들기 -->
+<div class="modal" id="photoModal" hidden>
+  <div class="card" role="dialog" aria-modal="true" aria-labelledby="phTitle">
+    <div class="row"><h2 id="phTitle" class="grow">사진으로 물고기 만들기</h2><button class="btn small" type="button" data-close>닫기</button></div>
+    <p class="sub">물고기가 옆으로 보이는 사진이 제일 잘 돼요. 사진 위를 끌어서 물고기 부분만 네모로 골라 주세요.</p>
+    <div class="photo">
+      <div>
+        <label class="drop" id="phDrop" for="phFile">여기에 사진을 끌어놓거나 눌러서 고르기<input type="file" id="phFile" accept="image/*" hidden></label>
+        <canvas id="phCanvas" hidden></canvas>
+      </div>
+      <div class="stack" style="gap:10px">
+        <div class="g2">
+          <label class="f"><span>이름</span><input type="text" id="phName" placeholder="예: 옐로우 탱"></label>
+          <label class="f"><span>가로 칸 수</span><input type="number" id="phW" min="10" max="32" value="20"></label>
+        </div>
+        <div class="row"><span style="font-size:12px;color:var(--ink-soft)">사진 속 머리 방향</span>
+          <div class="seg" id="phFace"><button type="button" data-v="right" aria-pressed="true">오른쪽</button><button type="button" data-v="left" aria-pressed="false">왼쪽</button></div>
+        </div>
+        <div class="row">
+          <button class="btn" id="phAuto" type="button" disabled>자동 도트 변환</button>
+          <button class="btn volt" id="phClaude" type="button" disabled>클로드에게 설계 맡기기</button>
+          <select id="phTier" style="width:auto"><option value="quick">빠르게</option><option value="default" selected>보통</option><option value="complex">꼼꼼히</option></select>
+          <button class="btn small" id="phStop" type="button" hidden>멈추기</button>
+        </div>
+        <p class="hint" id="phHint">사진을 고르면 버튼이 켜져요.</p>
+        <div class="out" id="phOut" hidden></div>
+        <div id="phResult" hidden>
+          <div class="row" style="align-items:flex-end"><img id="phThumb" alt="" style="image-rendering:pixelated;max-width:100%;background:var(--sunk);border-radius:8px;padding:6px"></div>
+          <div class="row" style="margin-top:8px"><button class="btn primary" id="phAdd" type="button">새 물고기로 추가</button><span class="hint" id="phInfo"></span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 코드 편집 -->
+<div class="modal" id="codeModal" hidden>
+  <div class="card" role="dialog" aria-modal="true" aria-labelledby="codeTitle">
+    <div class="row"><h2 id="codeTitle" class="grow mono">파일</h2><button class="btn small" type="button" data-close>닫기</button></div>
+    <p class="sub" id="codeSub"></p>
+    <textarea class="codebox" id="codeText" spellcheck="false"></textarea>
+    <div class="row" style="margin-top:10px">
+      <button class="btn primary" id="codeCommit" type="button">깃허브에 커밋</button>
+      <button class="btn" id="codeSave" type="button">파일로 받기</button>
+      <span class="hint" id="codeState"></span>
+    </div>
+  </div>
+</div>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="reef-kit.js"></script>
+<script>
+(function(){
+"use strict";
+/* All Reefs
+   물고기·아이템·이펙트·말풍선을 한 곳(reef-data.json)에서 관리하고,
+   같은 레포의 하위 reef들이 그 파일을 읽어서 똑같은 물고기를 보여줌 */
+
+const kit = ReefKit(THREE);
+const $ = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+const main = $('#main');
+// 클로드 안에서 열렸는지 (그러면 바깥 인터넷 요청은 막혀 있음)
+const IN_CLAUDE = !!(window.claude && window.claude.use);
+
+let D = null;            // 지금 고치고 있는 전체 데이터
+let fileData = null;     // 같은 폴더의 reef-data.json (처음 받은 그대로)
+const ui = {
+  tab: 'species',
+  sel: { species: 0, items: 0, effects: 0, reefs: 0 },
+  pane: 'parts',                 // 오른쪽 칸: parts / motion / info / claude / json
+  px: { target: 'side', mode: 'paint', tool: 'pen', ch: null, overlay: true },
+  part: 0,                       // 고른 부위 번호
+  pv: { swim: false, fx: [], variant: -1 }
+};
+let db = null, downloads = null, sample = null, sampleImages = false, sampleTools = false;
+
+/* ───────── 작은 도구 ───────── */
+function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function toast(msg, ms){
+  const t = $('#toast'); t.textContent = msg; t.classList.add('on');
+  clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('on'), ms || 2200);
+}
+function clamp(v, a, b){ return v < a ? a : v > b ? b : v; }
+function numv(v, d){ v = parseFloat(v); return isFinite(v) ? v : d; }
+function uid(prefix, list){
+  let i = 1; const ids = new Set(list.map(x => x.id));
+  while (ids.has(prefix + '-' + i)) i++;
+  return prefix + '-' + i;
+}
+// 두 번 눌러야 실행되는 버튼 (브라우저 확인창을 못 쓰는 곳이라서)
+function twoStep(btn, label, fn){
+  let armed = false, h = null;
+  const orig = btn.textContent;
+  btn.addEventListener('click', () => {
+    if (!armed){ armed = true; btn.textContent = label; btn.classList.add('danger'); h = setTimeout(() => { armed = false; btn.textContent = orig; }, 2600); return; }
+    clearTimeout(h); armed = false; btn.textContent = orig; fn();
+  });
+}
+
+/* ───────── 되돌리기 ───────── */
+const hist = [];
+let lastSnap = 0;
+function snapshot(force){
+  const now = performance.now();
+  if (!force && now - lastSnap < 1200) return;
+  lastSnap = now;
+  hist.push(JSON.stringify(D));
+  if (hist.length > 60) hist.shift();
+}
+function undo(){
+  if (!hist.length) return toast('되돌릴 게 없어요');
+  D = kit.normalize(JSON.parse(hist.pop()));
+  lastSnap = 0;
+  changed(true); render();
+  toast('한 단계 되돌렸어요');
+}
+// 데이터를 바꿀 때는 이걸로: 되돌리기 저장 → 바꾸기 → 저장 예약/미리보기 갱신
+function edit(fn, force){ snapshot(force); fn(); changed(); }
+
+/* ───────── 저장 ───────── */
+let saveTimer = null;
+function setSaved(state){
+  const el = $('#saved');
+  el.className = 'chip' + (state === 'ok' ? ' ok' : state === 'busy' ? ' busy' : '');
+  el.textContent = state === 'ok' ? (db ? '저장됨 · 클로드' : '저장됨 · 이 브라우저') : state === 'busy' ? '저장 중…' : '이 브라우저에만 저장';
+}
+function changed(noStamp){
+  if (!noStamp) D.updated = new Date().toISOString();
+  setSaved('busy');
+  clearTimeout(saveTimer); saveTimer = setTimeout(saveNow, 700);
+  schedulePreview();
+  broadcast();
+  counts();
+}
+function saveNow(){
+  const raw = JSON.stringify(D);
+  try { localStorage.setItem('allreefs.data', raw); } catch(e){}
+  if (db) db.doc('reef/data').set({ json: raw, updated: D.updated }).then(() => setSaved('ok')).catch(() => setSaved('local'));
+  else setSaved('ok');
+}
+
+/* ───────── 하위 reef 미리보기 창에 지금 데이터 보내기 ───────── */
+let bcTimer = null;
+function broadcast(){
+  clearTimeout(bcTimer);
+  bcTimer = setTimeout(() => $$('iframe[data-reef]').forEach(sendTo), 250);
+}
+function sendTo(fr){
+  try { fr.contentWindow.postMessage({ type: 'reef-data', data: D, reef: fr.dataset.reef, reset: fr.dataset.kind === 'console' }, '*'); } catch(e){}
+}
+window.addEventListener('message', e => {
+  const m = e.data;
+  if (m && m.type === 'reef-ready') $$('iframe[data-reef]').forEach(fr => { if (fr.contentWindow === e.source) sendTo(fr); });
+});
+
+/* ───────── 3D 미리보기 (하나 만들어서 여기저기 옮겨 씀) ───────── */
+const PV = (function(){
+  let renderer = null, scene, camera, root, obj = null, host = null, talk = null, ok = true;
+  const cam = { theta: 0.55, phi: 1.2, r: 30, target: new THREE.Vector3() };
+  let model = null, opts = {}, t = 0, pathT = 0, clock = new THREE.Clock();
+  try {
+    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.outputEncoding = THREE.sRGBEncoding;
+    scene = new THREE.Scene();
+    camera = new THREE.PerspectiveCamera(35, 1, 0.1, 800);
+    kit.lights(scene);
+    root = new THREE.Group(); scene.add(root);
+  } catch(e){ ok = false; }
+
+  function applyCam(){
+    cam.phi = clamp(cam.phi, 0.15, Math.PI - 0.15);
+    cam.r = clamp(cam.r, 2, 400);
+    const s = Math.sin(cam.phi);
+    camera.position.set(cam.target.x + cam.r * s * Math.sin(cam.theta), cam.target.y + cam.r * Math.cos(cam.phi), cam.target.z + cam.r * s * Math.cos(cam.theta));
+    camera.lookAt(cam.target);
+  }
+  // 끌어서 돌리기, 휠로 확대
+  if (ok){
+    const el = renderer.domElement;
+    let last = null;
+    el.addEventListener('pointerdown', e => { last = [e.clientX, e.clientY]; try { el.setPointerCapture(e.pointerId); } catch(er){} });
+    el.addEventListener('pointermove', e => {
+      if (!last) return;
+      cam.theta -= (e.clientX - last[0]) * 0.008; cam.phi -= (e.clientY - last[1]) * 0.008;
+      last = [e.clientX, e.clientY]; applyCam();
+    });
+    ['pointerup', 'pointercancel'].forEach(ev => el.addEventListener(ev, () => { last = null; }));
+    el.addEventListener('wheel', e => { e.preventDefault(); cam.r *= Math.exp(e.deltaY * 0.0014); applyCam(); }, { passive: false });
+  }
+
+  function attach(container){
+    if (!ok){ container.innerHTML = '<p class="empty">이 브라우저에서는 3D 미리보기를 못 켜요.</p>'; return; }
+    host = container;
+    container.prepend(renderer.domElement);
+    if (talk) talk.layer.remove();
+    talk = kit.Talk(container, camera, D.style);
+    resize();
+  }
+  function resize(){
+    if (!host) return;
+    const w = host.clientWidth || 300, h = host.clientHeight || w;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / Math.max(1, h); camera.updateProjectionMatrix();
+  }
+  window.addEventListener('resize', resize);
+
+  // 모델 보여주기. opts.effects: 이펙트 목록, opts.variant, opts.keepCam: 카메라 그대로
+  function show(m, o){
+    if (!ok) return;
+    model = m; opts = o || {};
+    if (obj){ kit.dispose(obj); obj = null; }
+    if (!m) return;
+    try {
+      obj = kit.build(m, { effects: opts.effects || [], variant: opts.variant || null, phase: 0.3 });
+    } catch(e){ console.error(e); toast('모양을 만들다 문제가 생겼어요: ' + e.message); return; }
+    root.add(obj);
+    const S = new kit.Sampler(m), L = Math.max(S.W, S.H) * m.scale;
+    obj.userData.lane = { path: 'loop', cx: 0, cy: 0, cz: 0, rx: L * 1.1, ry: L * 0.15, rz: L * 0.8, sp: 0.5, ph: 0 };
+    if (!opts.keepCam){ cam.r = L * (ui.pv.swim ? 3.4 : 2.1); cam.target.set(0, 0, 0); }
+    applyCam();
+    if (talk) talk.setStyle(D.style);
+  }
+  function say(){
+    if (!obj || !talk) return;
+    const line = kit.nextLine(obj);
+    talk.say(obj, line || '(할 말이 없어요. 정보 칸에서 넣어 주세요)');
+  }
+  function frame(){
+    requestAnimationFrame(frame);
+    const dt = Math.min(clock.getDelta(), 0.05);
+    if (!ok || !host || !host.isConnected) return;
+    t += dt; pathT += dt;
+    kit.tick(t);
+    if (obj){
+      if (ui.pv.swim && model.motion !== 'still' && model.motion !== 'spin' && model.motion !== 'float') kit.steer(obj, obj.userData.lane, pathT);
+      else { obj.position.set(0, 0, 0); obj.rotation.set(0, 0, 0); }
+      kit.animate(obj, t);
+    }
+    if (talk) talk.update();
+    renderer.render(scene, camera);
+  }
+  requestAnimationFrame(frame);
+  return { attach, show, say, resize, get obj(){ return obj; }, ok };
+})();
+
+// 바뀐 뒤 잠깐 기다렸다가 미리보기 다시 만들기
+let pvTimer = null;
+function schedulePreview(){
+  clearTimeout(pvTimer);
+  pvTimer = setTimeout(() => { if (typeof refreshPreview === 'function') refreshPreview(true); }, 110);
+}
+
+/* ───────── 메뉴 ───────── */
+function counts(){
+  if (!D) return;
+  $('#nSpecies').textContent = D.species.length;
+  $('#nItems').textContent = D.items.length;
+  $('#nEffects').textContent = D.effects.length;
+  $('#nReefs').textContent = D.reefs.length;
+}
+$$('#nav button').forEach(b => b.addEventListener('click', () => { ui.tab = b.dataset.tab; ui.part = 0; render(); }));
+function render(){
+  $$('#nav button').forEach(b => b.setAttribute('aria-current', b.dataset.tab === ui.tab ? 'true' : 'false'));
+  counts();
+  refreshPreview = null;
+  if (ui.tab === 'species' || ui.tab === 'items') renderModels();
+  else if (ui.tab === 'effects') renderEffects();
+  else if (ui.tab === 'style') renderStyle();
+  else if (ui.tab === 'reefs') renderReefs();
+  else if (ui.tab === 'guide') renderGuide();
+  else if (ui.tab === 'github') renderGithub();
+}
+let refreshPreview = null;
+
+// 창 닫기 버튼들
+$$('.modal').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m || e.target.hasAttribute('data-close')) closeModal(m); });
+});
+function openModal(m){ m.hidden = false; }
+function closeModal(m){ m.hidden = true; if (m.onclose) m.onclose(); }
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') $$('.modal').forEach(m => { if (!m.hidden) closeModal(m); });
+  const tag = (e.target.tagName || '').toLowerCase();
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && tag !== 'input' && tag !== 'textarea'){ e.preventDefault(); undo(); }
+});
+$('#undo').addEventListener('click', undo);
+
+/* ───────── 파일 받기 ───────── */
+function saveFile(filename, data, mime){
+  if (downloads) return downloads.save({ filename, data });
+  const blob = (data instanceof Blob) ? data : new Blob([data], { type: mime || 'text/plain' });
+  const url = URL.createObjectURL(blob), a = document.createElement('a');
+  a.href = url; a.download = filename; document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1500);
+  return Promise.resolve({ status: 'saved' });
+}
+function saved(p, what){
+  return p.then(r => { if (r && r.status === 'delivered') return; toast(what + ' 받았어요'); })
+    .catch(e => toast(e && e.code === 'declined' ? '취소했어요' : '저장하지 못했어요'));
+}
+// 같은 폴더에 있는 파일 읽기 (클로드 미리보기에서는 같이 올린 파일, 깃허브에서는 레포 파일)
+function fetchText(name){
+  return fetch(name + '?t=' + Date.now(), { cache: 'no-store' }).then(r => { if (!r.ok) throw new Error(name + ' 파일을 못 찾았어요 (' + r.status + ')'); return r.text(); });
+}
+function dataText(){ return JSON.stringify(D, null, 1); }
+
+/* ───────── 로고: 옆모습 도트 한 마리 ───────── */
+function drawLogo(){
+  const m = D.species[0]; if (!m) return;
+  const th = kit.thumb(m, 1), cv = $('#logo');
+  cv.width = th.width; cv.height = th.height;
+  cv.getContext('2d').drawImage(th, 0, 0);
+}
+
+/* ═══════════════════ 물고기 / 아이템 편집 ═══════════════════ */
+const ROLE = {
+  head:   { ko: '머리',           c: '#E0803F' },
+  body:   { ko: '몸통·지느러미',  c: '#5A56E0' },
+  stock:  { ko: '꼬리자루',       c: '#2F8F6A' },
+  caudal: { ko: '꼬리',           c: '#C24B7A' },
+  pect:   { ko: '가슴지느러미(양쪽)', c: '#2E8FB8' },
+  flipF:  { ko: '앞발(양쪽)',     c: '#B8862E' },
+  flipB:  { ko: '뒷발(양쪽)',     c: '#8A6E2E' },
+  still:  { ko: '고정',           c: '#6A6084' }
+};
+const KIND_KO = { box: '박스', plane: '평면', free: '자유 도형' };
+const SHAPE_KO = { box: '상자', cylinder: '원기둥', cone: '원뿔', sphere: '공', wedge: '쐐기', mesh: '직접 점 찍기' };
+const MOTION_KO = { fish: '물고기 헤엄', turtle: '거북 노젓기', float: '둥실둥실', spin: '빙글빙글', still: '가만히' };
+const CHARS = 'abcdefghijklmnopqrstuvwyzABCDEFGHIJKLMNOPQRSTUVWYZ0123456789';
+
+function coll(){ return ui.tab === 'items' ? D.items : D.species; }
+function curModel(){
+  const c = coll();
+  if (!c.length) return null;
+  ui.sel[ui.tab] = clamp(ui.sel[ui.tab], 0, c.length - 1);
+  return c[ui.sel[ui.tab]];
+}
+function curPart(){ const m = curModel(); if (!m || !m.parts.length) return null; ui.part = clamp(ui.part, 0, m.parts.length - 1); return m.parts[ui.part]; }
+
+// 새 물고기 틀: 둥근 몸 + 꼬리 + 지느러미
+function blankFish(list){
+  const side = [
+    '......aaaa..........',
+    '....aaaaaaaa........',
+    'b..aaaaaaaaaaa......',
+    'bb.aaaaaaaaaaaaa....',
+    'bbbaaaaaaaaaaaeaa...',
+    'bbbaaaaaaaaaaaaaaa..',
+    'bbbccccccccccccccc..',
+    'bb.cccccccccccccc...',
+    'b...cccccccccccc....',
+    '.......cccc.........'
+  ];
+  return kit.normModel({
+    id: uid('fish', list), name: '새 물고기', motion: 'fish', scale: 0.5, sizeCm: 10,
+    palette: { a: '#E88B54', b: '#F6BC8C', c: '#F8D2AE', e: '#2A2233' },
+    side,
+    parts: [
+      { id: '머리', kind: 'box', role: 'head', x: 13, y: 2, w: 5, h: 7, d: 4 },
+      { id: '몸통', kind: 'box', role: 'body', x: 6, y: 1, w: 7, h: 8, d: 4 },
+      { id: '꼬리자루', kind: 'box', role: 'stock', x: 3, y: 3, w: 3, h: 5, d: 3 },
+      { id: '꼬리', kind: 'plane', role: 'caudal', x: 0, y: 2, w: 3, h: 7 },
+      { id: '등지느러미', kind: 'plane', role: 'body', x: 6, y: 0, w: 6, h: 1 },
+      { id: '가슴지느러미', kind: 'plane', role: 'pect', x: 12, y: 5, w: 3, h: 2, z: 2.4, paint: ['XXX', '.XX'], color: 'b' }
+    ],
+    swim: { speed: 1, beat: 0.6, wag: 0.55, bend: 0.5, pect: 1, bob: 0.2, roll: 1 },
+    says: ['안녕!']
+  });
+}
+function blankItem(list){
+  return kit.normModel({
+    id: uid('item', list), name: '새 아이템', motion: 'float', scale: 0.6,
+    palette: { a: '#C9B8E8', b: '#9E8CC4' },
+    side: ['.aaaa.', 'aaaaaa', 'aabbaa', 'aabbaa', 'aaaaaa', '.aaaa.'],
+    parts: [{ id: '몸', kind: 'box', role: 'still', x: 0, y: 0, w: 6, h: 6, d: 6 }],
+    swim: { speed: 1, beat: 0.25, wag: 0, bend: 0, pect: 0, bob: 0.3, roll: 0 }
+  });
+}
+
+/* ───────── 화면 그리기 ───────── */
+function renderModels(){
+  const isItem = ui.tab === 'items', list = coll(), m = curModel();
+  main.innerHTML = `
+  <div class="editor">
+    <div class="card stack" style="gap:10px">
+      <div><h2>${isItem ? '아이템' : '물고기'}</h2><p class="sub" style="margin:0">${isItem ? '물고기 말고 따로 놓는 것들. 쓰면서 계속 고쳐 나가요.' : '여기서 고치면 모든 하위 reef의 같은 물고기가 바뀌어요.'}</p></div>
+      <div class="row">
+        <button class="btn small" id="mNew" type="button">+ 새로</button>
+        <button class="btn small" id="mDup" type="button" ${m ? '' : 'disabled'}>복제</button>
+        ${isItem ? '' : '<button class="btn small volt" id="mPhoto" type="button">사진으로</button>'}
+      </div>
+      <div class="mlist" id="mlist"></div>
+    </div>
+    ${m ? `
+    <div class="card" id="pxCard">
+      <div class="row" style="margin-bottom:8px"><h2 class="grow">${esc(m.name)} <span class="pill">${esc(m.id)}</span></h2></div>
+      <div class="toolbar">
+        <div class="seg" id="pxTarget" aria-label="그릴 곳">
+          <button type="button" data-v="side">옆모습</button>
+          <button type="button" data-v="top">윗모습</button>
+          <button type="button" data-v="part">부위 도트</button>
+        </div>
+        <div class="seg" id="pxMode" aria-label="모드">
+          <button type="button" data-v="paint">칠하기</button>
+          <button type="button" data-v="parts">부위 옮기기</button>
+        </div>
+        <div class="seg" id="pxTool" aria-label="도구">
+          <button type="button" data-v="pen">연필</button>
+          <button type="button" data-v="erase">지우개</button>
+          <button type="button" data-v="fill">채우기</button>
+          <button type="button" data-v="pick">스포이드</button>
+        </div>
+        <button class="btn small" id="pxOverlay" type="button" aria-pressed="${ui.px.overlay}">부위 선</button>
+      </div>
+      <div class="palette" id="palette"></div>
+      <div class="pxwrap" id="pxwrap"><canvas id="px"></canvas></div>
+      <div class="legend" id="legend"></div>
+      <h3>격자 크기 <span class="mono" id="gridSize" style="color:var(--ink-soft)"></span></h3>
+      <div class="row" id="gridBtns">
+        <button class="btn small" type="button" data-g="L+1" title="왼쪽에 한 줄 더">◀ 늘리기</button>
+        <button class="btn small" type="button" data-g="L-1" title="왼쪽 한 줄 빼기">◀ 줄이기</button>
+        <button class="btn small" type="button" data-g="R+1">늘리기 ▶</button>
+        <button class="btn small" type="button" data-g="R-1">줄이기 ▶</button>
+        <button class="btn small" type="button" data-g="T+1">▲ 늘리기</button>
+        <button class="btn small" type="button" data-g="T-1">▲ 줄이기</button>
+        <button class="btn small" type="button" data-g="B+1">늘리기 ▼</button>
+        <button class="btn small" type="button" data-g="B-1">줄이기 ▼</button>
+        <button class="btn small" type="button" id="flipBtn">좌우 뒤집기</button>
+      </div>
+      <p class="hint">머리는 항상 오른쪽. 오른쪽 클릭은 지우개. <b>부위 옮기기</b>에서 네모를 끌면 옮겨지고, 오른쪽 아래 모서리를 끌면 크기가 바뀌어요.</p>
+    </div>
+    <div class="card side3">
+      <div class="preview3d" id="pv">
+        <div class="over">
+          <button class="btn small" id="pvSwim" type="button" aria-pressed="${ui.pv.swim}">헤엄 경로</button>
+          <button class="btn small" id="pvSay" type="button">말해보기</button>
+          <select id="pvVar" style="width:auto;padding:3px 6px;font-size:11.5px"></select>
+        </div>
+      </div>
+      <div class="chips" id="pvFx" style="margin-top:8px"></div>
+      <div class="tabs" role="tablist" id="paneTabs">
+        <button role="tab" data-p="parts">부위</button>
+        <button role="tab" data-p="motion">움직임</button>
+        <button role="tab" data-p="info">정보</button>
+        <button role="tab" data-p="claude">클로드</button>
+        <button role="tab" data-p="json">JSON</button>
+      </div>
+      <div id="pane"></div>
+    </div>` : `<div class="card" style="grid-column:2 / -1"><p class="empty">아직 없어요. <b>+ 새로</b>${isItem ? '' : '나 <b>사진으로</b>'} 시작해 보세요.</p></div>`}
+  </div>`;
+
+  // 목록
+  const ml = $('#mlist');
+  list.forEach((mm, i) => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'mitem';
+    b.setAttribute('aria-current', i === ui.sel[ui.tab] ? 'true' : 'false');
+    const img = document.createElement('img'); img.alt = ''; img.src = kit.thumb(mm, 2).toDataURL();
+    const tx = document.createElement('span');
+    tx.innerHTML = '<b></b><i></i>';
+    tx.querySelector('b').textContent = mm.name;
+    tx.querySelector('i').textContent = mm.id + ' · ' + (MOTION_KO[mm.motion] || mm.motion);
+    b.appendChild(img); b.appendChild(tx);
+    b.addEventListener('click', () => { ui.sel[ui.tab] = i; ui.part = 0; ui.px.ch = null; ui.px.target = 'side'; renderModels(); });
+    ml.appendChild(b);
+  });
+  $('#mNew').addEventListener('click', () => edit(() => {
+    const nm = isItem ? blankItem(D.items) : blankFish(D.species);
+    list.push(nm); ui.sel[ui.tab] = list.length - 1; ui.part = 0; ui.px.target = 'side';
+  }, true) || renderModels());
+  if ($('#mDup')) $('#mDup').addEventListener('click', () => edit(() => {
+    const c = kit.clone(m); c.id = uid(m.id.replace(/-\d+$/, ''), list); c.name = m.name + ' 복사본';
+    list.splice(ui.sel[ui.tab] + 1, 0, kit.normModel(c)); ui.sel[ui.tab]++;
+  }, true) || renderModels());
+  if ($('#mPhoto')) $('#mPhoto').addEventListener('click', openPhoto);
+  if (!m) return;
+
+  // 도구 버튼들
+  segWire('#pxTarget', ui.px.target, v => {
+    if (v === 'part'){
+      const p = curPart();
+      if (!p || p.kind === 'free'){ toast('자유 도형이 아닌 부위를 먼저 골라 주세요'); return false; }
+      if (!p.paint) edit(() => { p.paint = paintFromSide(m, p); }, true);
+    }
+    if (v === 'top' && !m.top) edit(() => { m.top = makeTop(m); }, true);
+    ui.px.target = v; drawPx(); drawPalette();
+  });
+  segWire('#pxMode', ui.px.mode, v => { ui.px.mode = v; drawPx(); });
+  segWire('#pxTool', ui.px.tool, v => { ui.px.tool = v; });
+  $('#pxOverlay').addEventListener('click', e => { ui.px.overlay = !ui.px.overlay; e.target.setAttribute('aria-pressed', ui.px.overlay); drawPx(); });
+  $$('#gridBtns [data-g]').forEach(b => b.addEventListener('click', () => {
+    const g = b.dataset.g;
+    edit(() => resizeGrid(m, g[0], g.slice(1) === '+1' ? 1 : -1), true);
+    drawPx(); updateThumbs();
+  }));
+  $('#flipBtn').addEventListener('click', () => { edit(() => flipModel(m), true); drawPx(); updateThumbs(); });
+
+  // 3D 미리보기
+  PV.attach($('#pv'));
+  const vsel = $('#pvVar');
+  vsel.innerHTML = '<option value="-1">기본 색</option>' + m.variants.map((v, i) => `<option value="${i}">색 변형 ${i + 1}</option>`).join('');
+  vsel.value = String(ui.pv.variant < m.variants.length ? ui.pv.variant : -1);
+  vsel.addEventListener('change', () => { ui.pv.variant = +vsel.value; refreshPreview(); });
+  $('#pvSwim').addEventListener('click', e => { ui.pv.swim = !ui.pv.swim; e.target.setAttribute('aria-pressed', ui.pv.swim); refreshPreview(); });
+  $('#pvSay').addEventListener('click', () => PV.say());
+  const fxBox = $('#pvFx');
+  D.effects.forEach(ef => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'btn small'; b.textContent = ef.name;
+    b.setAttribute('aria-pressed', ui.pv.fx.indexOf(ef.id) >= 0);
+    b.title = '미리보기에만 붙여보기';
+    b.addEventListener('click', () => {
+      const k = ui.pv.fx.indexOf(ef.id);
+      if (k >= 0) ui.pv.fx.splice(k, 1); else ui.pv.fx.push(ef.id);
+      b.setAttribute('aria-pressed', k < 0); refreshPreview(true);
+    });
+    fxBox.appendChild(b);
+  });
+  refreshPreview = function(keepCam){
+    const mm = curModel(); if (!mm) return;
+    const fx = ui.pv.fx.concat(mm.effects).map(id => kit.effect(D, id)).filter(Boolean);
+    PV.show(mm, { effects: fx, variant: ui.pv.variant >= 0 ? mm.variants[ui.pv.variant] : null, keepCam });
+  };
+  refreshPreview();
+
+  $$('#paneTabs button').forEach(b => {
+    b.setAttribute('aria-selected', b.dataset.p === ui.pane);
+    b.addEventListener('click', () => { ui.pane = b.dataset.p; $$('#paneTabs button').forEach(x => x.setAttribute('aria-selected', x === b)); renderPane(); });
+  });
+  drawPalette(); setupPx(); drawPx(); renderPane();
+}
+
+function segWire(sel, cur, fn){
+  const box = $(sel);
+  $$('button', box).forEach(b => {
+    b.setAttribute('aria-pressed', b.dataset.v === cur);
+    b.addEventListener('click', () => {
+      if (fn(b.dataset.v) === false) return;
+      $$('button', box).forEach(x => x.setAttribute('aria-pressed', x === b));
+    });
+  });
+}
+function updateThumbs(){
+  const m = curModel(); if (!m) return;
+  const cur = $('#mlist .mitem[aria-current="true"] img');
+  if (cur) cur.src = kit.thumb(m, 2).toDataURL();
+  drawLogo();
+}
+
+/* ───────── 도트 격자 다루기 ───────── */
+// 지금 칠하는 곳의 격자: {rows, W, H, get, set}
+function pxGrid(){
+  const m = curModel(), t = ui.px.target;
+  let host, key;
+  if (t === 'top'){ host = m; key = 'top'; if (!m.top) m.top = makeTop(m); }
+  else if (t === 'part'){ const p = curPart(); if (!p || !p.paint){ ui.px.target = 'side'; host = m; key = 'side'; } else { host = p; key = 'paint'; } }
+  else { host = m; key = 'side'; }
+  const rows = host[key];
+  return {
+    get W(){ return host[key][0].length; }, get H(){ return host[key].length; },
+    get: (c, r) => { const row = host[key][r]; if (!row || c < 0 || c >= row.length) return null; const ch = row.charAt(c); return ch === '.' ? null : ch; },
+    set: (c, r, ch) => { const row = host[key][r]; if (!row || c < 0 || c >= row.length) return; host[key][r] = row.slice(0, c) + (ch || '.') + row.slice(c + 1); },
+    rows
+  };
+}
+function makeTop(m){
+  let D0 = 6;
+  m.parts.forEach(p => { if (p.kind === 'box') D0 = Math.max(D0, p.d); });
+  return Array.from({ length: D0 }, () => '.'.repeat(m.side[0].length));
+}
+function paintFromSide(m, p){
+  const S = new kit.Sampler(m), out = [];
+  for (let j = 0; j < p.h; j++){
+    let s = '';
+    for (let i = 0; i < p.w; i++) s += S.side(p.x + i, p.y + j) || '.';
+    out.push(s);
+  }
+  if (!out.join('').replace(/\./g, '')) out[0] = (Object.keys(m.palette)[0] || 'a') + out[0].slice(1);
+  return out;
+}
+function shiftParts(m, dx, dy){
+  m.parts.forEach(p => {
+    if (p.kind === 'free'){ p.pos[0] += dx; p.pos[1] += dy; }
+    else { p.x += dx; p.y += dy; }
+  });
+}
+function resizeGrid(m, side, delta){
+  const W = m.side[0].length, H = m.side.length;
+  const addCol = (rows, front) => rows.map(r => front ? '.' + r : r + '.');
+  const cutCol = (rows, front) => rows.map(r => front ? r.slice(1) : r.slice(0, -1));
+  if (side === 'L' || side === 'R'){
+    if (delta < 0 && W <= 2) return;
+    const front = side === 'L';
+    m.side = delta > 0 ? addCol(m.side, front) : cutCol(m.side, front);
+    if (m.top) m.top = delta > 0 ? addCol(m.top, front) : cutCol(m.top, front);
+    if (front) shiftParts(m, delta, 0);
+  } else {
+    if (delta < 0 && H <= 2) return;
+    const blank = '.'.repeat(W);
+    if (side === 'T'){ if (delta > 0) m.side.unshift(blank); else m.side.shift(); shiftParts(m, 0, delta); }
+    else { if (delta > 0) m.side.push(blank); else m.side.pop(); }
+  }
+}
+function flipModel(m){
+  const W = m.side[0].length, rev = r => r.split('').reverse().join('');
+  m.side = m.side.map(rev);
+  if (m.top) m.top = m.top.map(rev);
+  m.parts.forEach(p => {
+    if (p.kind === 'free'){ p.pos[0] = W - 1 - p.pos[0]; p.rot[1] = -p.rot[1]; p.rot[2] = -p.rot[2]; }
+    else if (p.kind === 'plane' && p.axis === 'x') p.x = W - 1 - p.x;
+    else p.x = W - p.x - p.w;
+    if (p.paint) p.paint = p.paint.map(rev);
+  });
+}
+
+/* ───────── 색 칸 ───────── */
+function drawPalette(){
+  const m = curModel(), box = $('#palette'); if (!box) return;
+  const keys = Object.keys(m.palette);
+  if (!ui.px.ch || keys.indexOf(ui.px.ch) < 0) ui.px.ch = keys[0] || null;
+  box.innerHTML = '';
+  if (ui.px.target === 'part'){
+    const p = curPart();
+    const xb = document.createElement('button');
+    xb.type = 'button'; xb.className = 'sw'; xb.title = '부위 색(X)';
+    xb.style.background = m.palette[p.color] || '#999'; xb.innerHTML = '<span>X</span>';
+    xb.setAttribute('aria-pressed', ui.px.ch === 'X');
+    xb.addEventListener('click', () => { ui.px.ch = 'X'; drawPalette(); });
+    box.appendChild(xb);
+  }
+  keys.forEach(k => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'sw'; b.style.background = m.palette[k];
+    b.title = k + ' ' + m.palette[k]; b.innerHTML = '<span>' + esc(k) + '</span>';
+    b.setAttribute('aria-pressed', ui.px.ch === k);
+    b.addEventListener('click', () => { ui.px.ch = k; if (ui.px.tool === 'erase' || ui.px.tool === 'pick') { ui.px.tool = 'pen'; $$('#pxTool button').forEach(x => x.setAttribute('aria-pressed', x.dataset.v === 'pen')); } drawPalette(); });
+    box.appendChild(b);
+  });
+  const sep = document.createElement('span'); sep.style.width = '6px'; box.appendChild(sep);
+  if (ui.px.ch && ui.px.ch !== 'X'){
+    const ci = document.createElement('input'); ci.type = 'color'; ci.value = m.palette[ui.px.ch] || '#888888';
+    ci.title = '고른 색 바꾸기';
+    ci.addEventListener('input', () => { edit(() => { m.palette[ui.px.ch] = ci.value; }); drawPx(); updateThumbs(); $$('#palette .sw[aria-pressed="true"]').forEach(s => s.style.background = ci.value); });
+    box.appendChild(ci);
+    const hex = document.createElement('input'); hex.type = 'text'; hex.value = m.palette[ui.px.ch]; hex.style.width = '86px'; hex.className = 'mono';
+    hex.addEventListener('change', () => { if (/^#[0-9a-f]{6}$/i.test(hex.value.trim())){ edit(() => { m.palette[ui.px.ch] = hex.value.trim(); }, true); drawPalette(); drawPx(); updateThumbs(); } else toast('#RRGGBB 모양으로 써 주세요'); });
+    box.appendChild(hex);
+  }
+  const add = document.createElement('button'); add.type = 'button'; add.className = 'btn small'; add.textContent = '+ 색';
+  add.addEventListener('click', () => {
+    const k = CHARS.split('').find(c => !(c in m.palette));
+    if (!k) return toast('색이 너무 많아요');
+    edit(() => { m.palette[k] = '#8FB8E8'; }, true); ui.px.ch = k; drawPalette();
+  });
+  box.appendChild(add);
+  if (ui.px.ch && ui.px.ch !== 'X'){
+    const del = document.createElement('button'); del.type = 'button'; del.className = 'btn small'; del.textContent = '이 색 지우기';
+    twoStep(del, '정말 지울까요?', () => {
+      const k = ui.px.ch;
+      edit(() => {
+        const wipe = r => r.split(k).join('.');
+        delete m.palette[k];
+        m.side = m.side.map(wipe); if (m.top) m.top = m.top.map(wipe);
+        m.parts.forEach(p => { if (p.paint) p.paint = p.paint.map(wipe); if (p.color === k) p.color = Object.keys(m.palette)[0]; });
+      }, true);
+      ui.px.ch = null; drawPalette(); drawPx(); updateThumbs();
+    });
+    box.appendChild(del);
+  }
+}
+
+/* ───────── 도트 캔버스 ───────── */
+let PX = null;
+function setupPx(){
+  const cv = $('#px'); if (!cv) return;
+  PX = { cv, ctx: cv.getContext('2d'), cell: 20, drag: null };
+  cv.addEventListener('contextmenu', e => e.preventDefault());
+  cv.addEventListener('pointerdown', pxDown);
+  cv.addEventListener('pointermove', pxMove);
+  ['pointerup', 'pointercancel'].forEach(ev => cv.addEventListener(ev, pxUp));
+  new ResizeObserver(() => drawPx()).observe($('#pxwrap'));
+}
+function roleColor(p){ return (ROLE[p.role] || ROLE.body).c; }
+function drawPx(){
+  if (!PX || !PX.cv.isConnected) return;
+  const m = curModel(), g = pxGrid(), W = g.W, H = g.H;
+  const avail = Math.max(160, ($('#pxwrap').clientWidth || 500) - 2);
+  const cell = Math.max(8, Math.min(30, Math.floor(avail / W)));
+  PX.cell = cell;
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  PX.cv.width = W * cell * dpr; PX.cv.height = H * cell * dpr;
+  PX.cv.style.width = W * cell + 'px'; PX.cv.style.height = H * cell + 'px';
+  const c = PX.ctx; c.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const css = getComputedStyle(document.documentElement);
+  const ca = css.getPropertyValue('--check-a').trim(), cb = css.getPropertyValue('--check-b').trim();
+  for (let r = 0; r < H; r++) for (let q = 0; q < W; q++){
+    const ch = g.get(q, r);
+    if (ch){ c.fillStyle = ch === 'X' ? (m.palette[curPart().color] || '#999') : (m.palette[ch] || '#ff00ff'); }
+    else c.fillStyle = (q + r) % 2 ? ca : cb;
+    c.fillRect(q * cell, r * cell, cell, cell);
+  }
+  // 칸 선
+  c.strokeStyle = css.getPropertyValue('--gridline').trim(); c.lineWidth = 1;
+  c.beginPath();
+  for (let q = 0; q <= W; q++){ c.moveTo(q * cell + 0.5, 0); c.lineTo(q * cell + 0.5, H * cell); }
+  for (let r = 0; r <= H; r++){ c.moveTo(0, r * cell + 0.5); c.lineTo(W * cell, r * cell + 0.5); }
+  c.stroke();
+  $('#gridSize').textContent = ui.px.target === 'part' ? `부위 도트 ${W}×${H}` : `${m.side[0].length}×${m.side.length}` + (m.top ? ` · 윗모습 깊이 ${m.top.length}` : '');
+  $('#gridBtns').style.display = ui.px.target === 'side' ? '' : 'none';
+
+  // 부위 네모 (옆모습/윗모습에서만)
+  const legend = $('#legend'); legend.innerHTML = '';
+  if (ui.px.overlay && ui.px.target !== 'part'){
+    const used = {};
+    m.parts.forEach((p, i) => {
+      const r = partRect(m, p); if (!r) return;
+      used[p.role] = 1;
+      const sel = i === ui.part;
+      c.save();
+      c.strokeStyle = roleColor(p); c.lineWidth = sel ? 3 : 1.6;
+      if (p.kind === 'plane') c.setLineDash([5, 3]);
+      c.strokeRect(r.x * cell + 1.5, r.y * cell + 1.5, r.w * cell - 3, r.h * cell - 3);
+      if (sel && ui.px.mode === 'parts' && p.kind !== 'free'){
+        c.setLineDash([]); c.fillStyle = roleColor(p);
+        c.fillRect((r.x + r.w) * cell - 9, (r.y + r.h) * cell - 9, 8, 8);
+      }
+      if (sel){ c.fillStyle = roleColor(p); c.font = '600 11px ' + css.getPropertyValue('--ui'); c.fillText(p.id, r.x * cell + 4, r.y * cell - 3 < 10 ? r.y * cell + 13 : r.y * cell - 3); }
+      c.restore();
+    });
+    Object.keys(used).forEach(k => {
+      const s = document.createElement('span');
+      s.innerHTML = `<i style="background:${ROLE[k].c}"></i>${ROLE[k].ko}`;
+      legend.appendChild(s);
+    });
+    const s2 = document.createElement('span'); s2.textContent = '실선 = 박스 · 점선 = 평면'; s2.style.color = 'var(--ink-faint)';
+    legend.appendChild(s2);
+  }
+}
+// 부위가 격자에서 차지하는 네모 (지금 보고 있는 면 기준)
+function partRect(m, p){
+  if (ui.px.target === 'top'){
+    if (p.kind !== 'box' && !(p.kind === 'plane' && p.axis === 'y')) return null;
+    const Dp = m.top ? m.top.length : 0;
+    const depth = p.kind === 'box' ? p.d : p.h;
+    return { x: p.x, y: Math.floor(p.z - depth / 2 + Dp / 2), w: p.w, h: depth };
+  }
+  if (p.kind === 'free') return { x: p.pos[0] - p.size[0] / 2 + 0.5, y: p.pos[1] - p.size[1] / 2 + 0.5, w: Math.max(0.4, p.size[0]), h: Math.max(0.4, p.size[1]) };
+  if (p.kind === 'plane' && p.axis === 'y') return { x: p.x, y: p.y, w: p.w, h: 1 };
+  if (p.kind === 'plane' && p.axis === 'x') return { x: p.x, y: p.y, w: 1, h: p.h };
+  return { x: p.x, y: p.y, w: p.w, h: p.h };
+}
+function pxCell(e){
+  const r = PX.cv.getBoundingClientRect();
+  return { c: Math.floor((e.clientX - r.left) / PX.cell), r: Math.floor((e.clientY - r.top) / PX.cell),
+           fx: (e.clientX - r.left) / PX.cell, fy: (e.clientY - r.top) / PX.cell };
+}
+function pxDown(e){
+  const m = curModel(), at = pxCell(e);
+  try { PX.cv.setPointerCapture(e.pointerId); } catch(er){}
+  if (ui.px.mode === 'parts' && ui.px.target !== 'part'){
+    const p = curPart(), r = p && partRect(m, p);
+    if (p && r && p.kind !== 'free' && ui.px.target === 'side' && Math.abs(at.fx - (r.x + r.w)) < 0.6 && Math.abs(at.fy - (r.y + r.h)) < 0.6){
+      snapshot(true); PX.drag = { kind: 'resize', p }; return;
+    }
+    // 누른 칸을 덮는 부위 중 제일 작은 것
+    let best = -1, area = 1e9;
+    m.parts.forEach((pp, i) => {
+      const rr = partRect(m, pp); if (!rr) return;
+      if (at.fx >= rr.x && at.fx < rr.x + rr.w && at.fy >= rr.y && at.fy < rr.y + rr.h && rr.w * rr.h < area){ best = i; area = rr.w * rr.h; }
+    });
+    if (best >= 0){
+      ui.part = best; const pp = m.parts[best];
+      snapshot(true);
+      PX.drag = { kind: 'move', p: pp, start: at, orig: pp.kind === 'free' ? pp.pos.slice() : [pp.x, pp.y, pp.z] };
+      renderPane();
+    }
+    drawPx(); return;
+  }
+  const g = pxGrid(), tool = e.button === 2 ? 'erase' : ui.px.tool;
+  if (tool === 'pick'){
+    const ch = g.get(at.c, at.r);
+    if (ch){ ui.px.ch = ch; ui.px.tool = 'pen'; $$('#pxTool button').forEach(x => x.setAttribute('aria-pressed', x.dataset.v === 'pen')); drawPalette(); }
+    return;
+  }
+  snapshot(true);
+  if (tool === 'fill'){ floodFill(g, at.c, at.r, ui.px.ch); changed(); drawPx(); updateThumbs(); return; }
+  PX.drag = { kind: 'paint', tool, last: at };
+  g.set(at.c, at.r, tool === 'erase' ? null : ui.px.ch);
+  drawPx();
+}
+function pxMove(e){
+  if (!PX.drag) return;
+  const at = pxCell(e), d = PX.drag, m = curModel();
+  if (d.kind === 'paint'){
+    const g = pxGrid();
+    // 빨리 그어도 끊기지 않게 사이 칸도 칠함
+    let x0 = d.last.c, y0 = d.last.r; const x1 = at.c, y1 = at.r;
+    const dx = Math.abs(x1 - x0), dy = -Math.abs(y1 - y0), sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1;
+    let err = dx + dy, guard = 0;
+    while (guard++ < 200){
+      g.set(x0, y0, d.tool === 'erase' ? null : ui.px.ch);
+      if (x0 === x1 && y0 === y1) break;
+      const e2 = 2 * err;
+      if (e2 >= dy){ err += dy; x0 += sx; }
+      if (e2 <= dx){ err += dx; y0 += sy; }
+    }
+    d.last = at; drawPx();
+  } else if (d.kind === 'move'){
+    const dc = Math.round(at.fx - d.start.fx), dr = Math.round(at.fy - d.start.fy);
+    if (d.p.kind === 'free'){ d.p.pos[0] = d.orig[0] + dc; d.p.pos[1] = d.orig[1] + dr; }
+    else if (ui.px.target === 'top'){ d.p.x = d.orig[0] + dc; d.p.z = d.orig[2] + dr; }
+    else { d.p.x = d.orig[0] + dc; d.p.y = d.orig[1] + dr; }
+    drawPx(); schedulePreview();
+  } else if (d.kind === 'resize'){
+    const p = d.p;
+    p.w = Math.max(1, Math.round(at.fx) - p.x); p.h = Math.max(1, Math.round(at.fy) - p.y);
+    if (p.paint) kit.normPart(p);
+    drawPx(); schedulePreview();
+  }
+}
+function pxUp(){
+  if (!PX || !PX.drag) return;
+  const k = PX.drag.kind; PX.drag = null;
+  changed(); updateThumbs();
+  if (k !== 'paint') renderPane();
+}
+function floodFill(g, c, r, ch){
+  const from = g.get(c, r); ch = ch || null;
+  if (from === ch) return;
+  const W = g.W, H = g.H, seen = new Set(), q = [[c, r]];
+  while (q.length){
+    const [x, y] = q.pop(); const k = x + ',' + y;
+    if (x < 0 || y < 0 || x >= W || y >= H || seen.has(k) || g.get(x, y) !== from) continue;
+    seen.add(k); g.set(x, y, ch);
+    q.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
+  }
+}
+
+/* ───────── 오른쪽 칸 ───────── */
+function renderPane(){
+  const box = $('#pane'); if (!box) return;
+  const m = curModel();
+  ({ parts: panePartsHtml, motion: paneMotion, info: paneInfo, claude: paneClaude, json: paneJson }[ui.pane] || panePartsHtml)(box, m);
+}
+
+function field(label, key, val, type, extra){
+  type = type || 'number';
+  return `<label class="f"><span>${label}</span><input type="${type}" data-f="${key}" value="${esc(val)}" ${extra || ''}></label>`;
+}
+function panePartsHtml(box, m){
+  const p = curPart();
+  box.innerHTML = `
+    <div class="row" style="margin-bottom:8px">
+      <button class="btn small" type="button" data-add="box">+ 박스</button>
+      <button class="btn small" type="button" data-add="plane">+ 평면</button>
+      <button class="btn small" type="button" data-add="free">+ 자유 도형</button>
+    </div>
+    <div class="plist" id="plist"></div>
+    <div id="pform"></div>`;
+  const pl = $('#plist');
+  m.parts.forEach((pp, i) => {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'pitem';
+    b.setAttribute('aria-current', i === ui.part);
+    b.innerHTML = `<i style="background:${roleColor(pp)}"></i><span></span><small>${KIND_KO[pp.kind]} · ${(ROLE[pp.role] || {}).ko || pp.role}</small>`;
+    b.querySelector('span').textContent = pp.id;
+    b.addEventListener('click', () => { ui.part = i; renderPane(); drawPx(); });
+    pl.appendChild(b);
+  });
+  $$('[data-add]', box).forEach(b => b.addEventListener('click', () => {
+    const k = b.dataset.add, S = new kit.Sampler(m);
+    edit(() => {
+      const base = { id: KIND_KO[k] + (m.parts.length + 1), kind: k, role: ui.tab === 'items' ? 'still' : 'body' };
+      if (k === 'free') Object.assign(base, { shape: 'box', size: [1, 1, 1], pos: [Math.floor(S.W / 2), Math.floor(S.H / 2), 0], rot: [0, 0, 0], color: Object.keys(m.palette)[0] || '#888888' });
+      else Object.assign(base, { x: Math.floor(S.W / 2) - 1, y: Math.floor(S.H / 2) - 1, w: 3, h: 3, d: 3 });
+      m.parts.push(kit.normPart(base, m.parts.length)); ui.part = m.parts.length - 1;
+    }, true);
+    renderPane(); drawPx();
+  }));
+  if (!p){ $('#pform').innerHTML = '<p class="empty">부위가 없어요. 위에서 하나 더해 보세요.</p>'; return; }
+  const roleOpts = Object.keys(ROLE).map(k => `<option value="${k}" ${k === p.role ? 'selected' : ''}>${ROLE[k].ko}</option>`).join('');
+  const kindOpts = Object.keys(KIND_KO).map(k => `<option value="${k}" ${k === p.kind ? 'selected' : ''}>${KIND_KO[k]}</option>`).join('');
+  const colorOpts = Object.keys(m.palette).map(k => `<option value="${k}" ${k === p.color ? 'selected' : ''}>${k} ${m.palette[k]}</option>`).join('');
+  let h = `
+    <div class="g2">${field('이름', 'id', p.id, 'text')}
+      <label class="f"><span>종류</span><select data-f="kind">${kindOpts}</select></label></div>
+    <div class="g2" style="margin-top:8px"><label class="f"><span>역할 (움직이는 뼈)</span><select data-f="role">${roleOpts}</select></label>`;
+  if (p.kind === 'plane') h += `<label class="f"><span>방향</span><select data-f="axis">
+      <option value="z" ${p.axis === 'z' ? 'selected' : ''}>세로 (옆에서 보임)</option>
+      <option value="y" ${p.axis === 'y' ? 'selected' : ''}>가로 (위에서 보임)</option>
+      <option value="x" ${p.axis === 'x' ? 'selected' : ''}>앞뒤 (정면에서 보임)</option></select></label>`;
+  else if (p.kind === 'free') h += `<label class="f"><span>모양</span><select data-f="shape">${Object.keys(SHAPE_KO).map(k => `<option value="${k}" ${k === p.shape ? 'selected' : ''}>${SHAPE_KO[k]}</option>`).join('')}</select></label>`;
+  else h += '<span></span>';
+  h += '</div>';
+  if (p.kind === 'free'){
+    h += `<h3>크기 · 위치(열, 행, 옆) · 회전(도)</h3>
+      <div class="g3">${field('가로', 's0', p.size[0], 'number', 'step="0.05"')}${field('세로', 's1', p.size[1], 'number', 'step="0.05"')}${field('두께', 's2', p.size[2], 'number', 'step="0.05"')}</div>
+      <div class="g3" style="margin-top:6px">${field('열', 'p0', p.pos[0], 'number', 'step="0.1"')}${field('행', 'p1', p.pos[1], 'number', 'step="0.1"')}${field('옆(z)', 'p2', p.pos[2], 'number', 'step="0.1"')}</div>
+      <div class="g3" style="margin-top:6px">${field('X축', 'r0', p.rot[0], 'number', 'step="1"')}${field('Y축', 'r1', p.rot[1], 'number', 'step="1"')}${field('Z축', 'r2', p.rot[2], 'number', 'step="1"')}</div>
+      <div class="g2" style="margin-top:6px"><label class="f"><span>색</span><select data-f="color">${colorOpts}<option value="${esc(p.color)}" ${m.palette[p.color] ? '' : 'selected'}>직접: ${esc(p.color)}</option></select></label>${field('색 직접 (#RRGGBB)', 'colorHex', m.palette[p.color] ? '' : p.color, 'text', 'placeholder="#FFAA00"')}</div>`;
+    if (p.shape === 'mesh') h += `<label class="f" style="margin-top:6px"><span>점(v)과 삼각형(f)</span><textarea data-f="mesh" rows="5">${esc(JSON.stringify(p.mesh || { v: [[0,0,0],[1,0,0],[0,1,0]], f: [[0,1,2]] }))}</textarea></label>
+      <p class="hint">점 좌표는 가로·세로·두께에 곱해져요. 이런 모양은 <b>클로드</b> 칸에서 말로 부탁하면 편해요.</p>`;
+  } else {
+    h += `<h3>칸 위치와 크기</h3><div class="g4">${field('열 x', 'x', p.x)}${field('행 y', 'y', p.y)}${field('가로 w', 'w', p.w, 'number', 'min="1"')}${field('세로 h', 'h', p.h, 'number', 'min="1"')}</div>
+      <div class="g4" style="margin-top:6px">${p.kind === 'box' ? field('두께 d', 'd', p.d, 'number', 'min="1"') : ''}${field('옆 위치 z', 'z', p.z, 'number', 'step="0.1"')}</div>`;
+    if (p.kind === 'box') h += `<label class="row" style="margin-top:8px;font-size:12.5px"><input type="checkbox" data-f="useTop" ${p.useTop ? 'checked' : ''}> 윗면은 <b>윗모습</b> 도트로 칠하기</label>`;
+    h += `<label class="row" style="margin-top:6px;font-size:12.5px"><input type="checkbox" data-f="hasPaint" ${p.paint ? 'checked' : ''}> 이 부위만의 도트 쓰기 (옆모습 대신)</label>`;
+    if (p.paint) h += `<div class="row" style="margin-top:6px"><label class="f grow"><span>X 칸 색</span><select data-f="color">${colorOpts}</select></label>
+      <button class="btn small" type="button" id="goPaint" style="align-self:end">부위 도트 칠하기</button></div>`;
+  }
+  h += `<h3>재질</h3><div class="slider"><span>불투명</span><input type="range" min="0.05" max="1" step="0.05" data-f="opacity" value="${p.opacity}"><output>${p.opacity}</output></div>
+    <div class="slider"><span>반짝임</span><input type="range" min="0" max="1" step="0.05" data-f="shine" value="${p.shine}"><output>${p.shine}</output></div>
+    <div class="row" style="margin-top:8px">
+      <button class="btn small" type="button" id="pUp">위로</button><button class="btn small" type="button" id="pDown">아래로</button>
+      <button class="btn small" type="button" id="pDup">복제</button><button class="btn small danger" type="button" id="pDel">삭제</button>
+    </div>
+    <p class="hint">역할에 따라 움직여요: 머리는 가만히, 몸통은 조금, 꼬리자루·꼬리는 크게 흔들려요. 가슴지느러미·거북 발은 반대쪽이 자동으로 생겨요.</p>`;
+  $('#pform').innerHTML = h;
+  wirePartForm(m, p);
+}
+function wirePartForm(m, p){
+  $$('#pform [data-f]').forEach(el => {
+    const f = el.dataset.f;
+    const ev = (el.tagName === 'SELECT' || el.type === 'checkbox' || f === 'mesh' || f === 'colorHex') ? 'change' : 'input';
+    el.addEventListener(ev, () => {
+      let re = false;
+      edit(() => {
+        const v = el.type === 'checkbox' ? el.checked : el.value;
+        if (f === 'id') p.id = v;
+        else if (f === 'kind'){ convertKind(m, p, v); re = true; }
+        else if (f === 'role' || f === 'axis' || f === 'shape'){ p[f] = v; re = true; }
+        else if (f === 'color'){ p.color = v; }
+        else if (f === 'colorHex'){ if (/^#[0-9a-f]{6}$/i.test(v.trim())) p.color = v.trim(); re = true; }
+        else if (f === 'useTop'){ p.useTop = v; if (v && !m.top) m.top = makeTop(m); }
+        else if (f === 'hasPaint'){ if (v) p.paint = paintFromSide(m, p); else delete p.paint; if (!p.color) p.color = Object.keys(m.palette)[0]; re = true; }
+        else if (f === 'mesh'){ try { p.mesh = JSON.parse(v); } catch(e){ toast('JSON 모양이 틀렸어요'); } }
+        else if (/^[spr][012]$/.test(f)){ const arr = { s: 'size', p: 'pos', r: 'rot' }[f[0]]; p[arr][+f[1]] = numv(v, p[arr][+f[1]]); }
+        else if (f === 'opacity' || f === 'shine'){ p[f] = numv(v, p[f]); const o = el.parentNode.querySelector('output'); if (o) o.textContent = v; }
+        else { p[f] = numv(v, p[f]); if (f !== 'z') p[f] = Math.round(p[f]); if (f === 'w' || f === 'h' || f === 'd') p[f] = Math.max(1, p[f]); if (p.paint) kit.normPart(p); }
+      });
+      if (f === 'id') { drawPx(); const cur = $('#plist .pitem[aria-current="true"] span'); if (cur) cur.textContent = p.id; return; }
+      drawPx(); updateThumbs(); if (re) renderPane();
+    });
+  });
+  const gp = $('#goPaint'); if (gp) gp.addEventListener('click', () => { ui.px.target = 'part'; ui.px.mode = 'paint'; renderModels(); });
+  $('#pUp').addEventListener('click', () => { if (ui.part > 0){ edit(() => { const a = m.parts.splice(ui.part, 1)[0]; m.parts.splice(ui.part - 1, 0, a); }, true); ui.part--; renderPane(); } });
+  $('#pDown').addEventListener('click', () => { if (ui.part < m.parts.length - 1){ edit(() => { const a = m.parts.splice(ui.part, 1)[0]; m.parts.splice(ui.part + 1, 0, a); }, true); ui.part++; renderPane(); } });
+  $('#pDup').addEventListener('click', () => { edit(() => { const c = kit.clone(p); c.id = p.id + ' 복사'; if (c.kind === 'free') c.pos[0] += 1; else c.x += 1; m.parts.splice(ui.part + 1, 0, c); }, true); ui.part++; renderPane(); drawPx(); });
+  twoStep($('#pDel'), '정말 삭제?', () => { edit(() => m.parts.splice(ui.part, 1), true); ui.part = Math.max(0, ui.part - 1); if (ui.px.target === 'part') ui.px.target = 'side'; renderPane(); drawPx(); updateThumbs(); });
+}
+// 부위 종류 바꾸기 (박스↔평면↔자유 도형)
+function convertKind(m, p, to){
+  if (p.kind === to) return;
+  const S = new kit.Sampler(m);
+  if (to === 'free'){
+    const cx = p.x + p.w / 2 - 0.5, cy = p.y + p.h / 2 - 0.5;
+    Object.assign(p, { shape: 'box', size: [p.w, p.h, p.kind === 'box' ? p.d : 0.2], pos: [cx, cy, p.z || 0], rot: [0, 0, 0] });
+    if (!p.color) p.color = Object.keys(m.palette)[0] || '#888888';
+    ['x', 'y', 'w', 'h', 'd', 'axis', 'paint', 'useTop'].forEach(k => delete p[k]);
+  } else if (p.kind === 'free'){
+    Object.assign(p, { x: Math.round(p.pos[0] - p.size[0] / 2 + 0.5), y: Math.round(p.pos[1] - p.size[1] / 2 + 0.5), w: Math.max(1, Math.round(p.size[0])), h: Math.max(1, Math.round(p.size[1])), d: Math.max(1, Math.round(p.size[2])), z: p.pos[2] });
+    ['shape', 'size', 'pos', 'rot', 'mesh'].forEach(k => delete p[k]);
+  }
+  p.kind = to;
+  if (to === 'box' && !p.d) p.d = 3;
+  if (to === 'plane' && !p.axis) p.axis = 'z';
+  kit.normPart(p);
+  void S;
+}
+
+function paneMotion(box, m){
+  const s = m.swim;
+  const opts = Object.keys(MOTION_KO).map(k => `<option value="${k}" ${k === m.motion ? 'selected' : ''}>${MOTION_KO[k]}</option>`).join('');
+  const sl = (label, key, min, max, step, val, unit) => `<div class="slider"><span>${label}</span><input type="range" min="${min}" max="${max}" step="${step}" data-m="${key}" value="${val}"><output>${(+val).toFixed(2)}${unit || ''}</output></div>`;
+  box.innerHTML = `
+    <label class="f"><span>움직임 종류</span><select data-m="motion">${opts}</select></label>
+    <h3>헤엄</h3>
+    ${sl('유영 속도', 'speed', 0, 3, 0.05, s.speed, '×')}
+    ${sl('꼬리 박자', 'beat', 0, 2, 0.02, s.beat, '/초')}
+    ${sl('꼬리 흔들기', 'wag', 0, 1.2, 0.01, s.wag)}
+    ${sl('몸 휘기', 'bend', 0, 1, 0.01, s.bend)}
+    ${sl('가슴지느러미', 'pect', 0, 2.5, 0.05, s.pect)}
+    ${sl('위아래 출렁', 'bob', 0, 1.5, 0.01, s.bob)}
+    ${sl('돌 때 기울기', 'roll', 0, 2, 0.05, s.roll)}
+    <h3>크기와 색</h3>
+    ${sl('3D 크기', 'scale', 0.05, 2, 0.01, m.scale)}
+    ${sl('등·배 음영', 'shade', 0, 0.25, 0.01, m.shade == null ? 0.06 : m.shade)}
+    <p class="hint">몸 휘기 0은 머리부터 꼬리자루까지 곧게 두고 꼬리만 흔들어요. 올릴수록 몸통까지 같이 휘어요. 유영 속도는 모든 reef에서 이 종이 움직이는 빠르기에 곱해져요.</p>`;
+  $$('[data-m]', box).forEach(el => el.addEventListener(el.tagName === 'SELECT' ? 'change' : 'input', () => {
+    const k = el.dataset.m;
+    edit(() => {
+      if (k === 'motion') m.motion = el.value;
+      else if (k === 'scale') m.scale = +el.value;
+      else if (k === 'shade') m.shade = +el.value;
+      else m.swim[k] = +el.value;
+    });
+    const o = el.parentNode.querySelector('output');
+    if (o) o.textContent = (+el.value).toFixed(2) + ({ speed: '×', beat: '/초' }[k] || '');
+    if (k === 'motion') updateThumbs();
+  }));
+}
+
+function linesEditor(host, arr, onChange, placeholder){
+  host.innerHTML = '';
+  arr.forEach((line, i) => {
+    const row = document.createElement('div'); row.className = 'row';
+    const inp = document.createElement('input'); inp.type = 'text'; inp.value = line; inp.placeholder = placeholder || '';
+    inp.addEventListener('input', () => onChange(a => { a[i] = inp.value; }));
+    const rm = document.createElement('button'); rm.type = 'button'; rm.className = 'btn small'; rm.textContent = '×'; rm.title = '지우기';
+    rm.addEventListener('click', () => { onChange(a => { a.splice(i, 1); }, true); linesEditor(host, arr, onChange, placeholder); });
+    row.appendChild(inp); row.appendChild(rm); host.appendChild(row);
+  });
+  const add = document.createElement('button'); add.type = 'button'; add.className = 'btn small ghost'; add.textContent = '+ 한 줄';
+  add.addEventListener('click', () => { onChange(a => { a.push(''); }, true); linesEditor(host, arr, onChange, placeholder); const ins = $$('input', host); if (ins.length) ins[ins.length - 1].focus(); });
+  host.appendChild(add);
+}
+
+function paneInfo(box, m){
+  const isItem = ui.tab === 'items';
+  const reefOpts = D.reefs.map((r, i) => `<option value="${i}">${esc(r.name)} (${r.kind})</option>`).join('');
+  box.innerHTML = `
+    <div class="g2">${field('id (영어·숫자·-)', 'id', m.id, 'text')}${field('이름', 'name', m.name, 'text')}</div>
+    <div class="g2" style="margin-top:6px">${field('학명', 'sci', m.sci || '', 'text')}${field('실제 크기 (cm)', 'sizeCm', m.sizeCm || '', 'number')}</div>
+    <h3>기본 이펙트 (모든 reef에서 항상)</h3><div class="chips" id="iFx"></div>
+    ${isItem ? '' : '<h3>할 말</h3><div class="lines" id="iSays"></div>'}
+    <h3>색 변형</h3><div id="iVars" class="lines"></div>
+    <h3>내보내기</h3>
+    <div class="row"><select id="iReef" class="grow" style="width:auto">${reefOpts}</select><button class="btn small" id="iSend" type="button">이 reef에 넣기</button></div>
+    <p class="hint">전시형 reef에는 한 마리가 새 경로로 들어가고, 마커 reef에는 섞는 종류에, 콘솔에는 기본 목록에 들어가요.</p>
+    <div class="row" style="margin-top:8px"><button class="btn small" id="iJson" type="button">JSON 받기</button><button class="btn small" id="iGlb" type="button">GLB 받기 (멈춘 모습)</button></div>
+    <h3>지우기</h3><div class="row"><button class="btn small danger" id="iDel" type="button">${isItem ? '이 아이템' : '이 물고기'} 지우기</button><span class="hint" id="iRefs"></span></div>`;
+  $$('[data-f]', box).forEach(el => el.addEventListener('change', () => {
+    const f = el.dataset.f, v = el.value.trim();
+    if (f === 'id'){
+      const nid = v.replace(/[^A-Za-z0-9_-]/g, '');
+      if (!nid) return toast('id를 비울 수 없어요');
+      if (coll().some(x => x !== m && x.id === nid) || D.items.concat(D.species).some(x => x !== m && x.id === nid)) return toast('같은 id가 이미 있어요');
+      edit(() => renameRefs(m.id, nid), true); m.id = nid; changed(); renderModels(); return;
+    }
+    edit(() => { m[f] = f === 'sizeCm' ? numv(v, 0) : v; }, true);
+    updateThumbs(); if (f === 'name'){ const b = $('#mlist .mitem[aria-current="true"] b'); if (b) b.textContent = v; }
+  }));
+  const fxb = $('#iFx');
+  D.effects.forEach(ef => {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'btn small'; b.textContent = ef.name;
+    b.setAttribute('aria-pressed', m.effects.indexOf(ef.id) >= 0);
+    b.addEventListener('click', () => { edit(() => { const k = m.effects.indexOf(ef.id); if (k >= 0) m.effects.splice(k, 1); else m.effects.push(ef.id); }, true); b.setAttribute('aria-pressed', m.effects.indexOf(ef.id) >= 0); });
+    fxb.appendChild(b);
+  });
+  if (!D.effects.length) fxb.innerHTML = '<span class="hint">이펙트 메뉴에서 먼저 만들어요.</span>';
+  if (!isItem) linesEditor($('#iSays'), m.says, (fn, force) => edit(() => fn(m.says), force), '짧은 한마디');
+  drawVariants(m);
+  $('#iSend').addEventListener('click', () => {
+    const r = D.reefs[+$('#iReef').value]; if (!r) return;
+    edit(() => sendToReef(r, m), true);
+    toast(r.name + '에 넣었어요');
+  });
+  $('#iJson').addEventListener('click', () => saved(saveFile(m.id + '.json', JSON.stringify(m, null, 1), 'application/json'), 'JSON'));
+  $('#iGlb').addEventListener('click', () => exportGlb(m));
+  const refs = findRefs(m.id);
+  $('#iRefs').textContent = refs.length ? '쓰는 곳: ' + refs.join(', ') : '';
+  twoStep($('#iDel'), '정말 지울까요?', () => {
+    edit(() => coll().splice(ui.sel[ui.tab], 1), true);
+    ui.sel[ui.tab] = Math.max(0, ui.sel[ui.tab] - 1); renderModels();
+    if (refs.length) toast('지웠어요. ' + refs.join(', ') + '에서는 이제 안 보여요', 3500);
+  });
+}
+function drawVariants(m){
+  const host = $('#iVars'); host.innerHTML = '';
+  m.variants.forEach((v, i) => {
+    const row = document.createElement('div'); row.className = 'row';
+    row.innerHTML = `<span class="mono" style="width:18px">${i + 1}</span>
+      <label class="f grow"><span>색상 이동°</span><input type="number" step="1" data-k="h" value="${v.h || 0}"></label>
+      <label class="f grow"><span>채도 ×</span><input type="number" step="0.02" data-k="s" value="${v.s == null ? 1 : v.s}"></label>
+      <label class="f grow"><span>밝기 ×</span><input type="number" step="0.02" data-k="v" value="${v.v == null ? 1 : v.v}"></label>
+      <button class="btn small" type="button" style="align-self:end">×</button>`;
+    $$('input', row).forEach(inp => inp.addEventListener('input', () => { edit(() => { v[inp.dataset.k] = numv(inp.value, 0); }); }));
+    $('button', row).addEventListener('click', () => { edit(() => m.variants.splice(i, 1), true); drawVariants(m); });
+    host.appendChild(row);
+  });
+  const add = document.createElement('button'); add.type = 'button'; add.className = 'btn small ghost'; add.textContent = '+ 색 변형';
+  add.addEventListener('click', () => { edit(() => m.variants.push({ h: (m.variants.length * 9) % 30 - 12, s: 1, v: 1 }), true); drawVariants(m); });
+  host.appendChild(add);
+}
+// 다른 곳에서 이 id를 쓰는지
+function findRefs(id){
+  const out = [];
+  D.reefs.forEach(r => {
+    const c = r.config || {};
+    const n = (c.lanes || []).filter(l => l.species === id).length + (c.props || []).filter(p => p.item === id).length +
+      (c.swimmers || []).filter(s => s.species === id).length + ((c.mix || []).indexOf(id) >= 0 ? 1 : 0);
+    if (n) out.push(r.name);
+  });
+  return out;
+}
+function renameRefs(from, to){
+  D.reefs.forEach(r => {
+    const c = r.config || {};
+    (c.lanes || []).forEach(l => { if (l.species === from) l.species = to; });
+    (c.props || []).forEach(p => { if (p.item === from) p.item = to; });
+    (c.swimmers || []).forEach(s => { if (s.species === from) s.species = to; });
+    if (c.mix) c.mix = c.mix.map(x => x === from ? to : x);
+  });
+}
+// 이 물고기를 하위 reef 모양에 맞게 넣기
+function sendToReef(r, m){
+  const c = r.config || (r.config = {});
+  const isItem = D.items.indexOf(m) >= 0;
+  const rnd = kit.seeded(kit.hash(m.id + Date.now()));
+  if (r.kind === 'showcase'){
+    if (isItem){ (c.props || (c.props = [])).push({ item: m.id, pos: [Math.round((rnd() - 0.5) * 20), Math.round((rnd() - 0.5) * 10), Math.round((rnd() - 0.5) * 20)], scale: 1, rot: 0 }); return; }
+    (c.lanes || (c.lanes = [])).push({ species: m.id, path: 'loop', cx: Math.round((rnd() - 0.5) * 16), cy: Math.round((rnd() - 0.5) * 12), cz: Math.round((rnd() - 0.5) * 16),
+      rx: 6 + Math.round(rnd() * 6), ry: 1.5 + Math.round(rnd() * 10) / 10, rz: 5 + Math.round(rnd() * 5), sp: 0.2 + Math.round(rnd() * 20) / 100, ph: Math.round(rnd() * 62) / 10,
+      scale: 1, variant: 0, effects: [], says: [] });
+  } else if (r.kind === 'marker'){
+    if (isItem) return toast('마커 reef에는 물고기만 넣을 수 있어요');
+    c.mix = c.mix || []; if (c.mix.indexOf(m.id) < 0) c.mix.push(m.id);
+  } else if (r.kind === 'console'){
+    if (isItem) return toast('콘솔에는 물고기만 넣을 수 있어요');
+    (c.swimmers || (c.swimmers = [])).push({ species: m.id, cx: 0, cz: 0, rx: 9, rz: 8, h: 12, sp: 0.12, ph: Math.round(rnd() * 62) / 10, sc: 1, say: m.says.slice() });
+  }
+}
+// GLB(3D 파일)로 내보내기: 멈춘 모습 한 장
+function loadScript(src){
+  return new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = () => rej(new Error('스크립트를 못 불러왔어요')); document.head.appendChild(s); });
+}
+function exportGlb(m){
+  const go = () => {
+    const obj = kit.build(m, {});
+    // 실제 크기(미터)로 맞춤: 몸 길이 = sizeCm
+    obj.scale.setScalar(((m.sizeCm || 10) / 100) / new kit.Sampler(m).W);
+    new THREE.GLTFExporter().parse(obj, res => {
+      saved(saveFile(m.id + '.glb', new Blob([res], { type: 'model/gltf-binary' }), 'model/gltf-binary'), 'GLB');
+    }, { binary: true });
+  };
+  if (THREE.GLTFExporter) return go();
+  loadScript('https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/exporters/GLTFExporter.js').then(go).catch(e => toast(e.message));
+}
+
+function paneJson(box, m){
+  box.innerHTML = `<textarea id="jText" rows="18" spellcheck="false"></textarea>
+    <div class="row" style="margin-top:8px"><button class="btn small primary" id="jApply" type="button">적용</button><button class="btn small" id="jCopy" type="button">복사</button><span class="hint">그대로 붙여넣어 다른 곳에서 쓸 수 있어요.</span></div>`;
+  $('#jText').value = JSON.stringify(m, null, 1);
+  $('#jApply').addEventListener('click', () => {
+    let o; try { o = JSON.parse($('#jText').value); } catch(e){ return toast('JSON 모양이 틀렸어요: ' + e.message, 3500); }
+    edit(() => { const nm = kit.normModel(o); if (nm.id !== m.id) renameRefs(m.id, nm.id); coll()[ui.sel[ui.tab]] = nm; }, true);
+    renderModels(); toast('적용했어요');
+  });
+  $('#jCopy').addEventListener('click', () => {
+    const t = $('#jText').value;
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(() => toast('복사했어요'), () => { $('#jText').select(); toast('선택해 두었어요. 직접 복사해 주세요'); });
+    else { $('#jText').select(); toast('선택해 두었어요. 직접 복사해 주세요'); }
+  });
+}
+
+/* ───────── 클로드에게 부탁하기 ───────── */
+function exampleModel(){
+  const id = D.guideExample || (D.species[0] && D.species[0].id);
+  const ex = kit.find(D, id) || D.species[0];
+  return ex ? JSON.stringify(ex) : '{}';
+}
+const SCHEMA_NOTE = `[모델 JSON 형식]
+{"id":"영어-소문자","name":"한국어 이름","sci":"학명","sizeCm":숫자,"motion":"fish|turtle|float|spin|still","scale":0.5,
+ "palette":{"한글자":"#RRGGBB",...},"side":["....", ...],"top":(선택) ["...."],
+ "parts":[{"id":"이름","kind":"box","role":"head|body|stock|caudal|pect|flipF|flipB|still","x":열,"y":행,"w":칸,"h":칸,"d":두께,"z":0},
+          {"kind":"plane","role":"caudal","x":..,"y":..,"w":..,"h":..,"axis":"z"},
+          {"kind":"plane","role":"pect","x":..,"y":..,"w":3,"h":3,"z":2.5,"paint":["XX.","XXX"],"color":"팔레트글자"},
+          {"kind":"free","role":"head","shape":"box|cylinder|cone|sphere|wedge|mesh","size":[x,y,z],"pos":[열,행,z],"rot":[도,도,도],"color":"팔레트글자 또는 #RRGGBB","opacity":1,"shine":0}],
+ "swim":{"speed":1,"beat":0.6,"wag":0.55,"bend":0.5,"pect":1,"bob":0.2,"roll":1},
+ "says":["..."],"variants":[{"h":0,"s":1,"v":1}],"effects":[]}`;
+
+async function askClaude(prompt, opts){
+  if (!sample) throw { code: 'unavailable', message: '클로드 기능은 claude.ai 안에서 열었을 때만 돼요' };
+  return sample.json(prompt, opts);
+}
+function claudeErr(e){
+  const c = e && e.code;
+  if (c === 'not_granted' || c === 'sampling_disabled') return '클로드 사용이 허락되지 않았어요.';
+  if (c === 'rate_limited') return '잠깐 너무 많이 불렀어요. 조금 뒤에 다시 해 주세요.';
+  if (c === 'invalid_json') return '답이 JSON 모양이 아니었어요. 부탁을 조금 더 짧게 해서 다시 해 보세요.';
+  if (c === 'cancelled') return '멈췄어요.';
+  if (c === 'images_unavailable') return '여기서는 사진을 보낼 수 없어요.';
+  if (c === 'unavailable') return e.message;
+  return '문제가 생겼어요: ' + ((e && e.message) || c || e);
+}
+
+function paneClaude(box, m){
+  const isItem = ui.tab === 'items';
+  box.innerHTML = `
+    <p class="sub">말로 부탁하면 클로드가 설계 지침을 지켜서 고친 모델을 만들어요. 규격 밖 모양(둥근 눈, 뿔, 리본 같은 것)도 자유 도형으로 만들어 줘요.</p>
+    ${sample ? '' : '<div class="note warn">클로드 기능은 이 페이지를 claude.ai 안에서 열었을 때만 쓸 수 있어요. 깃허브에서 열었다면 이 대화창에 부탁해 주세요.</div>'}
+    <textarea id="cReq" rows="4" placeholder="${isItem ? '예: 조개를 더 크게 벌리고 안에 진주를 두 개 넣어줘' : '예: 등지느러미를 더 길게, 이마에 작은 뿔을 원뿔로 달아줘'}"></textarea>
+    <div class="row" style="margin-top:8px">
+      <button class="btn volt" id="cGo" type="button" ${sample ? '' : 'disabled'}>클로드에게 부탁</button>
+      <select id="cTier" style="width:auto"><option value="quick">빠르게</option><option value="default" selected>보통</option><option value="complex">꼼꼼히</option></select>
+      <button class="btn small" id="cStop" type="button" hidden>멈추기</button>
+    </div>
+    <div class="out" id="cOut" hidden></div>
+    <div id="cRes" hidden style="margin-top:10px">
+      <div class="row"><img id="cThumb" alt="" style="image-rendering:pixelated;background:var(--sunk);border-radius:8px;padding:6px;max-width:100%"><span class="hint" id="cInfo"></span></div>
+      <div class="row" style="margin-top:8px"><button class="btn primary small" id="cApply" type="button">적용</button><button class="btn small" id="cTry" type="button">미리보기에서 보기</button><button class="btn small" id="cDrop" type="button">버리기</button></div>
+    </div>`;
+  let ctl = null, result = null;
+  $('#cGo').addEventListener('click', async () => {
+    const req = $('#cReq').value.trim(); if (!req) return toast('무엇을 바꿀지 적어 주세요');
+    const prompt = `너는 도트 스타일 3D 수족관 모델 설계자야. 아래 지침과 형식을 지켜서 현재 모델을 요청대로 고쳐줘.
+${D.guide}
+
+${SCHEMA_NOTE}
+
+[현재 모델]
+${JSON.stringify(m)}
+
+[요청]
+${req}
+
+규칙: id는 "${m.id}" 그대로. side의 모든 줄 길이는 같게. 고친 모델 JSON 객체 하나만 답해.`;
+    ctl = new AbortController();
+    $('#cGo').disabled = true; $('#cStop').hidden = false; $('#cOut').hidden = false; $('#cOut').textContent = '생각하는 중…'; $('#cRes').hidden = true;
+    try {
+      const o = await askClaude(prompt, { modelTier: $('#cTier').value, signal: ctl.signal, cache: false, onText: ({ text }) => { $('#cOut').textContent = text.slice(-1400); } });
+      result = kit.normModel(o); result.id = m.id;
+      $('#cOut').hidden = true; $('#cRes').hidden = false;
+      $('#cThumb').src = kit.thumb(result, 4).toDataURL();
+      const S0 = new kit.Sampler(m), S1 = new kit.Sampler(result);
+      $('#cInfo').textContent = `격자 ${S0.W}×${S0.H} → ${S1.W}×${S1.H} · 부위 ${m.parts.length} → ${result.parts.length}개`;
+    } catch(e){ $('#cOut').textContent = claudeErr(e); }
+    $('#cGo').disabled = false; $('#cStop').hidden = true;
+  });
+  $('#cStop').addEventListener('click', () => ctl && ctl.abort());
+  $('#cTry').addEventListener('click', () => { if (result) PV.show(result, { keepCam: true }); });
+  $('#cDrop').addEventListener('click', () => { result = null; $('#cRes').hidden = true; refreshPreview(true); });
+  $('#cApply').addEventListener('click', () => {
+    if (!result) return;
+    edit(() => { coll()[ui.sel[ui.tab]] = result; }, true);
+    result = null; renderModels(); toast('적용했어요. 마음에 안 들면 되돌리기');
+  });
+}
+
+/* ───────── 사진으로 만들기 ───────── */
+const PH = { img: null, crop: null, face: 'right', result: null, ctl: null };
+function openPhoto(){
+  openModal($('#photoModal'));
+  $('#phClaude').hidden = !sample;
+  $('#phTier').hidden = !sample;
+  $('#phHint').textContent = PH.img ? '고른 부분으로 만들어요.' : '사진을 고르면 버튼이 켜져요.' + (sample && !sampleImages ? ' (여기서는 클로드에게 사진을 보낼 수 없어서 자동 변환만 돼요)' : '') + (!sample ? ' 클로드 설계는 claude.ai 안에서 열었을 때만 돼요.' : '');
+}
+(function wirePhoto(){
+  const drop = $('#phDrop'), file = $('#phFile'), cv = $('#phCanvas');
+  function load(f){
+    if (!f || !/^image\//.test(f.type)) return toast('사진 파일을 골라 주세요');
+    const url = URL.createObjectURL(f), im = new Image();
+    im.onload = () => {
+      PH.img = im;
+      const maxW = Math.min(560, drop.parentNode.clientWidth || 560), k = Math.min(1, maxW / im.width, 420 / im.height);
+      cv.width = Math.round(im.width * k); cv.height = Math.round(im.height * k); PH.k = k;
+      PH.crop = { x: 0, y: 0, w: cv.width, h: cv.height };
+      cv.hidden = false; drop.style.padding = '10px';
+      drawPh();
+      $('#phAuto').disabled = false; $('#phClaude').disabled = !(sample && sampleImages);
+      $('#phHint').textContent = '물고기 부분만 끌어서 네모로 골라 주세요.';
+    };
+    im.src = url;
+  }
+  file.addEventListener('change', () => load(file.files[0]));
+  ['dragenter', 'dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('on'); }));
+  ['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('on'); }));
+  drop.addEventListener('drop', e => load(e.dataTransfer.files[0]));
+  let start = null;
+  cv.addEventListener('pointerdown', e => { const r = cv.getBoundingClientRect(); start = [e.clientX - r.left, e.clientY - r.top]; try { cv.setPointerCapture(e.pointerId); } catch(er){} });
+  cv.addEventListener('pointermove', e => {
+    if (!start) return;
+    const r = cv.getBoundingClientRect(), x = clamp(e.clientX - r.left, 0, cv.width), y = clamp(e.clientY - r.top, 0, cv.height);
+    PH.crop = { x: Math.min(start[0], x), y: Math.min(start[1], y), w: Math.abs(x - start[0]), h: Math.abs(y - start[1]) };
+    drawPh();
+  });
+  cv.addEventListener('pointerup', () => { start = null; if (PH.crop.w < 8 || PH.crop.h < 8){ PH.crop = { x: 0, y: 0, w: cv.width, h: cv.height }; drawPh(); } });
+  segWire('#phFace', 'right', v => { PH.face = v; });
+  $('#phAuto').addEventListener('click', () => {
+    const m = autoFish(cropCanvas(), +$('#phW').value || 20, PH.face === 'left', $('#phName').value.trim());
+    showPhResult(m, '자동 변환 결과예요. 추가한 뒤 도트와 부위를 다듬어 주세요.');
+  });
+  $('#phClaude').addEventListener('click', claudePhoto);
+  $('#phStop').addEventListener('click', () => PH.ctl && PH.ctl.abort());
+  $('#phAdd').addEventListener('click', () => {
+    if (!PH.result) return;
+    edit(() => {
+      const m = PH.result;
+      if (D.species.concat(D.items).some(x => x.id === m.id)) m.id = uid(m.id, D.species.concat(D.items));
+      D.species.push(m); ui.sel.species = D.species.length - 1; ui.px.target = 'side';
+    }, true);
+    PH.result = null; closeModal($('#photoModal')); ui.tab = 'species'; ui.part = 0; render();
+    toast('새 물고기를 추가했어요');
+  });
+})();
+function drawPh(){
+  const cv = $('#phCanvas'), c = cv.getContext('2d');
+  c.drawImage(PH.img, 0, 0, cv.width, cv.height);
+  const r = PH.crop;
+  c.fillStyle = 'rgba(20,16,36,.45)';
+  c.fillRect(0, 0, cv.width, r.y); c.fillRect(0, r.y + r.h, cv.width, cv.height - r.y - r.h);
+  c.fillRect(0, r.y, r.x, r.h); c.fillRect(r.x + r.w, r.y, cv.width - r.x - r.w, r.h);
+  c.strokeStyle = '#F09A5E'; c.lineWidth = 2; c.strokeRect(r.x + 1, r.y + 1, r.w - 2, r.h - 2);
+}
+function cropCanvas(maxSide){
+  const r = PH.crop, k = PH.k, sx = r.x / k, sy = r.y / k, sw = r.w / k, sh = r.h / k;
+  const s = Math.min(1, (maxSide || 1200) / Math.max(sw, sh));
+  const out = document.createElement('canvas'); out.width = Math.max(1, Math.round(sw * s)); out.height = Math.max(1, Math.round(sh * s));
+  out.getContext('2d').drawImage(PH.img, sx, sy, sw, sh, 0, 0, out.width, out.height);
+  return out;
+}
+function showPhResult(m, info){
+  PH.result = m;
+  $('#phResult').hidden = false;
+  $('#phThumb').src = kit.thumb(m, 6).toDataURL();
+  $('#phInfo').textContent = info || '';
+}
+async function claudePhoto(){
+  const cv = cropCanvas(1100);
+  const blob = await new Promise(res => cv.toBlob(res, 'image/jpeg', 0.9));
+  const W = +$('#phW').value || 20, name = $('#phName').value.trim();
+  const prompt = `너는 도트 스타일 3D 수족관 모델 설계자야. 첨부한 사진 속 물고기를 아래 지침과 형식에 맞는 모델로 만들어줘.
+${D.guide}
+
+${SCHEMA_NOTE}
+
+[형식 예시]
+${exampleModel()}
+
+[이번 조건]
+- 사진 속 머리 방향: ${PH.face === 'left' ? '왼쪽 (모델에서는 뒤집어서 오른쪽으로)' : '오른쪽'}
+- 가로 칸 수: 약 ${W}칸
+- 이름: ${name ? '"' + name + '"' : '사진 속 물고기의 한국어 이름'}
+- id: 영어 소문자와 - 만
+- 사진의 무늬와 색을 살리되 도트로 단순하게. 한 가지 동물만.
+모델 JSON 객체 하나만 답해.`;
+  PH.ctl = new AbortController();
+  $('#phClaude').disabled = true; $('#phStop').hidden = false; $('#phOut').hidden = false; $('#phOut').textContent = '사진을 보고 설계하는 중… (보통 30초~1분)';
+  try {
+    const o = await askClaude(prompt, { images: blob, modelTier: $('#phTier').value, signal: PH.ctl.signal, cache: false, onText: ({ text }) => { $('#phOut').textContent = text.slice(-1200); } });
+    const m = kit.normModel(o);
+    if (!m.parts.length) throw { code: 'x', message: '부위가 비어 있는 답이 왔어요' };
+    $('#phOut').hidden = true;
+    showPhResult(m, '클로드가 설계했어요. 추가한 뒤 미리보기로 확인해 보세요.');
+  } catch(e){ $('#phOut').textContent = claudeErr(e); }
+  $('#phClaude').disabled = false; $('#phStop').hidden = true;
+}
+
+// 사진 → 도트 자동 변환 (클로드 없이)
+function autoFish(src, W, faceLeft, name){
+  W = clamp(Math.round(W), 10, 32);
+  const H = clamp(Math.round(W * src.height / src.width), 6, 24);
+  const big = document.createElement('canvas'); big.width = W * 4; big.height = H * 4;
+  const bc = big.getContext('2d'); bc.drawImage(src, 0, 0, big.width, big.height);
+  const px = bc.getImageData(0, 0, big.width, big.height).data;
+  // 4x4 칸마다 평균 색
+  const cells = [];
+  for (let r = 0; r < H; r++){ cells.push([]); for (let c = 0; c < W; c++){
+    let R = 0, G = 0, B = 0;
+    for (let j = 0; j < 4; j++) for (let i = 0; i < 4; i++){ const o = ((r * 4 + j) * big.width + c * 4 + i) * 4; R += px[o]; G += px[o + 1]; B += px[o + 2]; }
+    cells[r].push([R / 16, G / 16, B / 16]);
+  } }
+  // 배경색 = 가장자리 칸들의 가운데 값
+  const border = [];
+  for (let c = 0; c < W; c++){ border.push(cells[0][c], cells[H - 1][c]); }
+  for (let r = 0; r < H; r++){ border.push(cells[r][0], cells[r][W - 1]); }
+  const med = k => border.map(x => x[k]).sort((a, b) => a - b)[Math.floor(border.length / 2)];
+  const bg = [med(0), med(1), med(2)];
+  const dist = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
+  const ds = []; cells.forEach(row => row.forEach(x => ds.push(dist(x, bg))));
+  // 배경과 물고기를 가르는 기준값 (두 무리로 나눴을 때 차이가 제일 큰 곳)
+  const sorted = ds.slice().sort((a, b) => a - b);
+  let thr = 40, best = -1;
+  for (let t = 10; t < 200; t += 3){
+    const a = sorted.filter(v => v < t), b = sorted.filter(v => v >= t);
+    if (!a.length || !b.length) continue;
+    const ma = a.reduce((s, v) => s + v, 0) / a.length, mb = b.reduce((s, v) => s + v, 0) / b.length;
+    const score = a.length * b.length * (mb - ma) * (mb - ma);
+    if (score > best){ best = score; thr = t; }
+  }
+  let mask = cells.map(row => row.map(x => dist(x, bg) >= thr));
+  // 제일 큰 덩어리만 남기기
+  const lab = mask.map(row => row.map(() => 0)); let bestN = 0, bestL = 0, L = 0;
+  for (let r = 0; r < H; r++) for (let c = 0; c < W; c++){
+    if (!mask[r][c] || lab[r][c]) continue;
+    L++; let n = 0; const q = [[c, r]]; lab[r][c] = L;
+    while (q.length){ const [x, y] = q.pop(); n++; [[1,0],[-1,0],[0,1],[0,-1]].forEach(([dx, dy]) => { const a = x + dx, b = y + dy; if (a >= 0 && b >= 0 && a < W && b < H && mask[b][a] && !lab[b][a]){ lab[b][a] = L; q.push([a, b]); } }); }
+    if (n > bestN){ bestN = n; bestL = L; }
+  }
+  mask = lab.map(row => row.map(v => v === bestL && bestL > 0));
+  // 속 빈 곳 메우기: 가장자리에서 닿지 않는 빈칸은 물고기
+  const out = mask.map(row => row.map(() => false)); const q2 = [];
+  for (let c = 0; c < W; c++){ q2.push([c, 0], [c, H - 1]); } for (let r = 0; r < H; r++){ q2.push([0, r], [W - 1, r]); }
+  while (q2.length){ const [x, y] = q2.pop(); if (x < 0 || y < 0 || x >= W || y >= H || out[y][x] || mask[y][x]) continue; out[y][x] = true; q2.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]); }
+  mask = mask.map((row, y) => row.map((v, x) => v || !out[y][x]));
+  // 색 줄이기 (비슷한 색끼리 묶기)
+  const pts = []; cells.forEach((row, y) => row.forEach((x, c) => { if (mask[y][c]) pts.push(x); }));
+  const K = Math.min(6, Math.max(1, pts.length));
+  const lum = p => p[0] * 0.3 + p[1] * 0.59 + p[2] * 0.11;
+  const byL = pts.slice().sort((a, b) => lum(a) - lum(b));
+  let cent = Array.from({ length: K }, (_, i) => byL[Math.floor((i + 0.5) / K * byL.length)] || [128, 128, 128]);
+  for (let it = 0; it < 8; it++){
+    const sum = cent.map(() => [0, 0, 0, 0]);
+    pts.forEach(p => { let bi = 0, bd = 1e9; cent.forEach((cc, i) => { const d = dist(p, cc); if (d < bd){ bd = d; bi = i; } }); sum[bi][0] += p[0]; sum[bi][1] += p[1]; sum[bi][2] += p[2]; sum[bi][3]++; });
+    cent = cent.map((cc, i) => sum[i][3] ? [sum[i][0] / sum[i][3], sum[i][1] / sum[i][3], sum[i][2] / sum[i][3]] : cc);
+  }
+  const keys = 'abcdfghi';   // e는 눈 색으로 비워둠
+  const palette = {};
+  cent.forEach((cc, i) => {
+    // 카메라 화면 위에서 잘 보이게 채도를 조금 올림
+    const avg = (cc[0] + cc[1] + cc[2]) / 3, boost = cc.map(v => clamp(avg + (v - avg) * 1.15, 0, 255));
+    palette[keys[i]] = kit.rgbHex(boost);
+  });
+  let side = [];
+  for (let r = 0; r < H; r++){
+    let s = '';
+    for (let c = 0; c < W; c++){
+      if (!mask[r][c]){ s += '.'; continue; }
+      let bi = 0, bd = 1e9; cent.forEach((cc, i) => { const d = dist(cells[r][c], cc); if (d < bd){ bd = d; bi = i; } });
+      s += keys[bi];
+    }
+    side.push(s);
+  }
+  if (faceLeft) side = side.map(r => r.split('').reverse().join(''));
+  const m = kit.normModel({ id: 'fish-auto', name: name || '사진 물고기', motion: 'fish', scale: 0.5, sizeCm: 12, palette, side, parts: [], says: ['…'] });
+  autoParts(m);
+  return m;
+}
+// 옆모습 모양을 보고 머리/몸통/꼬리자루/꼬리/지느러미 부위를 대충 나눠 주기
+function autoParts(m){
+  const S = new kit.Sampler(m), W = S.W, H = S.H;
+  const top = [], bot = [], cnt = [];
+  for (let c = 0; c < W; c++){ let t = -1, b = -1, n = 0; for (let r = 0; r < H; r++) if (S.side(c, r)){ if (t < 0) t = r; b = r; n++; } top.push(t); bot.push(b); cnt.push(n); }
+  let first = cnt.findIndex(n => n > 0), last = W - 1 - cnt.slice().reverse().findIndex(n => n > 0);
+  if (first < 0){ first = 0; last = W - 1; }
+  const len = last - first + 1;
+  let waist = first + Math.max(2, Math.round(len * 0.25)), wn = 1e9;
+  for (let c = first + Math.max(2, Math.round(len * 0.12)); c <= first + Math.round(len * 0.45); c++) if (cnt[c] > 0 && cnt[c] <= wn){ wn = cnt[c]; waist = c; }
+  const stockEnd = Math.min(last - 3, waist + Math.max(1, Math.round(len * 0.12)) - 1);
+  const headStart = Math.max(stockEnd + 2, last - Math.round(len * 0.28) + 1);
+  const core = (c0, c1) => {
+    const rows = [];
+    for (let r = 0; r < H; r++){ let n = 0; for (let c = c0; c <= c1; c++) if (S.side(c, r)) n++; if (n >= (c1 - c0 + 1) * 0.6) rows.push(r); }
+    if (!rows.length){ let t = H, b = 0; for (let c = c0; c <= c1; c++) if (top[c] >= 0){ t = Math.min(t, top[c]); b = Math.max(b, bot[c]); } return [t, Math.max(t, b)]; }
+    return [rows[0], rows[rows.length - 1]];
+  };
+  const [by0, by1] = core(stockEnd + 1, headStart - 1), bh = by1 - by0 + 1, bd = clamp(Math.round(bh * 0.55), 2, 7);
+  const [hy0, hy1] = core(headStart, last), [sy0, sy1] = core(waist, stockEnd);
+  let ty0 = H, ty1 = 0; for (let c = first; c < waist; c++) if (top[c] >= 0){ ty0 = Math.min(ty0, top[c]); ty1 = Math.max(ty1, bot[c]); }
+  const parts = [
+    { id: '머리', kind: 'box', role: 'head', x: headStart, y: hy0, w: last - headStart + 1, h: hy1 - hy0 + 1, d: Math.max(2, bd - 1) },
+    { id: '몸통', kind: 'box', role: 'body', x: stockEnd + 1, y: by0, w: headStart - stockEnd - 1, h: bh, d: bd },
+    { id: '꼬리자루', kind: 'box', role: 'stock', x: waist, y: sy0, w: stockEnd - waist + 1, h: sy1 - sy0 + 1, d: Math.max(1, bd - 2) }
+  ];
+  if (waist > first) parts.push({ id: '꼬리', kind: 'plane', role: 'caudal', x: first, y: Math.min(ty0, H - 1), w: waist - first, h: Math.max(1, ty1 - ty0 + 1) });
+  // 몸통 위·아래로 튀어나온 칸 = 지느러미
+  const fin = (fromRow, toRow) => {
+    let x0 = 1e9, x1 = -1, y0 = 1e9, y1 = -1;
+    for (let c = stockEnd + 1; c <= last; c++) for (let r = fromRow; r <= toRow; r++) if (S.side(c, r)){ x0 = Math.min(x0, c); x1 = Math.max(x1, c); y0 = Math.min(y0, r); y1 = Math.max(y1, r); }
+    return x1 >= 0 ? { x: x0, y: y0, w: x1 - x0 + 1, h: y1 - y0 + 1 } : null;
+  };
+  const dorsal = fin(0, by0 - 1), anal = fin(by1 + 1, H - 1);
+  if (dorsal) parts.push(Object.assign({ id: '등지느러미', kind: 'plane', role: 'body' }, dorsal));
+  if (anal) parts.push(Object.assign({ id: '뒷지느러미', kind: 'plane', role: 'body' }, anal));
+  const tailCh = S.side(first + Math.floor((waist - first) / 2), Math.floor((ty0 + ty1) / 2)) || Object.keys(m.palette)[0];
+  parts.push({ id: '가슴지느러미', kind: 'plane', role: 'pect', x: Math.max(0, headStart - 2), y: by0 + Math.floor(bh / 2), w: 3, h: 2, z: bd / 2 + 0.4, paint: ['XXX', '.XX'], color: tailCh });
+  // 눈: 머리 앞쪽 위
+  const ec = Math.max(headStart, last - Math.max(1, Math.round(len * 0.1)));
+  if (top[ec] >= 0){
+    const er = top[ec] + Math.max(1, Math.round((bot[ec] - top[ec]) * 0.32));
+    m.palette.e = '#221E33';
+    m.side[er] = m.side[er].slice(0, ec) + 'e' + m.side[er].slice(ec + 1);
+  }
+  m.parts = parts.map(kit.normPart);
+}
+
+/* ═══════════════════ 이펙트 ═══════════════════ */
+const FX_TYPES = { charge: '전기 껍질', glow: '빛나기', bubbles: '거품', sparkle: '반짝이' };
+const FX_PARAMS = {
+  charge:  [['color', '색', 'color'], ['speed', '흐르는 빠르기', 0, 0.4, 0.005], ['opacity', '진하기', 0, 1, 0.01], ['inflate', '몸에서 떨어진 거리', 0, 1, 0.01], ['flicker', '깜빡임', 0, 0.6, 0.01], ['density', '선 개수', 3, 40, 1]],
+  glow:    [['color', '색', 'color'], ['strength', '세기', 0, 1.5, 0.01], ['rate', '숨쉬기 빠르기', 0, 4, 0.05]],
+  bubbles: [['color', '색', 'color'], ['rate', '초당 개수', 0, 6, 0.1], ['size', '크기', 0.1, 1.5, 0.05], ['rise', '떠오르는 빠르기', 0, 8, 0.1], ['life', '사라지는 시간(초)', 0.5, 6, 0.1]],
+  sparkle: [['color', '색', 'color'], ['count', '개수', 1, 30, 1], ['radius', '퍼지는 범위', 0.5, 3, 0.05], ['rate', '깜빡 빠르기', 0, 5, 0.05], ['size', '크기', 0.1, 1.5, 0.05]]
+};
+const FX_DEFAULT = {
+  charge: { color: '#4E38FF', speed: 0.08, opacity: 0.55, inflate: 0.3, flicker: 0.22, density: 20 },
+  glow: { color: '#FFB070', strength: 0.35, rate: 1.2 },
+  bubbles: { color: '#DDF4FF', rate: 1.5, size: 0.45, rise: 3, life: 2.4 },
+  sparkle: { color: '#FFF1A8', count: 8, radius: 1.4, rate: 2, size: 0.5 }
+};
+let fxModel = null;
+function renderEffects(){
+  const list = D.effects;
+  ui.sel.effects = clamp(ui.sel.effects, 0, Math.max(0, list.length - 1));
+  const e = list[ui.sel.effects];
+  main.innerHTML = `
+  <div class="editor">
+    <div class="card stack" style="gap:10px">
+      <div><h2>이펙트</h2><p class="sub" style="margin:0">물고기나 경로에 붙이는 효과. 완벽하지 않아도 돼요, 쓰면서 고쳐요.</p></div>
+      <div class="row"><select id="fxNewType" style="width:auto">${Object.keys(FX_TYPES).map(k => `<option value="${k}">${FX_TYPES[k]}</option>`).join('')}</select><button class="btn small" id="fxNew" type="button">+ 새로</button></div>
+      <div class="mlist" id="fxList"></div>
+    </div>
+    <div class="card">${e ? `
+      <div class="g2">${field('id', 'id', e.id, 'text')}${field('이름', 'name', e.name, 'text')}</div>
+      <label class="f" style="margin-top:8px"><span>종류</span><select data-f="type">${Object.keys(FX_TYPES).map(k => `<option value="${k}" ${k === e.type ? 'selected' : ''}>${FX_TYPES[k]}</option>`).join('')}</select></label>
+      <h3>값</h3><div id="fxParams"></div>
+      <div class="row" style="margin-top:10px"><button class="btn small" id="fxDup" type="button">복제</button><button class="btn small danger" id="fxDel" type="button">삭제</button></div>
+      <p class="hint">새 종류가 필요하면 reef-kit.js의 attachEffect에 한 칸 더 만들면 돼요 (클로드에게 부탁해도 돼요).</p>` : '<p class="empty">이펙트가 없어요.</p>'}
+    </div>
+    <div class="card side3">
+      <label class="f"><span>미리볼 물고기</span><select id="fxOn">${D.species.concat(D.items).map(m => `<option value="${esc(m.id)}">${esc(m.name)}</option>`).join('')}</select></label>
+      <div class="preview3d" id="pv" style="margin-top:8px"></div>
+    </div>
+  </div>`;
+  const fl = $('#fxList');
+  list.forEach((ef, i) => {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'mitem'; b.style.gridTemplateColumns = '14px 1fr';
+    b.setAttribute('aria-current', i === ui.sel.effects);
+    b.innerHTML = `<i style="width:14px;height:14px;border-radius:4px;background:${esc(ef.params.color || '#999')}"></i><span><b></b><i></i></span>`;
+    b.querySelector('b').textContent = ef.name; b.querySelector('span i').textContent = ef.id + ' · ' + (FX_TYPES[ef.type] || ef.type);
+    b.addEventListener('click', () => { ui.sel.effects = i; renderEffects(); });
+    fl.appendChild(b);
+  });
+  $('#fxNew').addEventListener('click', () => {
+    const t = $('#fxNewType').value;
+    edit(() => { D.effects.push({ id: uid(t, D.effects), name: '새 ' + FX_TYPES[t], type: t, params: kit.clone(FX_DEFAULT[t]) }); }, true);
+    ui.sel.effects = D.effects.length - 1; renderEffects();
+  });
+  const on = $('#fxOn');
+  if (fxModel && kit.find(D, fxModel)) on.value = fxModel;
+  on.addEventListener('change', () => { fxModel = on.value; refreshPreview(); });
+  PV.attach($('#pv'));
+  refreshPreview = function(keepCam){
+    const m = kit.find(D, on.value); const ef = D.effects[ui.sel.effects];
+    PV.show(m, { effects: ef ? [ef] : [], keepCam });
+  };
+  refreshPreview();
+  if (!e) return;
+  $$('[data-f]').forEach(el => el.addEventListener('change', () => {
+    const f = el.dataset.f, v = el.value.trim();
+    if (f === 'id'){
+      const nid = v.replace(/[^A-Za-z0-9_-]/g, ''); if (!nid || D.effects.some(x => x !== e && x.id === nid)) return toast('쓸 수 없는 id예요');
+      edit(() => {
+        D.species.concat(D.items).forEach(m => { m.effects = m.effects.map(x => x === e.id ? nid : x); });
+        D.reefs.forEach(r => { (r.config.lanes || []).forEach(l => { l.effects = (l.effects || []).map(x => x === e.id ? nid : x); }); if (r.config.chargeEffect === e.id) r.config.chargeEffect = nid; });
+        e.id = nid;
+      }, true);
+    } else if (f === 'type'){ edit(() => { e.type = v; e.params = Object.assign(kit.clone(FX_DEFAULT[v]), { color: e.params.color }); }, true); renderEffects(); return; }
+    else edit(() => { e[f] = v; }, true);
+    renderEffects();
+  }));
+  const pb = $('#fxParams');
+  (FX_PARAMS[e.type] || []).forEach(([k, label, a, b2, st]) => {
+    const row = document.createElement('div');
+    if (a === 'color'){
+      row.className = 'row'; row.style.marginBottom = '8px';
+      row.innerHTML = `<span style="width:96px;font-size:12px;color:var(--ink-soft)">${label}</span><input type="color" value="${esc(e.params[k] || '#ffffff')}"><span class="mono hint" style="margin:0">${esc(e.params[k] || '')}</span>`;
+      const ci = $('input', row);
+      ci.addEventListener('input', () => { edit(() => { e.params[k] = ci.value; }); row.lastChild.textContent = ci.value; });
+    } else {
+      const v = e.params[k] == null ? FX_DEFAULT[e.type][k] : e.params[k];
+      row.className = 'slider';
+      row.innerHTML = `<span>${label}</span><input type="range" min="${a}" max="${b2}" step="${st}" value="${v}"><output>${v}</output>`;
+      const ri = $('input', row);
+      ri.addEventListener('input', () => { edit(() => { e.params[k] = +ri.value; }); $('output', row).textContent = ri.value; });
+    }
+    pb.appendChild(row);
+  });
+  $('#fxDup').addEventListener('click', () => { edit(() => { const c = kit.clone(e); c.id = uid(e.id, D.effects); c.name = e.name + ' 복사본'; D.effects.splice(ui.sel.effects + 1, 0, c); }, true); ui.sel.effects++; renderEffects(); });
+  twoStep($('#fxDel'), '정말 삭제?', () => {
+    edit(() => {
+      const id = e.id; D.effects.splice(ui.sel.effects, 1);
+      D.species.concat(D.items).forEach(m => { m.effects = m.effects.filter(x => x !== id); });
+      D.reefs.forEach(r => (r.config.lanes || []).forEach(l => { l.effects = (l.effects || []).filter(x => x !== id); }));
+    }, true);
+    ui.sel.effects = Math.max(0, ui.sel.effects - 1); renderEffects();
+  });
+}
+
+/* ═══════════════════ 말풍선 · 글꼴 ═══════════════════ */
+const FONTS = [
+  { name: '도트 (DotGothic16 + 주아)', family: '"DotGothic16", "Jua", system-ui, sans-serif', google: ['DotGothic16', 'Jua'] },
+  { name: '갈무리11 한글 도트 (깃허브에서만, 아니면 도트로 대신)', family: '"Galmuri11", "DotGothic16", "Jua", sans-serif', google: ['DotGothic16', 'Jua'], cssUrl: 'https://cdn.jsdelivr.net/npm/galmuri@2.40.3/dist/galmuri.css' },
+  { name: '주아', family: '"Jua", system-ui, sans-serif', google: ['Jua'] },
+  { name: '도현', family: '"Do Hyeon", system-ui, sans-serif', google: ['Do Hyeon'] },
+  { name: '개구', family: '"Gaegu", system-ui, sans-serif', google: ['Gaegu:wght@400;700'] },
+  { name: '고운돋움', family: '"Gowun Dodum", system-ui, sans-serif', google: ['Gowun Dodum'] },
+  { name: '나눔고딕코딩', family: '"Nanum Gothic Coding", monospace', google: ['Nanum Gothic Coding'] },
+  { name: '영문 픽셀 (Silkscreen + 주아)', family: '"Silkscreen", "Jua", sans-serif', google: ['Silkscreen', 'Jua'] },
+  { name: 'Quicksand + 주아', family: '"Quicksand", "Jua", system-ui, sans-serif', google: ['Quicksand:wght@500;600;700', 'Jua'] },
+  { name: 'IBM Plex Sans KR', family: '"IBM Plex Sans KR", sans-serif', google: ['IBM Plex Sans KR:wght@400;600'] }
+];
+function fontPresetIndex(f){ return FONTS.findIndex(x => x.family === f.family); }
+function renderStyle(){
+  const st = D.style, b = st.bubble, f = st.font, t = st.title;
+  const fontSel = (cur, id) => `<select id="${id}"><option value="-1">직접 입력</option>${FONTS.map((x, i) => `<option value="${i}" ${fontPresetIndex(cur) === i ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</select>`;
+  main.innerHTML = `
+  <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start" class="stylegrid">
+    <div class="stack">
+      <div class="card">
+        <h2>말풍선 글꼴</h2><p class="sub">모든 reef의 물고기가 말할 때 쓰는 글꼴.</p>
+        ${fontSel(f, 'fPreset')}
+        <div class="stack" style="gap:8px;margin-top:8px">
+          ${field('글꼴 이름 목록 (CSS)', 'family', f.family, 'text')}
+          ${field('구글 폰트 (쉼표로)', 'google', (f.google || []).join(', '), 'text', 'placeholder="예: Jua, DotGothic16"')}
+          ${field('다른 글꼴 CSS 주소 (깃허브에서만 적용)', 'cssUrl', f.cssUrl || '', 'text', 'placeholder="https://…/font.css"')}
+        </div>
+      </div>
+      <div class="card">
+        <h2>말풍선 모양</h2>
+        <div class="row" style="margin-bottom:8px">
+          <span style="width:70px;font-size:12px">바탕</span><input type="color" data-b="bg" value="${esc(b.bg)}">
+          <span style="width:40px;font-size:12px;margin-left:10px">글자</span><input type="color" data-b="ink" value="${esc(b.ink)}">
+          <span style="width:40px;font-size:12px;margin-left:10px">테두리</span><input type="color" data-b="border" value="${esc(b.border)}">
+        </div>
+        ${[['px', '테두리 두께', 1, 6, 1], ['size', '글자 크기', 10, 26, 1], ['pad', '안쪽 여백', 2, 18, 1], ['maxWidth', '최대 너비', 100, 340, 5], ['duration', '떠 있는 시간(초)', 1, 9, 0.1]].map(([k, l, a, bb, s]) =>
+          `<div class="slider"><span>${l}</span><input type="range" data-b="${k}" min="${a}" max="${bb}" step="${s}" value="${b[k]}"><output>${b[k]}</output></div>`).join('')}
+        <div class="row" style="margin-top:6px">
+          <label class="row" style="font-size:12.5px"><input type="checkbox" data-b="pixel" ${b.pixel ? 'checked' : ''}> 도트 모서리</label>
+          <label class="row" style="font-size:12.5px"><input type="checkbox" data-b="tail" ${b.tail ? 'checked' : ''}> 꼬리</label>
+          <label class="row" style="font-size:12.5px"><input type="checkbox" data-b="anim" ${b.anim === 'pop' ? 'checked' : ''}> 톡 튀어나오기</label>
+        </div>
+      </div>
+      <div class="card">
+        <h2>reef 제목 글꼴</h2><p class="sub">전시형 reef 왼쪽 위 제목에 쓰여요.</p>
+        ${fontSel(t, 'tPreset')}
+      </div>
+    </div>
+    <div class="card" style="position:sticky;top:76px">
+      <h2>미리보기</h2>
+      <div class="bubblestage" id="bstage"><img id="bFish" alt=""><div class="reef-say" id="bSay"><span class="in"></span></div></div>
+      <div class="row" style="margin-top:10px"><input type="text" id="bText" value="여기 따뜻하다. 조금만 더 있다 갈래." class="grow"><button class="btn small" id="bAgain" type="button">다시 말하기</button></div>
+      <p class="hint">한글이 없는 글꼴을 고르면 뒤에 적힌 글꼴(주아 등)로 한글이 나와요. 클로드 미리보기에서는 구글 폰트만 불러와져요.</p>
+    </div>
+  </div>
+  <style>@media (max-width:900px){ .stylegrid{grid-template-columns:1fr !important} }</style>`;
+  const fish = D.species[0];
+  if (fish) $('#bFish').src = kit.thumb(fish, 7).toDataURL();
+  const replay = () => { const s = $('#bSay .in'); s.textContent = $('#bText').value; s.style.animation = 'none'; void s.offsetWidth; s.style.animation = ''; };
+  replay();
+  $('#bText').addEventListener('input', replay); $('#bAgain').addEventListener('click', replay);
+  const apply = () => { kit.applyStyle(D.style); replay(); };
+  $('#fPreset').addEventListener('change', e => {
+    const i = +e.target.value; if (i < 0) return;
+    edit(() => { const p = FONTS[i]; f.family = p.family; f.google = p.google.slice(); f.cssUrl = p.cssUrl || ''; }, true); renderStyle(); apply();
+  });
+  $('#tPreset').addEventListener('change', e => {
+    const i = +e.target.value; if (i < 0) return;
+    edit(() => { const p = FONTS[i]; t.family = p.family; t.google = p.google.slice(); }, true); apply();
+  });
+  $$('[data-f]').forEach(el => el.addEventListener('change', () => {
+    const k = el.dataset.f, v = el.value.trim();
+    edit(() => { f[k] = k === 'google' ? v.split(',').map(s => s.trim()).filter(Boolean) : v; }, true);
+    $('#fPreset').value = String(fontPresetIndex(f)); apply();
+  }));
+  $$('[data-b]').forEach(el => el.addEventListener(el.type === 'checkbox' ? 'change' : 'input', () => {
+    const k = el.dataset.b;
+    edit(() => {
+      if (k === 'anim') b.anim = el.checked ? 'pop' : 'none';
+      else if (el.type === 'checkbox') b[k] = el.checked;
+      else if (el.type === 'color') b[k] = el.value;
+      else b[k] = +el.value;
+    });
+    const o = el.parentNode.querySelector('output'); if (o) o.textContent = el.value;
+    apply();
+  }));
+}
+
+/* ═══════════════════ 하위 reef ═══════════════════ */
+const KIND_INFO = {
+  showcase: { ko: '전시형', tpl: 'voxel-reef.html', about: '물고기가 떠다니는 3D 전시. 끌어서 돌려보고, 누르면 말해요.' },
+  marker: { ko: '마커 AR', tpl: 'marker-test.html', about: '벽에 붙인 4cm 형광 큐브 하나를 찾아서 거리·각도를 계산하고, 그 앞에 물고기 떼를 띄워요.' },
+  console: { ko: '카드 콘솔', tpl: 'reef-console.html', about: 'QR 카드와 viewer.html용 scenes.json을 만드는 편집기. 여기서는 기본 목록을 정해요.' }
+};
+const BUNDLED = ['voxel-reef.html', 'charged-reef.html', 'reef-console.html', 'marker-test.html'];
+const fileExists = {};
+function reefSrc(r){
+  const tpl = KIND_INFO[r.kind] ? KIND_INFO[r.kind].tpl : 'voxel-reef.html';
+  const f = (BUNDLED.indexOf(r.file) >= 0 || fileExists[r.file]) ? r.file : tpl;
+  return f + (r.kind === 'marker' ? '#preview' : '');
+}
+async function reefFileText(r){
+  const tpl = await fetchText(KIND_INFO[r.kind].tpl);
+  return tpl.replace(/data-reef="[^"]*"/, 'data-reef="' + r.id + '"')
+    .replace(/<title>[^<]*<\/title>/, '<title>' + esc(r.name) + '</title>')
+    .replace(/<h1 id="title">[^<]*<\/h1>/, '<h1 id="title">' + esc(r.name) + '</h1>');
+}
+// 한 파일로: reef-kit.js와 데이터를 페이지 안에 넣어서 혼자서도 열리게
+async function singleFile(r){
+  const html = await reefFileText(r), k = await fetchText('reef-kit.js');
+  const dataJs = 'window.REEF_DATA = ' + JSON.stringify(D).replace(/</g, '\\u003c') + ';';
+  return html.replace('<script src="reef-kit.js"><\/script>', () => '<script>\n' + k + '\n<\/script>\n<script>' + dataJs + '<\/script>');
+}
+
+function renderReefs(){
+  const list = D.reefs;
+  ui.sel.reefs = clamp(ui.sel.reefs, 0, Math.max(0, list.length - 1));
+  const r = list[ui.sel.reefs];
+  main.innerHTML = `
+  <div class="reefs">
+    <div class="card stack" style="gap:10px">
+      <div><h2>하위 reef</h2><p class="sub" style="margin:0">같은 레포에 있는 페이지들. 모두 reef-data.json을 읽어요.</p></div>
+      <div class="row"><select id="rNewKind" style="width:auto">${Object.keys(KIND_INFO).map(k => `<option value="${k}">${KIND_INFO[k].ko}</option>`).join('')}</select><button class="btn small" id="rNew" type="button">+ 새 reef</button></div>
+      <div class="mlist" id="rList"></div>
+    </div>
+    ${r ? `<div class="stack">
+      <div class="card">
+        <div class="row"><h2 class="grow">${esc(r.name)} <span class="pill">${KIND_INFO[r.kind] ? KIND_INFO[r.kind].ko : r.kind}</span></h2>
+          <button class="btn small" id="rReload" type="button">새로고침</button>
+          <a class="btn small" id="rOpen" href="${esc(reefSrc(r))}" target="_blank" rel="noopener">새 탭에서 열기</a></div>
+        <p class="sub">${KIND_INFO[r.kind] ? KIND_INFO[r.kind].about : ''} 여기서 고친 내용이 바로 아래 창에 보여요.</p>
+        <div class="frame"><iframe id="rFrame" title="${esc(r.name)} 미리보기" data-reef="${esc(r.id)}" data-kind="${esc(r.kind)}" src="${esc(reefSrc(r))}"></iframe></div>
+      </div>
+      <div class="card">
+        <div class="g3">${field('이름', 'name', r.name, 'text')}${field('id (페이지가 찾는 이름)', 'id', r.id, 'text')}${field('파일 이름', 'file', r.file, 'text')}</div>
+        <div class="row" style="margin-top:10px">
+          <button class="btn small" id="rHtml" type="button">HTML 받기</button>
+          <button class="btn small" id="rSingle" type="button">한 파일로 받기</button>
+          <button class="btn small primary" id="rPush" type="button">깃허브에 이 파일 올리기</button>
+          <button class="btn small" id="rCode" type="button">코드 직접 편집</button>
+          <button class="btn small danger" id="rDel" type="button">이 reef 지우기</button>
+        </div>
+        <p class="hint"><b>HTML 받기</b>는 reef-kit.js·reef-data.json과 같은 폴더에 두는 파일, <b>한 파일로 받기</b>는 지금 물고기를 통째로 넣어서 혼자서도 열리는 파일이에요 (대신 자동 동기화는 안 돼요).</p>
+      </div>
+      <div class="card" id="rCfg"></div>
+      <div class="card" id="rAsk"></div>
+    </div>` : '<div class="card"><p class="empty">reef가 없어요.</p></div>'}
+  </div>`;
+  const rl = $('#rList');
+  list.forEach((rr, i) => {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'mitem'; b.style.gridTemplateColumns = '1fr';
+    b.setAttribute('aria-current', i === ui.sel.reefs);
+    b.innerHTML = '<span><b></b><i></i></span>';
+    b.querySelector('b').textContent = rr.name;
+    const n = rr.kind === 'showcase' ? (rr.config.lanes || []).length + '마리' : rr.kind === 'marker' ? (rr.config.fishTotal || 0) + '마리' : (rr.config.swimmers || []).length + '마리';
+    b.querySelector('i').textContent = rr.file + ' · ' + (KIND_INFO[rr.kind] ? KIND_INFO[rr.kind].ko : rr.kind) + ' · ' + n;
+    b.addEventListener('click', () => { ui.sel.reefs = i; renderReefs(); });
+    rl.appendChild(b);
+  });
+  $('#rNew').addEventListener('click', () => {
+    const kind = $('#rNewKind').value;
+    edit(() => {
+      const id = uid(kind === 'showcase' ? 'reef' : kind, D.reefs);
+      const cfg = kind === 'showcase' ? { title: 'New Reef', subtitle: '', radius: 50, lanes: [], props: [], sliders: ['swim', 'flap'], talk: { tap: true, auto: 0 } }
+        : kind === 'marker' ? { fishTotal: 12, mix: D.species.filter(m => m.motion === 'fish').slice(0, 2).map(m => m.id), shells: [22, 36, 52], chargeEvery: 0, chargeEffect: '', cubeCm: 4, fovDeg: 65, drop: 14, wallGap: 8 }
+        : { swimmers: [] };
+      D.reefs.push({ id, name: '새 ' + KIND_INFO[kind].ko + ' reef', file: id + '.html', kind, config: cfg });
+    }, true);
+    ui.sel.reefs = D.reefs.length - 1; renderReefs();
+  });
+  if (!r) return;
+  refreshPreview = null;
+  $('#rReload').addEventListener('click', () => { try { $('#rFrame').contentWindow.location.reload(); } catch(e){ $('#rFrame').src = reefSrc(r); } });
+  $$('.card [data-f]').forEach(el => el.addEventListener('change', () => {
+    const f = el.dataset.f, v = el.value.trim();
+    if (f === 'id'){
+      const nid = v.replace(/[^A-Za-z0-9_-]/g, ''); if (!nid || D.reefs.some(x => x !== r && x.id === nid)) return toast('쓸 수 없는 id예요');
+      edit(() => { r.id = nid; }, true);
+    } else if (f === 'file'){
+      let nf = v.replace(/[^A-Za-z0-9_.\-]/g, ''); if (!/\.html$/.test(nf)) nf += '.html';
+      edit(() => { r.file = nf; }, true);
+    } else edit(() => { r[f] = v; }, true);
+    renderReefs();
+  }));
+  $('#rHtml').addEventListener('click', async () => { try { saved(saveFile(r.file, await reefFileText(r), 'text/html'), r.file); } catch(e){ toast(e.message); } });
+  $('#rSingle').addEventListener('click', async () => { try { saved(saveFile(r.file.replace(/\.html$/, '') + '-single.html', await singleFile(r), 'text/html'), '한 파일 HTML'); } catch(e){ toast(e.message); } });
+  $('#rPush').addEventListener('click', async () => {
+    try { const txt = await reefFileText(r); await GH.put(r.file, txt, 'all-reefs: ' + r.file); fileExists[r.file] = true; toast(r.file + ' 올렸어요'); }
+    catch(e){ toast(ghMsg(e), 4000); }
+  });
+  $('#rCode').addEventListener('click', () => openCode(r.file, () => reefFileText(r)));
+  twoStep($('#rDel'), '정말 지울까요? (레포 파일은 그대로)', () => { edit(() => D.reefs.splice(ui.sel.reefs, 1), true); ui.sel.reefs = Math.max(0, ui.sel.reefs - 1); renderReefs(); });
+  const cfgBox = $('#rCfg');
+  if (r.kind === 'showcase') cfgShowcase(cfgBox, r);
+  else if (r.kind === 'marker') cfgMarker(cfgBox, r);
+  else cfgConsole(cfgBox, r);
+  askReef($('#rAsk'), r);
+}
+
+function speciesOptions(cur, withItems){
+  const src = withItems ? D.items : D.species;
+  let h = src.map(m => `<option value="${esc(m.id)}" ${m.id === cur ? 'selected' : ''}>${esc(m.name)}</option>`).join('');
+  if (cur && !src.some(m => m.id === cur)) h = `<option value="${esc(cur)}" selected>${esc(cur)} (없음)</option>` + h;
+  return h;
+}
+function numField(label, obj, key, step){
+  return `<label class="f"><span>${label}</span><input type="number" step="${step || 0.1}" data-k="${key}" value="${obj[key] == null ? '' : obj[key]}"></label>`;
+}
+function wireNums(box, obj, after){
+  $$('input[data-k]', box).forEach(el => el.addEventListener('input', () => { edit(() => { obj[el.dataset.k] = numv(el.value, 0); }); if (after) after(); }));
+}
+
+function cfgShowcase(box, r){
+  const c = r.config;
+  c.lanes = c.lanes || []; c.props = c.props || []; c.sliders = c.sliders || ['swim', 'flap']; c.talk = c.talk || { tap: true, auto: 0 };
+  box.innerHTML = `
+    <h2>설정</h2>
+    <div class="g3" style="margin-top:8px">${field('제목', 'title', c.title || '', 'text')}${field('부제목 (비우면 자동)', 'subtitle', c.subtitle || '', 'text')}
+      <label class="f"><span>카메라 거리</span><input type="number" step="1" data-c="radius" value="${c.radius || 50}"></label></div>
+    <div class="row" style="margin-top:10px;font-size:12.5px">
+      <span style="color:var(--ink-faint)">슬라이더</span>
+      ${['swim', 'flap', 'charge'].map(k => `<label class="row"><input type="checkbox" data-sl="${k}" ${c.sliders.indexOf(k) >= 0 ? 'checked' : ''}> ${{ swim: '헤엄 빠르기', flap: '지느러미', charge: '전기' }[k]}</label>`).join('')}
+      <span style="color:var(--ink-faint);margin-left:10px">말하기</span>
+      <label class="row"><input type="checkbox" data-talk="tap" ${c.talk.tap !== false ? 'checked' : ''}> 누르면</label>
+      <label class="row">저절로 <input type="number" data-talk="auto" min="0" step="1" value="${c.talk.auto || 0}" style="width:64px">초마다 (0=끔)</label>
+    </div>
+    <h3>물고기 경로 <span class="mono" style="color:var(--ink-soft)">${c.lanes.length}</span></h3>
+    <div class="row" style="margin-bottom:8px">
+      <select id="aSp" style="width:auto">${speciesOptions(D.species[0] && D.species[0].id)}</select>
+      <input type="number" id="aN" value="3" min="1" max="30" style="width:64px">
+      <select id="aFx" style="width:auto"><option value="">이펙트 없음</option>${D.effects.map(e => `<option value="${esc(e.id)}">${esc(e.name)}</option>`).join('')}</select>
+      <button class="btn small" id="aGo" type="button">자동 배치로 추가</button>
+      <button class="btn small danger" id="aClear" type="button">경로 모두 지우기</button>
+    </div>
+    <div class="lanes" id="lanes"></div>
+    <h3>아이템 놓기 <span class="mono" style="color:var(--ink-soft)">${c.props.length}</span></h3>
+    <div class="lanes" id="props"></div>
+    <button class="btn small ghost" id="propAdd" type="button" style="margin-top:8px" ${D.items.length ? '' : 'disabled'}>+ 아이템</button>`;
+  $$('[data-f]', box).forEach(el => el.addEventListener('change', () => { edit(() => { c[el.dataset.f] = el.value; }, true); }));
+  $('[data-c="radius"]', box).addEventListener('change', e => edit(() => { c.radius = numv(e.target.value, 50); }, true));
+  $$('[data-sl]', box).forEach(el => el.addEventListener('change', () => edit(() => {
+    const k = el.dataset.sl, i = c.sliders.indexOf(k);
+    if (el.checked && i < 0) c.sliders.push(k); if (!el.checked && i >= 0) c.sliders.splice(i, 1);
+  }, true)));
+  $$('[data-talk]', box).forEach(el => el.addEventListener('change', () => edit(() => { c.talk[el.dataset.talk] = el.type === 'checkbox' ? el.checked : numv(el.value, 0); }, true)));
+  $('#aGo').addEventListener('click', () => {
+    const sp = $('#aSp').value, n = clamp(+$('#aN').value || 1, 1, 30), fx = $('#aFx').value;
+    edit(() => {
+      const rnd = kit.seeded(kit.hash(sp + c.lanes.length));
+      for (let i = 0; i < n; i++){
+        const k = c.lanes.length;
+        c.lanes.push({ species: sp, path: rnd() < 0.3 ? 'wander' : 'loop', cx: Math.round((rnd() - 0.5) * 22), cy: Math.round((rnd() - 0.5) * 16 * 10) / 10, cz: Math.round((rnd() - 0.5) * 22),
+          rx: Math.round(5 + rnd() * 8), ry: Math.round((1 + rnd() * 1.6) * 10) / 10, rz: Math.round(4 + rnd() * 7), sp: Math.round((0.18 + rnd() * 0.22) * 100) / 100, ph: Math.round(((k * 2.1) % 6.28) * 10) / 10,
+          scale: 1, variant: i % 3, effects: (fx && i === 0) ? [fx] : [], says: [] });
+      }
+    }, true);
+    renderReefs();
+  });
+  twoStep($('#aClear'), '정말 모두?', () => { edit(() => { c.lanes = []; }, true); renderReefs(); });
+  const lb = $('#lanes');
+  c.lanes.forEach((l, i) => lb.appendChild(laneEditor(c.lanes, l, i)));
+  if (!c.lanes.length) lb.innerHTML = '<p class="empty">경로가 없어요. 위에서 자동 배치로 추가해 보세요.</p>';
+  const pb = $('#props');
+  c.props.forEach((p, i) => {
+    const d = document.createElement('div'); d.className = 'lane';
+    p.pos = p.pos || [0, 0, 0];
+    d.innerHTML = `<div class="g4"><label class="f"><span>아이템</span><select data-pk="item">${speciesOptions(p.item, true)}</select></label>
+      <label class="f"><span>x</span><input type="number" step="0.5" data-pp="0" value="${p.pos[0]}"></label><label class="f"><span>y</span><input type="number" step="0.5" data-pp="1" value="${p.pos[1]}"></label><label class="f"><span>z</span><input type="number" step="0.5" data-pp="2" value="${p.pos[2]}"></label></div>
+      <div class="g4" style="margin-top:6px"><label class="f"><span>크기</span><input type="number" step="0.05" data-pk="scale" value="${p.scale || 1}"></label><label class="f"><span>돌린 각도</span><input type="number" step="5" data-pk="rot" value="${p.rot || 0}"></label><span></span><button class="btn small danger" type="button" style="align-self:end">빼기</button></div>`;
+    $$('[data-pk]', d).forEach(el => el.addEventListener('change', () => edit(() => { p[el.dataset.pk] = el.tagName === 'SELECT' ? el.value : numv(el.value, 0); }, true)));
+    $$('[data-pp]', d).forEach(el => el.addEventListener('input', () => edit(() => { p.pos[+el.dataset.pp] = numv(el.value, 0); })));
+    $('button', d).addEventListener('click', () => { edit(() => c.props.splice(i, 1), true); renderReefs(); });
+    pb.appendChild(d);
+  });
+  $('#propAdd').addEventListener('click', () => { edit(() => c.props.push({ item: D.items[0].id, pos: [0, -8, 0], scale: 1, rot: 0 }), true); renderReefs(); });
+}
+function laneEditor(arr, l, i){
+  const m = kit.find(D, l.species);
+  const d = document.createElement('details'); d.className = 'lane';
+  const vars = m ? m.variants : [];
+  d.innerHTML = `<summary><img alt=""><b></b><small>${esc(l.path || 'loop')} · ${(l.effects || []).length ? (l.effects || []).join(', ') : '이펙트 없음'} · #${i + 1}</small></summary>
+    <div class="body">
+      <div class="g4"><label class="f"><span>물고기</span><select data-lk="species">${speciesOptions(l.species)}</select></label>
+        <label class="f"><span>색 변형</span><select data-lk="variant"><option value="-1">기본</option>${vars.map((v, k) => `<option value="${k}" ${l.variant === k ? 'selected' : ''}>변형 ${k + 1}</option>`).join('')}</select></label>
+        <label class="f"><span>경로</span><select data-lk="path"><option value="loop" ${l.path !== 'wander' && l.path !== 'still' ? 'selected' : ''}>8자 고리</option><option value="wander" ${l.path === 'wander' ? 'selected' : ''}>떠돌기</option><option value="still" ${l.path === 'still' ? 'selected' : ''}>제자리</option></select></label>
+        <button class="btn small danger" type="button" data-del style="align-self:end">빼기</button></div>
+      <div class="g4">${numField('중심 x', l, 'cx', 0.5)}${numField('중심 y', l, 'cy', 0.5)}${numField('중심 z', l, 'cz', 0.5)}${numField('크기 배수', l, 'scale', 0.05)}</div>
+      <div class="g4">${numField('폭 x', l, 'rx', 0.5)}${numField('높낮이 y', l, 'ry', 0.1)}${numField('폭 z', l, 'rz', 0.5)}${numField('빠르기', l, 'sp', 0.01)}</div>
+      <div class="g4">${numField('시작 위치', l, 'ph', 0.1)}</div>
+      <div class="chips" data-fx></div>
+      <label class="f"><span>이 경로에서만 할 말 (비우면 물고기 기본 말)</span></label><div class="lines" data-says></div>
+    </div>`;
+  if (m) $('summary img', d).src = kit.thumb(m, 2).toDataURL();
+  $('summary b', d).textContent = m ? m.name : l.species + ' (없음)';
+  d.addEventListener('toggle', () => { d.dataset.open = d.open; });
+  $$('[data-lk]', d).forEach(el => el.addEventListener('change', () => { edit(() => { l[el.dataset.lk] = el.dataset.lk === 'variant' ? +el.value : el.value; }, true); if (el.dataset.lk === 'species'){ const nd = laneEditor(arr, l, i); nd.open = true; d.replaceWith(nd); } }));
+  wireNums(d, l);
+  $('[data-del]', d).addEventListener('click', () => { edit(() => arr.splice(i, 1), true); renderReefs(); });
+  const fb = $('[data-fx]', d);
+  l.effects = l.effects || [];
+  D.effects.forEach(ef => {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'btn small'; b.textContent = ef.name;
+    b.setAttribute('aria-pressed', l.effects.indexOf(ef.id) >= 0);
+    b.addEventListener('click', () => { edit(() => { const k = l.effects.indexOf(ef.id); if (k >= 0) l.effects.splice(k, 1); else l.effects.push(ef.id); }, true); b.setAttribute('aria-pressed', l.effects.indexOf(ef.id) >= 0); });
+    fb.appendChild(b);
+  });
+  l.says = l.says || [];
+  linesEditor($('[data-says]', d), l.says, (fn, force) => edit(() => fn(l.says), force), '짧은 한마디');
+  return d;
+}
+function cfgMarker(box, r){
+  const c = r.config;
+  c.mix = c.mix || []; c.shells = c.shells || [22, 36, 52, 72];
+  if (c.cubeCm == null) c.cubeCm = 4;
+  if (c.wallGap == null) c.wallGap = 8;
+  delete c.markerSepCm;
+  box.innerHTML = `<h2>설정</h2>
+    <div class="g4" style="margin-top:8px">${numField('물고기 수', c, 'fishTotal', 1)}${numField('큐브 한 변 (cm)', c, 'cubeCm', 0.1)}${numField('카메라 화각 (긴 쪽, 도)', c, 'fovDeg', 1)}${numField('큐브 아래로 내려온 거리', c, 'drop', 1)}${numField('벽에서 띄울 거리', c, 'wallGap', 1)}</div>
+    <div class="g2" style="margin-top:8px"><label class="f"><span>궤도 거리들 (cm, 쉼표로)</span><input type="text" id="mShells" value="${esc(c.shells.join(', '))}"></label>
+      <div class="g2">${numField('몇 마리마다 이펙트', c, 'chargeEvery', 1)}<label class="f"><span>붙일 이펙트</span><select id="mFx"><option value="">없음</option>${D.effects.map(e => `<option value="${esc(e.id)}" ${e.id === c.chargeEffect ? 'selected' : ''}>${esc(e.name)}</option>`).join('')}</select></label></div></div>
+    <h3>섞을 물고기</h3><div class="chips" id="mMix"></div>
+    <p class="hint">미리보기는 카메라 없이 본 모습(벽·큐브·물고기)이에요. 폰에서 열면 카메라로 큐브를 찾고, 주소 끝에 #sim을 붙이면 가짜 카메라로 인식을 시험해요.</p>`;
+  wireNums(box, c);
+  $('#mShells').addEventListener('change', e => edit(() => { c.shells = e.target.value.split(',').map(s => numv(s, 0)).filter(v => v > 0); }, true));
+  $('#mFx').addEventListener('change', e => edit(() => { c.chargeEffect = e.target.value; }, true));
+  const mb = $('#mMix');
+  D.species.forEach(m => {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'btn small'; b.textContent = m.name;
+    b.setAttribute('aria-pressed', c.mix.indexOf(m.id) >= 0);
+    b.addEventListener('click', () => { edit(() => { const k = c.mix.indexOf(m.id); if (k >= 0) c.mix.splice(k, 1); else c.mix.push(m.id); }, true); b.setAttribute('aria-pressed', c.mix.indexOf(m.id) >= 0); });
+    mb.appendChild(b);
+  });
+}
+function cfgConsole(box, r){
+  const c = r.config; c.swimmers = c.swimmers || [];
+  box.innerHTML = `<h2>기본 목록</h2><p class="sub">콘솔을 처음 여는 사람에게 보이는 물고기들. 콘솔에서 고친 뒤 저장한 내용은 그 브라우저에 따로 남아요.</p><div class="lanes" id="sw"></div>
+    <button class="btn small ghost" id="swAdd" type="button" style="margin-top:8px">+ 한 마리</button>`;
+  const host = $('#sw');
+  c.swimmers.forEach((s, i) => {
+    const m = kit.find(D, s.species);
+    const d = document.createElement('details'); d.className = 'lane';
+    d.innerHTML = `<summary><img alt=""><b></b><small>#${i + 1}</small></summary><div class="body">
+      <div class="g4"><label class="f"><span>물고기</span><select data-sk="species">${speciesOptions(s.species)}</select></label>${numField('크기', s, 'sc', 0.05)}${numField('빠르기', s, 'sp', 0.01)}<button class="btn small danger" type="button" data-del style="align-self:end">빼기</button></div>
+      <div class="g4">${numField('궤도 x', s, 'rx', 0.5)}${numField('궤도 z', s, 'rz', 0.5)}${numField('높이', s, 'h', 0.5)}${numField('시작 위치', s, 'ph', 0.1)}</div>
+      <div class="g4">${numField('옮김 x', s, 'cx', 0.5)}${numField('옮김 z', s, 'cz', 0.5)}</div>
+      <div class="lines" data-says></div></div>`;
+    if (m) $('summary img', d).src = kit.thumb(m, 2).toDataURL();
+    $('summary b', d).textContent = m ? m.name : s.species;
+    $('[data-sk]', d).addEventListener('change', e => { edit(() => { s.species = e.target.value; }, true); renderReefs(); });
+    wireNums(d, s);
+    $('[data-del]', d).addEventListener('click', () => { edit(() => c.swimmers.splice(i, 1), true); renderReefs(); });
+    s.say = s.say || [];
+    linesEditor($('[data-says]', d), s.say, (fn, force) => edit(() => fn(s.say), force), '더블탭하면 하는 말');
+    host.appendChild(d);
+  });
+  $('#swAdd').addEventListener('click', () => { edit(() => c.swimmers.push({ species: (D.species[0] || {}).id, cx: 0, cz: 0, rx: 9, rz: 8, h: 12, sp: 0.12, ph: c.swimmers.length * 1.7 % 6.2, sc: 1, say: [] }), true); renderReefs(); });
+}
+function askReef(box, r){
+  box.innerHTML = `<h2>클로드에게 부탁</h2><p class="sub">예: "블루탱을 5마리로 늘리고 한 마리만 전기 이펙트", "거북들을 더 느리게, 위쪽으로"</p>
+    ${sample ? '' : '<div class="note warn">claude.ai 안에서 열었을 때만 쓸 수 있어요.</div>'}
+    <textarea id="qReq" rows="3"></textarea>
+    <div class="row" style="margin-top:8px"><button class="btn volt small" id="qGo" type="button" ${sample ? '' : 'disabled'}>부탁하기</button><span class="hint" id="qState"></span></div>`;
+  $('#qGo').addEventListener('click', async () => {
+    const req = $('#qReq').value.trim(); if (!req) return;
+    $('#qGo').disabled = true; $('#qState').textContent = '생각하는 중…';
+    const prompt = `아래는 수족관 페이지 "${r.name}"(종류: ${r.kind})의 설정 JSON이야. 요청대로 고친 설정 JSON 객체 하나만 답해. 모양(키 이름)은 그대로 유지해.
+쓸 수 있는 물고기 id: ${D.species.map(m => m.id + '(' + m.name + ')').join(', ')}
+쓸 수 있는 아이템 id: ${D.items.map(m => m.id + '(' + m.name + ')').join(', ') || '없음'}
+쓸 수 있는 이펙트 id: ${D.effects.map(e => e.id + '(' + e.name + ')').join(', ') || '없음'}
+[지금 설정]
+${JSON.stringify(r.config)}
+[요청]
+${req}`;
+    try {
+      const o = await askClaude(prompt, { modelTier: 'default', cache: false });
+      if (!o || typeof o !== 'object' || Array.isArray(o)) throw { code: 'invalid_json' };
+      edit(() => { r.config = o; }, true);
+      $('#qState').textContent = '적용했어요. 마음에 안 들면 되돌리기';
+      renderReefs();
+    } catch(e){ $('#qState').textContent = claudeErr(e); }
+    const g = $('#qGo'); if (g) g.disabled = false;
+  });
+}
+
+/* ═══════════════════ 설계 지침 ═══════════════════ */
+function renderGuide(){
+  main.innerHTML = `<div class="stack" style="max-width:860px">
+    <div class="card">
+      <h2>설계 지침</h2>
+      <p class="sub">사진으로 만들 때, 클로드에게 고쳐 달라고 할 때 항상 같이 보내는 규칙이에요. 여기를 고치면 앞으로 만드는 물고기 모양이 바뀌어요.</p>
+      <textarea id="gText" rows="18"></textarea>
+      <div class="g2" style="margin-top:10px"><label class="f"><span>예시로 같이 보낼 물고기</span><select id="gEx">${D.species.map(m => `<option value="${esc(m.id)}" ${m.id === (D.guideExample || (D.species[0] || {}).id) ? 'selected' : ''}>${esc(m.name)}</option>`).join('')}</select></label></div>
+    </div>
+    <div class="card">
+      <h2>대화창에서 쓸 때</h2>
+      <p class="sub">여기 버튼이 안 되는 곳(깃허브 페이지)에서는 사진을 이 대화창에 올리고 "All Reefs 지침대로 물고기 JSON 만들어줘"라고 하면 돼요. 받은 JSON은 물고기 → JSON 칸에 붙여넣으면 들어가요.</p>
+    </div></div>`;
+  $('#gText').value = D.guide;
+  $('#gText').addEventListener('input', e => edit(() => { D.guide = e.target.value; }));
+  $('#gEx').addEventListener('change', e => edit(() => { D.guideExample = e.target.value; }, true));
+}
+
+/* ═══════════════════ 깃허브 ═══════════════════ */
+const GH = {
+  cfg(){ let c = {}; try { c = JSON.parse(localStorage.getItem('allreefs.gh') || '{}') || {}; } catch(e){} return Object.assign({ repo: '', branch: 'main', dir: '', token: '' }, c); },
+  save(c){ try { localStorage.setItem('allreefs.gh', JSON.stringify(c)); } catch(e){} },
+  ready(){ const c = this.cfg(); return !!(c.repo && c.repo.indexOf('/') > 0 && c.token); },
+  path(f){ const d = (this.cfg().dir || '').replace(/^\/+|\/+$/g, ''); return (d ? d + '/' : '') + f; },
+  url(f){ const c = this.cfg(); return 'https://api.github.com/repos/' + c.repo + '/contents/' + this.path(f).split('/').map(encodeURIComponent).join('/'); },
+  headers(){ return { 'Authorization': 'Bearer ' + this.cfg().token, 'Accept': 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' }; },
+  async get(f){
+    if (!this.ready()) throw { gh: 'setup' };
+    const r = await fetch(this.url(f) + '?ref=' + encodeURIComponent(this.cfg().branch), { headers: this.headers(), cache: 'no-store' });
+    if (r.status === 404) return null;
+    if (!r.ok) throw { gh: r.status };
+    const j = await r.json();
+    return { sha: j.sha, text: j.content ? decodeURIComponent(escape(atob(j.content.replace(/\s/g, '')))) : '' };
+  },
+  async put(f, text, message){
+    if (!this.ready()) throw { gh: 'setup' };
+    const cur = await this.get(f);
+    const body = { message: message || ('all-reefs: ' + f), content: btoa(unescape(encodeURIComponent(text))), branch: this.cfg().branch };
+    if (cur) body.sha = cur.sha;
+    const r = await fetch(this.url(f), { method: 'PUT', headers: this.headers(), body: JSON.stringify(body) });
+    if (!r.ok){ let msg = ''; try { msg = (await r.json()).message; } catch(e){} throw { gh: r.status, msg }; }
+    return r.json();
+  },
+  async list(){
+    if (!this.ready()) throw { gh: 'setup' };
+    const d = (this.cfg().dir || '').replace(/^\/+|\/+$/g, '');
+    const u = 'https://api.github.com/repos/' + this.cfg().repo + '/contents/' + d.split('/').map(encodeURIComponent).join('/') + '?ref=' + encodeURIComponent(this.cfg().branch);
+    const r = await fetch(u, { headers: this.headers(), cache: 'no-store' });
+    if (!r.ok) throw { gh: r.status };
+    return r.json();
+  }
+};
+function ghMsg(e){
+  if (e && e.gh === 'setup') return '깃허브 메뉴에서 레포와 토큰을 먼저 넣어 주세요.';
+  if (e && e.gh === 401) return '토큰이 거절됐어요(401). 기간이 지났는지 확인해 주세요.';
+  if (e && e.gh === 403) return '권한이 없어요(403). 토큰에 Contents: Read and write가 필요해요.';
+  if (e && e.gh === 404) return '레포나 브랜치를 못 찾았어요(404).';
+  if (e && (e.gh === 409 || e.gh === 422)) return '파일이 그 사이 바뀌었어요. 다시 해 주세요. ' + (e.msg || '');
+  const m = String((e && (e.message || e.msg)) || e);
+  if (/failed to fetch|networkerror|load failed/i.test(m)) return IN_CLAUDE ? '클로드 미리보기 안에서는 깃허브에 연결할 수 없어요. 전체 파일 받기로 레포에 올린 뒤, 레포의 all-reefs.html에서 여세요.' : '깃허브에 연결하지 못했어요. 인터넷과 주소를 확인해 주세요.';
+  return m;
+}
+const LOG = [];
+function log(line){ LOG.push(new Date().toLocaleTimeString() + '  ' + line); const el = $('#ghLog'); if (el){ el.textContent = LOG.slice(-60).join('\n'); el.scrollTop = 1e9; } }
+
+function renderGithub(){
+  const c = GH.cfg();
+  main.innerHTML = `<div class="stack" style="max-width:900px">
+    ${IN_CLAUDE ? `<div class="note warn">지금은 클로드 미리보기 안이라 깃허브 연결이 막혀 있어요. <b>전체 파일 받기</b>로 zip을 받아 레포에 올리고, 깃허브 페이지 주소의 <b>all-reefs.html</b>에서 열면 여기 기능이 다 돼요.</div>` : ''}
+    <div class="card">
+      <h2>레포 연결</h2>
+      <p class="sub">토큰은 이 브라우저에만 저장되고 어디에도 올라가지 않아요. github.com/settings/personal-access-tokens 에서 이 레포만, Contents: Read and write로 만들어 주세요.</p>
+      <div class="g4">
+        <label class="f" style="grid-column:span 2"><span>레포 (owner/name)</span><input type="text" id="gRepo" value="${esc(c.repo)}" placeholder="you/your-repo"></label>
+        <label class="f"><span>브랜치</span><input type="text" id="gBranch" value="${esc(c.branch)}"></label>
+        <label class="f"><span>폴더 (없으면 비움)</span><input type="text" id="gDir" value="${esc(c.dir)}" placeholder="reef"></label>
+      </div>
+      <label class="f" style="margin-top:8px"><span>토큰</span><input type="password" id="gTok" value="${esc(c.token)}" placeholder="github_pat_…" autocomplete="off"></label>
+      <div class="row" style="margin-top:10px"><button class="btn small" id="gTest" type="button">연결 확인</button><span class="hint" id="gState"></span></div>
+    </div>
+    <div class="card">
+      <h2>올리기 · 불러오기</h2>
+      <div class="row">
+        <button class="btn primary" id="gPush" type="button">reef-data.json 올리기</button>
+        <button class="btn" id="gPull" type="button">레포에서 불러오기</button>
+        <button class="btn" id="gAll" type="button">전체 파일 올리기</button>
+        <label class="row" style="font-size:12.5px"><input type="checkbox" id="gOver"> 이미 있는 reef 페이지도 덮어쓰기</label>
+      </div>
+      <p class="hint"><b>reef-data.json 올리기</b>만 하면 모든 하위 reef의 물고기가 바뀌어요 (깃허브 페이지 반영에 1분쯤). <b>전체 파일 올리기</b>는 처음 설치할 때나 reef-kit.js를 새로 받았을 때. viewer.html은 건드리지 않아요.</p>
+      <div class="log" id="ghLog" style="margin-top:10px"></div>
+    </div>
+    <div class="card">
+      <div class="row"><h2 class="grow">레포 파일</h2><button class="btn small" id="gList" type="button">목록 보기</button></div>
+      <p class="sub">하위 reef 페이지나 reef-kit.js 코드를 여기서 바로 고쳐서 커밋할 수 있어요.</p>
+      <div class="files" id="gFiles"></div>
+    </div></div>`;
+  $('#ghLog').textContent = LOG.slice(-60).join('\n');
+  const store = () => GH.save({ repo: $('#gRepo').value.trim().replace(/^https?:\/\/github\.com\//, '').replace(/\/+$/, ''), branch: $('#gBranch').value.trim() || 'main', dir: $('#gDir').value.trim(), token: $('#gTok').value.trim() });
+  ['#gRepo', '#gBranch', '#gDir', '#gTok'].forEach(s => $(s).addEventListener('change', store));
+  $('#gTest').addEventListener('click', async () => {
+    store(); $('#gState').textContent = '확인 중…';
+    try { const f = await GH.get('reef-data.json'); $('#gState').textContent = f ? '연결됐어요. 레포에 reef-data.json이 있어요.' : '연결됐어요. 아직 reef-data.json이 없어요 (전체 파일 올리기로 시작).'; }
+    catch(e){ $('#gState').textContent = ghMsg(e); }
+  });
+  $('#gPush').addEventListener('click', () => { store(); pushData(); });
+  $('#gPull').addEventListener('click', async () => {
+    store(); log('레포에서 reef-data.json 읽는 중…');
+    try {
+      const f = await GH.get('reef-data.json'); if (!f) return log('레포에 reef-data.json이 없어요.');
+      snapshot(true); D = kit.normalize(JSON.parse(f.text)); changed(true); kit.applyStyle(D.style); drawLogo();
+      log('불러왔어요. (되돌리기로 이전 작업본으로 돌아갈 수 있어요)');
+    } catch(e){ log(ghMsg(e)); }
+  });
+  $('#gAll').addEventListener('click', async () => {
+    store(); log('전체 파일 모으는 중…');
+    try {
+      let exist = {};
+      try { (await GH.list()).forEach(x => { exist[x.name] = true; }); } catch(e){ if (e.gh !== 404) throw e; }
+      const files = await bundleFiles();
+      for (const name of Object.keys(files)){
+        const isReefPage = D.reefs.some(r => r.file === name);
+        if (isReefPage && exist[name] && !$('#gOver').checked){ log('건너뜀 (이미 있음): ' + name); continue; }
+        log('올리는 중: ' + name);
+        await GH.put(name, files[name], 'all-reefs: ' + name);
+        fileExists[name] = true;
+      }
+      log('끝! 깃허브 페이지에 반영되기까지 1분쯤 걸려요.');
+    } catch(e){ log(ghMsg(e)); }
+  });
+  $('#gList').addEventListener('click', async () => {
+    store(); const box = $('#gFiles'); box.innerHTML = '<p class="hint">읽는 중…</p>';
+    try {
+      const list = (await GH.list()).filter(x => x.type === 'file');
+      box.innerHTML = '';
+      list.forEach(x => {
+        fileExists[x.name] = true;
+        const row = document.createElement('div'); row.className = 'row';
+        row.innerHTML = `<span class="mono grow"></span><span class="hint" style="margin:0">${Math.round(x.size / 102.4) / 10} KB</span>`;
+        row.querySelector('.mono').textContent = x.name;
+        if (/\.(html|js|json|md|css|txt)$/i.test(x.name)){
+          const b = document.createElement('button'); b.type = 'button'; b.className = 'btn small'; b.textContent = '편집';
+          b.addEventListener('click', () => openCode(x.name));
+          row.appendChild(b);
+        }
+        box.appendChild(row);
+      });
+    } catch(e){ box.innerHTML = '<p class="hint">' + esc(ghMsg(e)) + '</p>'; }
+  });
+}
+async function pushData(){
+  if (!GH.ready()){ ui.tab = 'github'; render(); return toast('레포와 토큰을 먼저 넣어 주세요'); }
+  log('reef-data.json 올리는 중…'); setSaved('busy');
+  try {
+    await GH.put('reef-data.json', dataText(), 'all-reefs: update fish');
+    // 새로 만든 reef 페이지가 레포에 없으면 같이 만들어 줌
+    let exist = {};
+    try { (await GH.list()).forEach(x => { exist[x.name] = true; }); } catch(e){}
+    for (const r of D.reefs){
+      if (exist[r.file] || !KIND_INFO[r.kind]) continue;
+      log('새 reef 페이지 만드는 중: ' + r.file);
+      await GH.put(r.file, await reefFileText(r), 'all-reefs: add ' + r.file);
+      fileExists[r.file] = true;
+    }
+    log('올렸어요. 1분쯤 뒤 하위 reef들이 새 물고기로 바뀌어요.');
+    toast('깃허브에 올렸어요');
+  } catch(e){ log(ghMsg(e)); toast(ghMsg(e), 4500); }
+  saveNow();
+}
+$('#pushBtn').addEventListener('click', () => pushData());
+
+/* ───────── 코드 편집 창 ───────── */
+function openCode(name, fallback){
+  const md = $('#codeModal');
+  $('#codeTitle').textContent = name; $('#codeText').value = '불러오는 중…'; $('#codeState').textContent = '';
+  $('#codeSub').textContent = GH.ready() && !IN_CLAUDE ? '레포에 있는 최신 파일이에요. 고치고 커밋하면 바로 올라가요.' : '같이 들어 있는 파일이에요. 고친 뒤 파일로 받아서 레포에 올려 주세요.';
+  $('#codeCommit').disabled = !GH.ready() || IN_CLAUDE;
+  openModal(md);
+  (async () => {
+    let text = null;
+    if (GH.ready() && !IN_CLAUDE){ try { const f = await GH.get(name); if (f) text = f.text; } catch(e){ $('#codeState').textContent = ghMsg(e); } }
+    if (text == null){
+      try { text = name === 'reef-data.json' ? dataText() : fallback ? await fallback() : await fetchText(name); }
+      catch(e){ text = ''; $('#codeState').textContent = e.message; }
+    }
+    $('#codeText').value = text;
+  })();
+  $('#codeCommit').onclick = async () => {
+    $('#codeState').textContent = '커밋 중…';
+    try {
+      await GH.put(name, $('#codeText').value, 'all-reefs: edit ' + name);
+      fileExists[name] = true;
+      $('#codeState').textContent = '커밋했어요.';
+      if (name === 'reef-data.json'){ try { snapshot(true); D = kit.normalize(JSON.parse($('#codeText').value)); changed(true); } catch(e){} }
+    } catch(e){ $('#codeState').textContent = ghMsg(e); }
+  };
+  $('#codeSave').onclick = () => saved(saveFile(name, $('#codeText').value, 'text/plain'), name);
+}
+
+/* ───────── 전체 파일 모으기 / zip ───────── */
+async function bundleFiles(){
+  const files = {}, miss = [];
+  for (const n of ['all-reefs.html', 'reef-kit.js']){
+    try { files[n] = await fetchText(n); } catch(e){ miss.push(n); }
+  }
+  files['reef-data.json'] = dataText();
+  for (const r of D.reefs){
+    if (!KIND_INFO[r.kind]) continue;
+    try { files[r.file] = await reefFileText(r); } catch(e){ miss.push(r.file); }
+  }
+  if (miss.length) throw new Error('같은 폴더에서 이 파일을 못 찾았어요: ' + miss.join(', '));
+  return files;
+}
+$('#zipBtn').addEventListener('click', async () => {
+  const btn = $('#zipBtn'); btn.disabled = true; btn.textContent = '모으는 중…';
+  try {
+    if (!window.JSZip) await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js');
+    const files = await bundleFiles(), zip = new JSZip();
+    Object.keys(files).forEach(n => zip.file(n, files[n]));
+    const blob = await zip.generateAsync({ type: 'blob' });
+    await saved(saveFile('all-reefs.zip', blob, 'application/zip'), 'all-reefs.zip');
+  } catch(e){ toast(e.message || String(e), 4500); }
+  btn.disabled = false; btn.textContent = '전체 파일 받기';
+});
+
+/* ═══════════════════ 시작 ═══════════════════ */
+async function boot(){
+  $('#where').textContent = IN_CLAUDE ? '클로드 미리보기' : location.protocol === 'file:' ? '내 컴퓨터 파일' : location.host;
+  let local = null;
+  try { local = JSON.parse(localStorage.getItem('allreefs.data') || 'null'); } catch(e){}
+  try { fileData = await kit.loadData(); } catch(e){ fileData = null; }
+  D = kit.normalize(local || fileData || { species: [], items: [], effects: [], reefs: [] });
+  kit.applyStyle(D.style);
+  setSaved('ok'); drawLogo(); render();
+  if (local && fileData && fileData.updated && local.updated !== fileData.updated && !IN_CLAUDE){
+    const n = document.createElement('div'); n.className = 'note'; n.style.marginBottom = '12px';
+    n.innerHTML = '이 브라우저에 저장된 작업본을 열었어요. 레포의 reef-data.json과 달라요. <button class="btn small" type="button">레포 버전으로 바꾸기</button>';
+    $('button', n).addEventListener('click', () => { snapshot(true); D = kit.normalize(fileData); changed(true); render(); n.remove(); });
+    main.prepend(n);
+  }
+  if (!IN_CLAUDE) return;
+  claude.use('downloads').then(d => { downloads = d; }).catch(() => {});
+  claude.use('sample').then(async s => {
+    sample = s;
+    if (s){ const lim = await s.limits().catch(() => null); sampleImages = !!(lim && lim.images); sampleTools = !!(lim && lim.tools); }
+    if (ui.tab === 'reefs' || ui.pane === 'claude') render();
+  }).catch(() => {});
+  claude.use('db').then(async d => {
+    if (!d) return;
+    db = d;
+    const snap = await d.doc('reef/data').get().catch(() => null);
+    const body = snap && snap.exists ? snap.data() : null;
+    if (body && body.json){
+      try {
+        const remote = JSON.parse(body.json);
+        if (!D.updated || (remote.updated && remote.updated > D.updated)){ D = kit.normalize(remote); kit.applyStyle(D.style); drawLogo(); render(); toast('클로드에 저장된 작업본을 불러왔어요'); }
+      } catch(e){}
+    } else saveNow();
+    setSaved('ok');
+  }).catch(() => {});
+}
+boot();
+})();
+</script>
+</body>
+</html>
