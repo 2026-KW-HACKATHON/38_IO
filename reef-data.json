@@ -1,0 +1,1412 @@
+{
+ "v": 1,
+ "updated": "2026-09-24T00:00:00Z",
+ "style": {
+  "font": {
+   "family": "\"DotGothic16\", \"Jua\", system-ui, sans-serif",
+   "google": [
+    "DotGothic16",
+    "Jua"
+   ],
+   "cssUrl": ""
+  },
+  "bubble": {
+   "bg": "#FFFDF8",
+   "ink": "#3B3350",
+   "border": "#3B3350",
+   "px": 3,
+   "size": 14,
+   "pad": 8,
+   "maxWidth": 190,
+   "tail": true,
+   "pixel": true,
+   "duration": 3.2,
+   "anim": "pop"
+  },
+  "title": {
+   "family": "\"Quicksand\", \"Jua\", system-ui, sans-serif",
+   "google": [
+    "Quicksand:wght@500;600;700"
+   ]
+  }
+ },
+ "guide": "[물고기 설계 지침]\n1. 모델은 '옆모습 도트(side)' 한 장 + 그 위에 얹는 부위(parts)로 만든다. 머리는 항상 오른쪽(열 번호가 큰 쪽).\n2. side는 같은 길이의 문자열 배열. '.'은 빈칸, 나머지 한 글자는 palette의 색 이름.\n3. 격자 크기는 가로 12~28칸, 세로 8~18칸. 실제 비율보다 살짝 뭉툭하고 크게.\n4. 몸은 직육면체(box) 2~4개로: head(머리) / body(몸통) / stock(꼬리자루). 칸 좌표 x,y는 왼쪽 위 칸, w,h는 칸 수, d는 두께(칸).\n5. 얇은 부분(꼬리, 등·뒷지느러미)은 평면(plane). 꼬리는 role \"caudal\", 등·뒷지느러미는 role \"body\".\n6. 가슴지느러미는 plane + role \"pect\" + 자체 도트(paint, 'X'=color 색) + z(몸 옆으로 떨어진 거리). 한쪽만 쓰면 반대쪽은 자동.\n7. 눈은 머리 박스 안 옆모습에 어두운 색 1칸.\n8. 색은 5~9개. 순백(#FFFFFF)은 쓰지 말고 따뜻한 흰색(#FBF2E6 근처). 카메라 화면 위에서도 보이게 채도는 약간 높게.\n9. 줄무늬·무늬는 지느러미까지 이어서 칠한다.\n10. 규격 밖 모양이 필요하면 kind \"free\" (shape: box/cylinder/cone/sphere/wedge/mesh, size, pos[열,행,z], rot[도], color)로 추가.\n11. swim: speed(1=보통), beat(초당 꼬리 박자 0.3~1.2), wag(꼬리 흔들기 0.2~0.9), bend(몸 휘기 0~1), pect, bob, roll.\n12. says: 그 물고기가 할 짧은 말 2~3개 (한국어, 20자 안쪽).",
+ "species": [
+  {
+   "id": "clown",
+   "name": "흰동가리",
+   "sci": "Amphiprion ocellaris",
+   "sizeCm": 11,
+   "motion": "fish",
+   "scale": 0.5,
+   "palette": {
+    "o": "#EE9256",
+    "d": "#D9722F",
+    "l": "#F8BE86",
+    "w": "#FCF4E8",
+    "W": "#E8DCCB",
+    "k": "#4A3550",
+    "f": "#F6C094",
+    "e": "#2A2233"
+   },
+   "side": [
+    "............kkk......",
+    "..........ffwfff.....",
+    ".........fffwfff.....",
+    "kff......ddkwddd.....",
+    "kfff.....ddkwdddkwdd.",
+    "kffffokwoookwoookwoeo",
+    "kffffokwoookwoookwooo",
+    "kffffokwoookwoookwooo",
+    "kffffokWoookWoookWooo",
+    "kfff.....llkWlllkWll.",
+    "kff......llkWlll.....",
+    ".........fffff.......",
+    ".........kkk........."
+   ],
+   "parts": [
+    {
+     "id": "머리",
+     "kind": "box",
+     "role": "head",
+     "x": 16,
+     "y": 4,
+     "w": 5,
+     "h": 6,
+     "d": 5
+    },
+    {
+     "id": "몸통",
+     "kind": "box",
+     "role": "body",
+     "x": 9,
+     "y": 3,
+     "w": 7,
+     "h": 8,
+     "d": 5
+    },
+    {
+     "id": "꼬리자루",
+     "kind": "box",
+     "role": "stock",
+     "x": 5,
+     "y": 5,
+     "w": 4,
+     "h": 4,
+     "d": 3
+    },
+    {
+     "id": "꼬리",
+     "kind": "plane",
+     "role": "caudal",
+     "x": 0,
+     "y": 3,
+     "w": 5,
+     "h": 8
+    },
+    {
+     "id": "등지느러미",
+     "kind": "plane",
+     "role": "body",
+     "x": 9,
+     "y": 0,
+     "w": 7,
+     "h": 3
+    },
+    {
+     "id": "뒷지느러미",
+     "kind": "plane",
+     "role": "body",
+     "x": 9,
+     "y": 11,
+     "w": 5,
+     "h": 2
+    },
+    {
+     "id": "가슴지느러미",
+     "kind": "plane",
+     "role": "pect",
+     "x": 14,
+     "y": 7,
+     "w": 3,
+     "h": 3,
+     "z": 2.9,
+     "paint": [
+      "XX.",
+      "XXX",
+      ".XX"
+     ],
+     "color": "f"
+    }
+   ],
+   "swim": {
+    "speed": 1.0,
+    "beat": 0.62,
+    "wag": 0.55,
+    "bend": 0.55,
+    "pect": 1.0,
+    "bob": 0.2,
+    "roll": 1.0
+   },
+   "says": [
+    "여기 따뜻하다.",
+    "말미잘 어디 갔지?",
+    "줄무늬 세 개, 셀 수 있어?"
+   ],
+   "variants": [
+    {
+     "h": 0,
+     "s": 1,
+     "v": 1
+    },
+    {
+     "h": -8,
+     "s": 0.92,
+     "v": 1.04
+    },
+    {
+     "h": 7,
+     "s": 1.05,
+     "v": 0.95
+    }
+   ]
+  },
+  {
+   "id": "tang",
+   "name": "블루탱",
+   "sci": "Paracanthurus hepatus",
+   "sizeCm": 25,
+   "motion": "fish",
+   "scale": 0.5,
+   "palette": {
+    "b": "#5C83E0",
+    "B": "#4365C8",
+    "l": "#BCD1F8",
+    "n": "#2B3159",
+    "y": "#F1CC6C",
+    "f": "#4A6BC4",
+    "e": "#221E33"
+   },
+   "side": [
+    "...........nnnnn......",
+    ".........ffffffff.....",
+    "n........BBBBBBB......",
+    "ny......BBnnnnnnnnn...",
+    "nyy.....nnnnBBBBBBnB..",
+    ".nyy.yynnbbbbbbbbbbeb.",
+    "..nyyyynnbbbnbbbbbbbbb",
+    "..nyyyynnbbbnbbbbbbbbb",
+    "..nyyyynnbbbnbbbbbbbbb",
+    ".nyy.yynnnnnnbbbbbbbb.",
+    "nyy.....llllllllllll..",
+    "ny......lllllllllll...",
+    "n........lllllll......",
+    ".........fffffff......",
+    "..........nnnnn......."
+   ],
+   "parts": [
+    {
+     "id": "머리",
+     "kind": "box",
+     "role": "head",
+     "x": 17,
+     "y": 3,
+     "w": 5,
+     "h": 9,
+     "d": 4
+    },
+    {
+     "id": "몸통",
+     "kind": "box",
+     "role": "body",
+     "x": 8,
+     "y": 2,
+     "w": 9,
+     "h": 11,
+     "d": 4
+    },
+    {
+     "id": "꼬리자루",
+     "kind": "box",
+     "role": "stock",
+     "x": 5,
+     "y": 5,
+     "w": 3,
+     "h": 5,
+     "d": 2
+    },
+    {
+     "id": "꼬리",
+     "kind": "plane",
+     "role": "caudal",
+     "x": 0,
+     "y": 2,
+     "w": 5,
+     "h": 11
+    },
+    {
+     "id": "등지느러미",
+     "kind": "plane",
+     "role": "body",
+     "x": 9,
+     "y": 0,
+     "w": 8,
+     "h": 2
+    },
+    {
+     "id": "뒷지느러미",
+     "kind": "plane",
+     "role": "body",
+     "x": 9,
+     "y": 13,
+     "w": 7,
+     "h": 2
+    },
+    {
+     "id": "가슴지느러미",
+     "kind": "plane",
+     "role": "pect",
+     "x": 15,
+     "y": 7,
+     "w": 3,
+     "h": 3,
+     "z": 2.4,
+     "paint": [
+      "XX.",
+      "XXX",
+      ".XX"
+     ],
+     "color": "f"
+    }
+   ],
+   "swim": {
+    "speed": 0.75,
+    "beat": 0.5,
+    "wag": 0.5,
+    "bend": 0.5,
+    "pect": 0.9,
+    "bob": 0.25,
+    "roll": 1.0
+   },
+   "says": [
+    "어디 가더라…",
+    "천천히 가도 괜찮아.",
+    "노란 꼬리 멋지지?"
+   ],
+   "variants": [
+    {
+     "h": 0,
+     "s": 1,
+     "v": 1
+    },
+    {
+     "h": 10,
+     "s": 0.9,
+     "v": 1.05
+    },
+    {
+     "h": -9,
+     "s": 1.08,
+     "v": 0.94
+    }
+   ]
+  },
+  {
+   "id": "turtle-cream",
+   "name": "크림 거북",
+   "sci": "Chelonia mydas",
+   "sizeCm": 90,
+   "motion": "turtle",
+   "scale": 0.52,
+   "palette": {
+    "b": "#F6E7C4",
+    "s": "#83C43C",
+    "L": "#63A128",
+    "e": "#1F1C26"
+   },
+   "side": [
+    "..sssssssss....",
+    "..sssssssssbbbb",
+    "..sssssssssbbeb",
+    "bb.bbbbbbb.bbbb",
+    "...bbbbbbb....."
+   ],
+   "top": [
+    "..sssLsLsss....",
+    "..ssssLssss....",
+    "..LssLsLssLbbbb",
+    "bbsLLsssLLsbbbb",
+    "bbsLLsssLLsbbbb",
+    "..LssLsLssLbbbb",
+    "..ssssLssss....",
+    "..sssLsLsss...."
+   ],
+   "parts": [
+    {
+     "id": "몸",
+     "kind": "box",
+     "role": "still",
+     "x": 3,
+     "y": 3,
+     "w": 7,
+     "h": 2,
+     "d": 6,
+     "useTop": true
+    },
+    {
+     "id": "꼬리",
+     "kind": "box",
+     "role": "still",
+     "x": 0,
+     "y": 3,
+     "w": 2,
+     "h": 1,
+     "d": 2,
+     "useTop": true
+    },
+    {
+     "id": "머리",
+     "kind": "box",
+     "role": "still",
+     "x": 11,
+     "y": 1,
+     "w": 4,
+     "h": 3,
+     "d": 4,
+     "useTop": true
+    },
+    {
+     "id": "등딱지",
+     "kind": "box",
+     "role": "still",
+     "x": 2,
+     "y": 0,
+     "w": 9,
+     "h": 3,
+     "d": 8,
+     "useTop": true
+    },
+    {
+     "id": "앞발",
+     "kind": "box",
+     "role": "flipF",
+     "x": 7,
+     "y": 4,
+     "w": 3,
+     "h": 1,
+     "d": 4,
+     "z": 5
+    },
+    {
+     "id": "뒷발",
+     "kind": "box",
+     "role": "flipB",
+     "x": 3,
+     "y": 4,
+     "w": 3,
+     "h": 1,
+     "d": 3,
+     "z": 4.5
+    }
+   ],
+   "swim": {
+    "speed": 1.0,
+    "beat": 0.37,
+    "wag": 0.5,
+    "bend": 0,
+    "pect": 1.0,
+    "bob": 0.3,
+    "roll": 0.6
+   },
+   "says": [],
+   "variants": []
+  },
+  {
+   "id": "turtle-lime",
+   "name": "라임 거북",
+   "sci": "Chelonia mydas",
+   "sizeCm": 90,
+   "motion": "turtle",
+   "scale": 0.52,
+   "palette": {
+    "b": "#CBDC8E",
+    "s": "#C79272",
+    "L": "#A6735A",
+    "e": "#1F1C26"
+   },
+   "side": [
+    "..sssssssss....",
+    "..sssssssssbbbb",
+    "..sssssssssbbeb",
+    "bb.bbbbbbb.bbbb",
+    "...bbbbbbb....."
+   ],
+   "top": [
+    "..sssLsLsss....",
+    "..ssssLssss....",
+    "..LssLsLssLbbbb",
+    "bbsLLsssLLsbbbb",
+    "bbsLLsssLLsbbbb",
+    "..LssLsLssLbbbb",
+    "..ssssLssss....",
+    "..sssLsLsss...."
+   ],
+   "parts": [
+    {
+     "id": "몸",
+     "kind": "box",
+     "role": "still",
+     "x": 3,
+     "y": 3,
+     "w": 7,
+     "h": 2,
+     "d": 6,
+     "useTop": true
+    },
+    {
+     "id": "꼬리",
+     "kind": "box",
+     "role": "still",
+     "x": 0,
+     "y": 3,
+     "w": 2,
+     "h": 1,
+     "d": 2,
+     "useTop": true
+    },
+    {
+     "id": "머리",
+     "kind": "box",
+     "role": "still",
+     "x": 11,
+     "y": 1,
+     "w": 4,
+     "h": 3,
+     "d": 4,
+     "useTop": true
+    },
+    {
+     "id": "등딱지",
+     "kind": "box",
+     "role": "still",
+     "x": 2,
+     "y": 0,
+     "w": 9,
+     "h": 3,
+     "d": 8,
+     "useTop": true
+    },
+    {
+     "id": "앞발",
+     "kind": "box",
+     "role": "flipF",
+     "x": 7,
+     "y": 4,
+     "w": 3,
+     "h": 1,
+     "d": 4,
+     "z": 5
+    },
+    {
+     "id": "뒷발",
+     "kind": "box",
+     "role": "flipB",
+     "x": 3,
+     "y": 4,
+     "w": 3,
+     "h": 1,
+     "d": 3,
+     "z": 4.5
+    }
+   ],
+   "swim": {
+    "speed": 1.0,
+    "beat": 0.37,
+    "wag": 0.5,
+    "bend": 0,
+    "pect": 1.0,
+    "bob": 0.3,
+    "roll": 0.6
+   },
+   "says": [],
+   "variants": []
+  },
+  {
+   "id": "turtle-sundae",
+   "name": "민트 선데 거북",
+   "sci": "Chelonia mydas",
+   "sizeCm": 90,
+   "motion": "turtle",
+   "scale": 0.52,
+   "palette": {
+    "b": "#FFF0DB",
+    "s": "#A6DCC0",
+    "L": "#7FBE9D",
+    "e": "#3B2A22",
+    "c": "#FFFDF7",
+    "r": "#B8332B",
+    "t": "#4A3222"
+   },
+   "side": [
+    "...............",
+    "......cc.......",
+    ".....ccc.......",
+    "....ccccc......",
+    "..sssssssss....",
+    "..sssssssssbbbb",
+    "..sssssssssbbeb",
+    "bb.bbbbbbb.bbbb",
+    "...bbbbbbb....."
+   ],
+   "top": [
+    "..sssLsLsss....",
+    "..ssssLssss....",
+    "..LssLsLssLbbbb",
+    "bbsLLsssLLsbbbb",
+    "bbsLLsssLLsbbbb",
+    "..LssLsLssLbbbb",
+    "..ssssLssss....",
+    "..sssLsLsss...."
+   ],
+   "parts": [
+    {
+     "id": "몸",
+     "kind": "box",
+     "role": "still",
+     "x": 3,
+     "y": 7,
+     "w": 7,
+     "h": 2,
+     "d": 6,
+     "useTop": true
+    },
+    {
+     "id": "꼬리",
+     "kind": "box",
+     "role": "still",
+     "x": 0,
+     "y": 7,
+     "w": 2,
+     "h": 1,
+     "d": 2,
+     "useTop": true
+    },
+    {
+     "id": "머리",
+     "kind": "box",
+     "role": "still",
+     "x": 11,
+     "y": 5,
+     "w": 4,
+     "h": 3,
+     "d": 4,
+     "useTop": true
+    },
+    {
+     "id": "등딱지",
+     "kind": "box",
+     "role": "still",
+     "x": 2,
+     "y": 4,
+     "w": 9,
+     "h": 3,
+     "d": 8,
+     "useTop": true,
+     "opacity": 0.8,
+     "shine": 0.25
+    },
+    {
+     "id": "앞발",
+     "kind": "box",
+     "role": "flipF",
+     "x": 7,
+     "y": 8,
+     "w": 3,
+     "h": 1,
+     "d": 4,
+     "z": 5
+    },
+    {
+     "id": "뒷발",
+     "kind": "box",
+     "role": "flipB",
+     "x": 3,
+     "y": 8,
+     "w": 3,
+     "h": 1,
+     "d": 3,
+     "z": 4.5
+    },
+    {
+     "id": "크림1",
+     "kind": "box",
+     "role": "still",
+     "x": 4,
+     "y": 3,
+     "w": 5,
+     "h": 1,
+     "d": 4
+    },
+    {
+     "id": "크림2",
+     "kind": "box",
+     "role": "still",
+     "x": 5,
+     "y": 2,
+     "w": 3,
+     "h": 1,
+     "d": 4
+    },
+    {
+     "id": "크림3",
+     "kind": "box",
+     "role": "still",
+     "x": 6,
+     "y": 1,
+     "w": 2,
+     "h": 1,
+     "d": 2
+    },
+    {
+     "id": "체리",
+     "kind": "free",
+     "role": "still",
+     "shape": "box",
+     "size": [
+      1,
+      1,
+      1
+     ],
+     "pos": [
+      6.5,
+      0,
+      0
+     ],
+     "rot": [
+      0,
+      0,
+      0
+     ],
+     "color": "r"
+    },
+    {
+     "id": "꼭지1",
+     "kind": "free",
+     "role": "still",
+     "shape": "box",
+     "size": [
+      0.13,
+      0.95,
+      0.13
+     ],
+     "pos": [
+      6.61,
+      -0.456,
+      0
+     ],
+     "rot": [
+      0,
+      0,
+      -13.75
+     ],
+     "color": "t"
+    },
+    {
+     "id": "꼭지2",
+     "kind": "free",
+     "role": "still",
+     "shape": "box",
+     "size": [
+      0.11,
+      0.8,
+      0.11
+     ],
+     "pos": [
+      7.01,
+      -1.205,
+      0
+     ],
+     "rot": [
+      0,
+      0,
+      -45.3
+     ],
+     "color": "t"
+    }
+   ],
+   "swim": {
+    "speed": 1.0,
+    "beat": 0.37,
+    "wag": 0.5,
+    "bend": 0,
+    "pect": 1.0,
+    "bob": 0.3,
+    "roll": 0.6
+   },
+   "says": [],
+   "variants": []
+  }
+ ],
+ "items": [
+  {
+   "id": "cherry",
+   "name": "체리",
+   "sizeCm": 2,
+   "motion": "float",
+   "scale": 0.8,
+   "palette": {
+    "r": "#B8332B",
+    "R": "#8E231D",
+    "t": "#4A3222"
+   },
+   "side": [
+    "..t.",
+    ".t..",
+    "rrr.",
+    "rRr.",
+    "rrr."
+   ],
+   "parts": [
+    {
+     "id": "열매",
+     "kind": "box",
+     "role": "still",
+     "x": 0,
+     "y": 2,
+     "w": 3,
+     "h": 3,
+     "d": 3
+    },
+    {
+     "id": "꼭지",
+     "kind": "free",
+     "role": "still",
+     "shape": "box",
+     "size": [
+      0.25,
+      1.6,
+      0.25
+     ],
+     "pos": [
+      1.6,
+      0.8,
+      0
+     ],
+     "rot": [
+      0,
+      0,
+      -30
+     ],
+     "color": "t"
+    }
+   ],
+   "swim": {
+    "speed": 1,
+    "beat": 0.3,
+    "wag": 0,
+    "bend": 0,
+    "pect": 0,
+    "bob": 0.4,
+    "roll": 0
+   },
+   "says": []
+  },
+  {
+   "id": "coral",
+   "name": "분홍 산호",
+   "sizeCm": 20,
+   "motion": "still",
+   "scale": 0.6,
+   "palette": {
+    "p": "#F28CA8",
+    "P": "#D9678A",
+    "q": "#FFC2D2"
+   },
+   "side": [
+    ".q...q.",
+    ".p.q.p.",
+    ".pPp.p.",
+    "..pPpp.",
+    "q..pP..",
+    "p..pP..",
+    "PpppP..",
+    "..pPp..",
+    "..pPp.."
+   ],
+   "parts": [
+    {
+     "id": "줄기",
+     "kind": "box",
+     "role": "still",
+     "x": 2,
+     "y": 3,
+     "w": 3,
+     "h": 6,
+     "d": 3
+    },
+    {
+     "id": "가지1",
+     "kind": "box",
+     "role": "still",
+     "x": 1,
+     "y": 0,
+     "w": 1,
+     "h": 3,
+     "d": 1
+    },
+    {
+     "id": "가지2",
+     "kind": "box",
+     "role": "still",
+     "x": 5,
+     "y": 0,
+     "w": 1,
+     "h": 4,
+     "d": 1
+    },
+    {
+     "id": "가지3",
+     "kind": "box",
+     "role": "still",
+     "x": 0,
+     "y": 4,
+     "w": 1,
+     "h": 3,
+     "d": 1
+    },
+    {
+     "id": "가지4",
+     "kind": "box",
+     "role": "still",
+     "x": 3,
+     "y": 0,
+     "w": 1,
+     "h": 3,
+     "d": 1,
+     "z": 1
+    }
+   ],
+   "swim": {
+    "speed": 1,
+    "beat": 0.2,
+    "wag": 0,
+    "bend": 0,
+    "pect": 0,
+    "bob": 0,
+    "roll": 0
+   },
+   "says": []
+  },
+  {
+   "id": "pearl",
+   "name": "진주 조개",
+   "sizeCm": 8,
+   "motion": "spin",
+   "scale": 0.6,
+   "palette": {
+    "s": "#C9B8E8",
+    "S": "#9E8CC4",
+    "w": "#FFF8EE"
+   },
+   "side": [
+    "..SSS..",
+    ".SsssS.",
+    "SsssssS",
+    "...w...",
+    "SSSSSSS"
+   ],
+   "parts": [
+    {
+     "id": "윗껍데기",
+     "kind": "box",
+     "role": "still",
+     "x": 0,
+     "y": 0,
+     "w": 7,
+     "h": 3,
+     "d": 5
+    },
+    {
+     "id": "아랫껍데기",
+     "kind": "box",
+     "role": "still",
+     "x": 0,
+     "y": 4,
+     "w": 7,
+     "h": 1,
+     "d": 5
+    },
+    {
+     "id": "진주",
+     "kind": "free",
+     "role": "still",
+     "shape": "sphere",
+     "size": [
+      1.3,
+      1.3,
+      1.3
+     ],
+     "pos": [
+      3,
+      3,
+      0
+     ],
+     "rot": [
+      0,
+      0,
+      0
+     ],
+     "color": "w",
+     "shine": 0.6
+    }
+   ],
+   "swim": {
+    "speed": 1,
+    "beat": 0.15,
+    "wag": 0,
+    "bend": 0,
+    "pect": 0,
+    "bob": 0.2,
+    "roll": 0
+   },
+   "says": []
+  }
+ ],
+ "effects": [
+  {
+   "id": "charge-violet",
+   "name": "전기 (보라)",
+   "type": "charge",
+   "params": {
+    "color": "#4E38FF",
+    "speed": 0.055,
+    "opacity": 0.5,
+    "inflate": 0.35,
+    "flicker": 0.24,
+    "density": 26
+   }
+  },
+  {
+   "id": "charge-blue",
+   "name": "전기 (파랑)",
+   "type": "charge",
+   "params": {
+    "color": "#46A0F2",
+    "speed": 0.17,
+    "opacity": 0.6,
+    "inflate": 0.3,
+    "flicker": 0.22,
+    "density": 9
+   }
+  },
+  {
+   "id": "glow-warm",
+   "name": "따뜻한 빛",
+   "type": "glow",
+   "params": {
+    "color": "#FFB070",
+    "strength": 0.35,
+    "rate": 1.2
+   }
+  },
+  {
+   "id": "bubble-trail",
+   "name": "뽀글 거품",
+   "type": "bubbles",
+   "params": {
+    "color": "#DDF4FF",
+    "rate": 1.6,
+    "size": 0.45,
+    "rise": 3.0,
+    "life": 2.4
+   }
+  },
+  {
+   "id": "sparkle",
+   "name": "반짝이",
+   "type": "sparkle",
+   "params": {
+    "color": "#FFF1A8",
+    "count": 8,
+    "radius": 1.4,
+    "rate": 2.0,
+    "size": 0.5
+   }
+  }
+ ],
+ "reefs": [
+  {
+   "id": "voxel",
+   "name": "Voxel Reef",
+   "file": "voxel-reef.html",
+   "kind": "showcase",
+   "config": {
+    "title": "Voxel Reef",
+    "subtitle": "",
+    "radius": 52,
+    "lanes": [
+     {
+      "species": "clown",
+      "path": "loop",
+      "cx": -7,
+      "cy": 3.4,
+      "cz": 5,
+      "rx": 6.5,
+      "ry": 1.8,
+      "rz": 5.0,
+      "sp": 0.34,
+      "ph": 0.0,
+      "scale": 1,
+      "variant": 0,
+      "effects": [
+       "charge-violet"
+      ],
+      "says": []
+     },
+     {
+      "species": "clown",
+      "path": "loop",
+      "cx": 9,
+      "cy": -3.6,
+      "cz": -6,
+      "rx": 5.6,
+      "ry": 1.5,
+      "rz": 6.2,
+      "sp": 0.4,
+      "ph": 2.1,
+      "scale": 1,
+      "variant": 1,
+      "effects": [],
+      "says": []
+     },
+     {
+      "species": "clown",
+      "path": "loop",
+      "cx": -2,
+      "cy": 7.2,
+      "cz": -10,
+      "rx": 6.8,
+      "ry": 2.2,
+      "rz": 4.6,
+      "sp": 0.29,
+      "ph": 4.3,
+      "scale": 1,
+      "variant": 2,
+      "effects": [],
+      "says": []
+     },
+     {
+      "species": "tang",
+      "path": "loop",
+      "cx": 6,
+      "cy": -6.2,
+      "cz": 8,
+      "rx": 11.0,
+      "ry": 2.0,
+      "rz": 8.0,
+      "sp": 0.22,
+      "ph": 1.1,
+      "scale": 1,
+      "variant": 0,
+      "effects": [
+       "charge-violet"
+      ],
+      "says": []
+     },
+     {
+      "species": "tang",
+      "path": "loop",
+      "cx": -9,
+      "cy": 0.6,
+      "cz": -2,
+      "rx": 9.5,
+      "ry": 2.6,
+      "rz": 10.5,
+      "sp": 0.19,
+      "ph": 3.4,
+      "scale": 1,
+      "variant": 1,
+      "effects": [],
+      "says": []
+     },
+     {
+      "species": "tang",
+      "path": "loop",
+      "cx": 2,
+      "cy": -1.6,
+      "cz": 1,
+      "rx": 13.5,
+      "ry": 1.8,
+      "rz": 7.0,
+      "sp": 0.25,
+      "ph": 5.2,
+      "scale": 1,
+      "variant": 2,
+      "effects": [],
+      "says": []
+     },
+     {
+      "species": "turtle-cream",
+      "path": "loop",
+      "cx": 1,
+      "cy": -8.6,
+      "cz": 11,
+      "rx": 9.0,
+      "ry": 1.4,
+      "rz": 6.0,
+      "sp": 0.13,
+      "ph": 0.7,
+      "scale": 1,
+      "variant": 0,
+      "effects": [],
+      "says": []
+     },
+     {
+      "species": "turtle-lime",
+      "path": "loop",
+      "cx": -4,
+      "cy": 9.0,
+      "cz": -12,
+      "rx": 8.0,
+      "ry": 1.2,
+      "rz": 7.0,
+      "sp": 0.11,
+      "ph": 3.9,
+      "scale": 1,
+      "variant": 0,
+      "effects": [],
+      "says": []
+     },
+     {
+      "species": "turtle-sundae",
+      "path": "loop",
+      "cx": -14,
+      "cy": -2.6,
+      "cz": 5,
+      "rx": 6.0,
+      "ry": 1.3,
+      "rz": 7.0,
+      "sp": 0.12,
+      "ph": 2.2,
+      "scale": 1,
+      "variant": 0,
+      "effects": [],
+      "says": []
+     }
+    ],
+    "props": [],
+    "sliders": [
+     "swim",
+     "flap"
+    ],
+    "talk": {
+     "tap": true,
+     "auto": 9
+    }
+   }
+  },
+  {
+   "id": "charged",
+   "name": "Charged Reef",
+   "file": "charged-reef.html",
+   "kind": "showcase",
+   "config": {
+    "title": "Charged Reef",
+    "subtitle": "",
+    "radius": 46,
+    "lanes": [
+     {
+      "species": "clown",
+      "path": "loop",
+      "cx": -7,
+      "cy": 3.4,
+      "cz": 5,
+      "rx": 6.5,
+      "ry": 1.8,
+      "rz": 5.0,
+      "sp": 0.34,
+      "ph": 0.0,
+      "scale": 1,
+      "variant": 0,
+      "effects": [
+       "charge-blue"
+      ],
+      "says": []
+     },
+     {
+      "species": "clown",
+      "path": "loop",
+      "cx": 9,
+      "cy": -3.6,
+      "cz": -6,
+      "rx": 5.6,
+      "ry": 1.5,
+      "rz": 6.2,
+      "sp": 0.4,
+      "ph": 2.1,
+      "scale": 1,
+      "variant": 0,
+      "effects": [],
+      "says": []
+     },
+     {
+      "species": "clown",
+      "path": "loop",
+      "cx": -2,
+      "cy": 7.2,
+      "cz": -10,
+      "rx": 6.8,
+      "ry": 2.2,
+      "rz": 4.6,
+      "sp": 0.29,
+      "ph": 4.3,
+      "scale": 1,
+      "variant": 0,
+      "effects": [],
+      "says": []
+     },
+     {
+      "species": "tang",
+      "path": "loop",
+      "cx": 6,
+      "cy": -6.2,
+      "cz": 8,
+      "rx": 11.0,
+      "ry": 2.0,
+      "rz": 8.0,
+      "sp": 0.22,
+      "ph": 1.1,
+      "scale": 1,
+      "variant": 0,
+      "effects": [
+       "charge-blue"
+      ],
+      "says": []
+     },
+     {
+      "species": "tang",
+      "path": "loop",
+      "cx": -9,
+      "cy": 0.6,
+      "cz": -2,
+      "rx": 9.5,
+      "ry": 2.6,
+      "rz": 10.5,
+      "sp": 0.19,
+      "ph": 3.4,
+      "scale": 1,
+      "variant": 0,
+      "effects": [],
+      "says": []
+     },
+     {
+      "species": "tang",
+      "path": "loop",
+      "cx": 2,
+      "cy": -1.6,
+      "cz": 1,
+      "rx": 13.5,
+      "ry": 1.8,
+      "rz": 7.0,
+      "sp": 0.25,
+      "ph": 5.2,
+      "scale": 1,
+      "variant": 0,
+      "effects": [],
+      "says": []
+     }
+    ],
+    "props": [],
+    "sliders": [
+     "swim",
+     "flap",
+     "charge"
+    ],
+    "talk": {
+     "tap": true,
+     "auto": 0
+    }
+   }
+  },
+  {
+   "id": "console",
+   "name": "Reef Console",
+   "file": "reef-console.html",
+   "kind": "console",
+   "config": {
+    "swimmers": [
+     {
+      "species": "turtle-cream",
+      "cx": 0,
+      "cz": 0,
+      "rx": 11,
+      "rz": 8,
+      "h": 9,
+      "sp": 0.13,
+      "ph": 0.7,
+      "sc": 1.0,
+      "say": [
+       "Morning.",
+       "This card is warm. I approve.",
+       "Do not pick me up."
+      ]
+     },
+     {
+      "species": "turtle-lime",
+      "cx": 4,
+      "cz": 3,
+      "rx": 8,
+      "rz": 10,
+      "h": 15,
+      "sp": 0.11,
+      "ph": 3.9,
+      "sc": 0.9,
+      "say": [
+       "Slow is a strategy.",
+       "I have been swimming since Tuesday."
+      ]
+     },
+     {
+      "species": "turtle-sundae",
+      "cx": -4,
+      "cz": -2,
+      "rx": 9,
+      "rz": 7,
+      "h": 21,
+      "sp": 0.12,
+      "ph": 2.2,
+      "sc": 0.95,
+      "say": [
+       "Yes, the cherry is structural.",
+       "Dessert has feelings too."
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "id": "marker",
+   "name": "Reef Marker Test",
+   "file": "marker-test.html",
+   "kind": "marker",
+   "config": {
+    "fishTotal": 18,
+    "mix": [
+     "clown",
+     "tang"
+    ],
+    "shells": [
+     22,
+     36,
+     52,
+     72
+    ],
+    "chargeEvery": 6,
+    "chargeEffect": "charge-violet",
+    "markerSepCm": 50,
+    "fovDeg": 62,
+    "drop": 14
+   }
+  }
+ ]
+}
