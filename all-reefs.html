@@ -2407,57 +2407,6 @@ function openCode(name, fallback){
 }
 
 /* ───────── 전체 파일 모으기 / zip ───────── */
-const README = `# All Reefs
-
-물고기·아이템·이펙트·말풍선을 reef-data.json 한 파일로 관리하고, 같은 폴더의 모든 reef 페이지가 그 파일을 읽어요.
-
-## 파일
-- all-reefs.html — 관리 앱 (여기서 고치고 "깃허브에 올리기")
-- reef-data.json — 물고기 목록과 각 reef 설정 (모든 페이지가 읽는 한 곳)
-- reef-kit.js — 도트를 3D로 만들고 헤엄치게 하는 공용 코드
-- voxel-reef.html, charged-reef.html — 전시형 reef
-- reef-console.html — QR 카드 / scenes.json 만드는 콘솔
-- marker-test.html — 벽에 붙인 4cm 형광 큐브 마커 AR 테스트 (#preview = 카메라 없이 미리보기, #sim = 가짜 카메라로 인식 시험)
-
-## 올리는 법
-1. 이 파일들을 viewer.html이 있는 레포 폴더에 그대로 올려요.
-2. 깃허브 페이지 주소/all-reefs.html 을 열고, 깃허브 메뉴에서 레포와 토큰(Contents: Read and write)을 넣어요.
-3. 물고기를 고친 뒤 "깃허브에 올리기"를 누르면 1분쯤 뒤 모든 reef가 바뀌어요. 열려 있는 reef 페이지도 30초마다 확인해서 스스로 바뀌어요.
-
-## viewer.html
-viewer.html은 아직 예전 거북 코드를 쓰고 있어요. VIEWER-SETUP.md를 보고 몇 줄만 바꾸면 여기 물고기를 그대로 보여줘요.
-`;
-const VIEWER_NOTE = `# viewer.html을 All Reefs에 연결하기
-
-scenes.json에는 이제 turtles(예전 모양)와 swimmers(새 모양)가 같이 들어가요. 그래서 viewer.html을 안 고쳐도 예전처럼 거북 3종은 나와요.
-All Reefs의 물고기를 쓰려면 아래 네 군데만 바꾸면 돼요.
-
-1. three.js 스크립트 바로 뒤에 한 줄 추가
-   <script src="reef-kit.js"><\/script>
-
-2. 시작할 때 데이터 읽기
-   var kit = ReefKit(THREE), reefData = null;
-   kit.loadData().then(function(d){ reefData = d; kit.applyStyle(d.style); /* 여기서 장면 만들기 */ });
-
-3. 거북 만드는 부분 (buildTurtle(MORPHS[t.morph]) 같은 곳)을 이렇게
-   var list = scene.swimmers || scene.turtles;
-   var ids = ['turtle-cream', 'turtle-lime', 'turtle-sundae'];
-   var m = kit.find(reefData, t.species || ids[t.morph % 3]);
-   var obj = kit.build(m, { scale: (0.30 / 0.52) * (t.sc || 1), phase: t.ph });
-   obj.userData.lane = { say: t.say };
-
-4. 매 프레임 움직이는 곳에서 발 움직임 코드 대신
-   kit.tick(time);
-   kit.animate(obj, time);
-   (위치와 방향은 지금 쓰는 place() 그대로 두면 돼요)
-
-말풍선을 All Reefs 스타일로 바꾸고 싶으면:
-   var talk = kit.Talk(화면을_감싼_div, camera, reefData.style);
-   더블탭한 물고기에게  talk.say(obj, kit.nextLine(obj));
-   매 프레임  talk.update();
-
-viewer.html 파일을 대화창에 올려 주면 이 연결을 대신 해 줄 수 있어요.
-`;
 async function bundleFiles(){
   const files = {}, miss = [];
   for (const n of ['all-reefs.html', 'reef-kit.js']){
@@ -2468,8 +2417,6 @@ async function bundleFiles(){
     if (!KIND_INFO[r.kind]) continue;
     try { files[r.file] = await reefFileText(r); } catch(e){ miss.push(r.file); }
   }
-  files['README.md'] = README;
-  files['VIEWER-SETUP.md'] = VIEWER_NOTE;
   if (miss.length) throw new Error('같은 폴더에서 이 파일을 못 찾았어요: ' + miss.join(', '));
   return files;
 }
