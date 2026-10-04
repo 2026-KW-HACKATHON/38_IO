@@ -21,7 +21,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 #desk{position:fixed;inset:0}
 
 /* 왼쪽 위 안내 글: XP 노란 말풍선 모양 */
-#hint{position:fixed;left:10px;top:calc(10px + env(safe-area-inset-top,0px));z-index:9000;margin:0;
+#hint{position:fixed;right:10px;bottom:10px;z-index:9000;margin:0;
   font-size:11px;color:#000;background:#ffffe1;border:1px solid #000;border-radius:3px;box-shadow:2px 2px 2px rgba(0,0,0,.25);
   pointer-events:none;padding:4px 8px;max-width:calc(100vw - 40px);box-sizing:border-box}
 
@@ -114,8 +114,9 @@ button{font:inherit;color:inherit;cursor:pointer}
   clip-path:polygon(0 0,100% 0,0 100%);z-index:1}
 @keyframes pop{from{opacity:0}to{opacity:1}}
 
-/* 아이콘 줄: 컴퓨터는 오른쪽 아래 바탕화면 아이콘, 모바일은 아래쪽 XP 작업 표시줄 */
-#dock{position:fixed;z-index:9000;display:flex;gap:6px;right:16px;bottom:calc(14px + env(safe-area-inset-bottom,0px))}
+/* 아이콘 줄: 컴퓨터는 왼쪽 위부터 아래로 늘어선 바탕화면 아이콘 (창보다 뒤), 모바일은 아래쪽 XP 작업 표시줄 */
+#dock{position:fixed;z-index:1;display:flex;flex-direction:column;flex-wrap:wrap;align-content:flex-start;gap:10px;
+  left:6px;top:calc(8px + env(safe-area-inset-top,0px));max-height:calc(100vh - 16px)}
 .dk{appearance:none;background:transparent;border:0;padding:4px;width:84px;display:flex;flex-direction:column;align-items:center;gap:4px}
 .dk .ic{height:48px;display:flex;align-items:center;justify-content:center}
 .dk .ic img{width:48px;height:48px;display:block;image-rendering:pixelated}   /* 48픽셀 아이콘을 도트 그대로 */
@@ -124,7 +125,8 @@ button{font:inherit;color:inherit;cursor:pointer}
 .dk:hover .nm,.dk:focus-visible .nm{background:#316ac5}
 .dk:active .ic{filter:brightness(.8) sepia(1) hue-rotate(180deg) saturate(3)}
 @media (max-width:700px){
-  #dock{left:0;right:0;bottom:0;gap:0;justify-content:space-around;padding:4px 4px calc(4px + env(safe-area-inset-bottom,0px));
+  #hint{right:auto;bottom:auto;left:10px;top:calc(10px + env(safe-area-inset-top,0px))}
+  #dock{z-index:9000;flex-direction:row;flex-wrap:nowrap;top:auto;max-height:none;left:0;right:0;bottom:0;gap:0;justify-content:space-around;padding:4px 4px calc(4px + env(safe-area-inset-bottom,0px));
     background:linear-gradient(180deg,#1f2f86 0,#3165c4 3%,#3682e5 6%,#4490e6 10%,#3883e5 12%,#2b71e0 15%,#2663da 18%,#235bd6 20%,
       #2258d5 23%,#2157d6 38%,#245ddb 54%,#2562df 86%,#245fdc 89%,#2158d4 92%,#1d4ec0 95%,#1941a5 98%)}
   .dk{width:auto;flex:1;min-width:0;padding:2px;border-radius:3px}
@@ -358,7 +360,7 @@ button{font:inherit;color:inherit;cursor:pointer}
       var x, y;
       if (pos) { x = pos[0]; y = pos[1]; }
       else if (narrow) { x = 10 + i * 14; y = 56 + i * 48; }
-      else { x = def.at[0] * window.innerWidth; y = def.at[1] * window.innerHeight; }
+      else { var gap = dock.offsetWidth + 16; x = gap + def.at[0] * (window.innerWidth - gap); y = def.at[1] * window.innerHeight; }
       place(e, x, y);
     });
   }
