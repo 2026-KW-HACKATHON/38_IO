@@ -18,7 +18,8 @@ html,body{height:100%;margin:0;overflow:hidden}
 body{background:#3cc3cf url("assets/space/xp/bg.jpg") center/cover no-repeat;color:#000;font-family:var(--ui);font-size:12px;
   -webkit-font-smoothing:antialiased}
 button{font:inherit;color:inherit;cursor:pointer}
-#desk{position:fixed;inset:0}
+#desk{position:fixed;inset:0;z-index:2;pointer-events:none}   /* 창들은 바탕화면 아이콘보다 앞, 빈 곳은 아이콘을 누를 수 있게 통과 */
+.win{pointer-events:auto}
 
 /* 왼쪽 위 안내 글: XP 노란 말풍선 모양 */
 #hint{position:fixed;right:10px;bottom:10px;z-index:9000;margin:0;
@@ -167,7 +168,7 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
 
   /* ── 만들 창 목록 (위에서부터 순서대로 쌓임, 마지막이 맨 앞) ── */
   var WINDOWS = [
-    { id: 'fish',    title: '나의 어항',   kind: 'reef',    page: 'marker-test.html#preview-space', icon: "assets/space/xp/icon-fish.png",   at: [0.03, 0.37] },
+    { id: 'fish',    title: '나의 어항',   kind: 'reef',    page: 'ppt-reef.html', icon: "assets/space/xp/icon-fish.png",   at: [0.03, 0.37] },
     { id: 'map',     title: '월계 지도', kind: 'map',     icon: "assets/space/xp/icon-map.png",    at: [0.29, 0.06] },
     { id: 'friends', title: '친구 관리',   kind: 'friends', icon: "assets/space/xp/icon-friends.png", at: [0.72, 0.10] },
     { id: 'stock',   title: '재고 관리',   kind: 'picture', img: "assets/space/stock.webp", cover: true, icon: "assets/space/xp/icon-stock.png", at: [0.07, 0.62] },
