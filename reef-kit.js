@@ -90,6 +90,8 @@
         if (p.paint && !Array.isArray(p.paint)) delete p.paint;
         if (p.paint) p.paint = p.paint.map(function (r) { return pad(r, p.w); }).slice(0, p.h);
         if (p.paint) while (p.paint.length < p.h) p.paint.push(pad('', p.w));
+        // 칠한 칸이 하나도 없는 부위 도트는 없는 것으로 (옆모습을 따라감)
+        if (p.paint && !p.paint.join('').replace(/[.\s]/g, '')) delete p.paint;
       }
       return p;
     }
