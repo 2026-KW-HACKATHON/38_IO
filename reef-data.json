@@ -1,6 +1,6 @@
 {
  "v": 1,
- "updated": "2026-10-04T16:05:17.581Z",
+ "updated": "2026-10-04T16:05:28.625Z",
  "style": {
   "font": {
    "family": "\"DotGothic16\", \"Jua\", system-ui, sans-serif",
@@ -3456,7 +3456,7 @@
    "file": "marker-test.html",
    "kind": "marker",
    "config": {
-    "fishTotal": 18,
+    "fishTotal": 10,
     "mix": [
      "deep-anglerfish"
     ],
