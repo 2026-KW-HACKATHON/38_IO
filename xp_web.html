@@ -97,9 +97,9 @@ button{font:inherit;color:inherit;cursor:pointer}
 .me{position:relative;width:0;height:0}   /* 별과 말풍선을 내 위치 한 점에 붙이는 틀 */
 .me .pbubble{left:-17px;bottom:24px}
 .mebtn{position:absolute;left:6px;top:6px;z-index:1;min-width:0}   /* 내 위치로 가는 단추 */
-/* 별: 한 칸씩 위아래로 흔들리고 주변에 노란 빛 */
-.star{position:absolute;width:26px;height:26px;transform:translate(-50%,-50%);image-rendering:pixelated;cursor:pointer;z-index:1;
-  filter:drop-shadow(0 0 3px rgba(255,214,64,.95)) drop-shadow(0 0 7px rgba(255,200,40,.55));
+/* 별: 위아래로 살짝 흔들리고 주변에 노란 빛 */
+.star{position:absolute;width:30px;height:30px;transform:translate(-50%,-50%);cursor:pointer;z-index:1;
+  filter:drop-shadow(1px 2px 2px rgba(0,0,0,.35)) drop-shadow(0 0 5px rgba(255,214,64,.7));
   animation:starBob 1.4s steps(1) infinite}
 @keyframes starBob{0%{transform:translate(-50%,-50%)}25%{transform:translate(-50%,calc(-50% - 2px))}
   50%{transform:translate(-50%,calc(-50% - 4px))}75%{transform:translate(-50%,calc(-50% - 2px))}}
@@ -118,7 +118,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 #dock{position:fixed;z-index:9000;display:flex;gap:6px;right:16px;bottom:calc(14px + env(safe-area-inset-bottom,0px))}
 .dk{appearance:none;background:transparent;border:0;padding:4px;width:84px;display:flex;flex-direction:column;align-items:center;gap:4px}
 .dk .ic{height:64px;display:flex;align-items:center;justify-content:center}
-.dk .ic img{width:64px;height:64px;object-fit:contain;display:block;image-rendering:pixelated}
+.dk .ic img{width:56px;height:56px;object-fit:contain;display:block}
 /* 바탕화면 아이콘 이름: 흰 글씨 + 그림자, 고르면 파란 칸 */
 .dk .nm{font-size:11px;line-height:1.3;color:#fff;text-align:center;padding:0 2px;text-shadow:1px 1px 1px #000}
 .dk:hover .nm,.dk:focus-visible .nm{background:#316ac5}
@@ -153,12 +153,12 @@ button{font:inherit;color:inherit;cursor:pointer}
 
   /* ── 만들 창 목록 (위에서부터 순서대로 쌓임, 마지막이 맨 앞) ── */
   var WINDOWS = [
-    { id: 'fish',    title: '나의 어항',   kind: 'reef',    page: 'marker-test.html#preview-space', icon: "assets/space/aero/icon-fish.png",   at: [0.03, 0.37] },
-    { id: 'map',     title: '월계 지도', kind: 'map',     icon: "assets/space/aero/icon-map.png",    at: [0.29, 0.06] },
-    { id: 'friends', title: '친구 관리',   kind: 'friends', icon: "assets/space/aero/icon-friends.png", at: [0.72, 0.10] },
-    { id: 'stock',   title: '재고 관리',   kind: 'picture', img: "assets/space/stock.webp", cover: true, icon: "assets/space/aero/icon-stock.png", at: [0.07, 0.62] },
-    { id: 'review',  title: '리뷰 관리',   kind: 'reef',    page: 'cord-jr-reef.html',        icon: "assets/space/aero/icon-review.png", at: [0.36, 0.60] },
-    { id: 'gift',    title: '선물 코드',   kind: 'gift',    icon: "assets/space/aero/icon-gift.png",    at: [0.72, 0.52] }
+    { id: 'fish',    title: '나의 어항',   kind: 'reef',    page: 'marker-test.html#preview-space', icon: "assets/space/xp/icon-fish.png",   at: [0.03, 0.37] },
+    { id: 'map',     title: '월계 지도', kind: 'map',     icon: "assets/space/xp/icon-map.png",    at: [0.29, 0.06] },
+    { id: 'friends', title: '친구 관리',   kind: 'friends', icon: "assets/space/xp/icon-friends.png", at: [0.72, 0.10] },
+    { id: 'stock',   title: '재고 관리',   kind: 'picture', img: "assets/space/stock.webp", cover: true, icon: "assets/space/xp/icon-stock.png", at: [0.07, 0.62] },
+    { id: 'review',  title: '리뷰 관리',   kind: 'reef',    page: 'cord-jr-reef.html',        icon: "assets/space/xp/icon-review.png", at: [0.36, 0.60] },
+    { id: 'gift',    title: '선물 코드',   kind: 'gift',    icon: "assets/space/xp/icon-gift.png",    at: [0.72, 0.52] }
   ];
 
   var wins = [];       // 화면에 있는 창들
@@ -271,7 +271,7 @@ button{font:inherit;color:inherit;cursor:pointer}
   /* ── 내 위치: 위치 권한을 물어보고, 지금 있는 곳에 별을 붙여 따라다니게 함 ── */
   function watchMe(map, body) {
     var wrap = document.createElement('div'); wrap.className = 'me';
-    var star = document.createElement('img'); star.className = 'star'; star.src = "assets/space/aero/star.png"; star.alt = '내 위치';
+    var star = document.createElement('img'); star.className = 'star'; star.src = "assets/space/xp/star.png"; star.alt = '내 위치';
     star.draggable = false; wrap.appendChild(star);
     var over = new kakao.maps.CustomOverlay({ content: wrap, xAnchor: 0, yAnchor: 0, zIndex: 3 });
     var here = null, timer = null;
@@ -378,7 +378,7 @@ button{font:inherit;color:inherit;cursor:pointer}
   function makeDock() {
     // 나의 계정: 아이콘만 먼저 있음 (창은 나중에 만들 예정)
     var acc = document.createElement('button'); acc.type = 'button'; acc.className = 'dk'; acc.title = '나의 계정 (준비 중)';
-    acc.innerHTML = '<span class="ic"><img src="' + "assets/space/aero/icon-account.png" + '" alt="" draggable="false"></span><span class="nm">나의 계정</span>';
+    acc.innerHTML = '<span class="ic"><img src="' + "assets/space/xp/icon-account.png" + '" alt="" draggable="false"></span><span class="nm">나의 계정</span>';
     dock.appendChild(acc);
     WINDOWS.forEach(function (def, i) {
       var b = document.createElement('button'); b.type = 'button'; b.className = 'dk'; b.title = def.title;
