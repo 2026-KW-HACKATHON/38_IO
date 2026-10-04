@@ -2440,13 +2440,19 @@ async function boot(){
   let local = null;
   try { local = JSON.parse(localStorage.getItem('allreefs.data') || 'null'); } catch(e){}
   try { fileData = await kit.loadData(); } catch(e){ fileData = null; }
-  D = kit.normalize(local || fileData || { species: [], items: [], effects: [], reefs: [] });
+  // 레포 파일이 브라우저 작업본보다 새것이면 레포 파일을 엶
+  const repoNewer = !!(local && fileData && fileData.updated && String(fileData.updated) > String(local.updated || ''));
+  D = kit.normalize(repoNewer ? fileData : (local || fileData || { species: [], items: [], effects: [], reefs: [] }));
   kit.applyStyle(D.style);
   setSaved('ok'); drawLogo(); render();
+  if (repoNewer) saveNow();
   if (local && fileData && fileData.updated && local.updated !== fileData.updated && !IN_CLAUDE){
+    const other = repoNewer ? local : fileData;
     const n = document.createElement('div'); n.className = 'note'; n.style.marginBottom = '12px';
-    n.innerHTML = '이 브라우저에 저장된 작업본을 열었어요. 레포의 reef-data.json과 달라요. <button class="btn small" type="button">레포 버전으로 바꾸기</button>';
-    $('button', n).addEventListener('click', () => { snapshot(true); D = kit.normalize(fileData); changed(true); render(); n.remove(); });
+    n.innerHTML = repoNewer
+      ? '레포의 reef-data.json이 더 새것이라 그걸 열었어요. <button class="btn small" type="button">브라우저 작업본으로 되돌리기</button>'
+      : '이 브라우저에 저장된 작업본을 열었어요. 레포의 reef-data.json과 달라요. <button class="btn small" type="button">레포 버전으로 바꾸기</button>';
+    $('button', n).addEventListener('click', () => { snapshot(true); D = kit.normalize(other); changed(true); render(); n.remove(); });
     main.prepend(n);
   }
   if (!IN_CLAUDE) return;
