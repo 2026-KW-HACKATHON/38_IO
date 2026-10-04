@@ -1,6 +1,6 @@
 {
  "v": 1,
- "updated": "2026-10-04T19:13:44.332Z",
+ "updated": "2026-10-04T19:23:15.074Z",
  "style": {
   "font": {
    "family": "\"Galmuri11\", \"DotGothic16\", \"Jua\", sans-serif",
@@ -64,9 +64,9 @@
    },
    "side": [
     "..aed....cba...",
-    ".baadf..cbaa...",
+    ".baadf..cbak...",
     "llbaedf.kjihg..",
-    ".llbaeokoknjinm",
+    ".llbaeokoknjimk",
     "..lbaennooknjko",
     "llbaedf.okokk..",
     ".baaef..kokok..",
@@ -391,9 +391,9 @@
     "...........a...",
     "...........a...",
     "...bpm.cabaa...",
-    "q..bkkjfecdbB..",
-    "rstacmlefbga...",
-    "rrubaonihaaa...",
+    "qh.bkkjfecgbB..",
+    "qstacmlefbha...",
+    ".rubaonihaaa...",
     "tq.canoaabbc..B",
     ".......jvjiyzyA",
     ".......jijvzAzy",
@@ -1535,7 +1535,7 @@
        "(:):(",
        "aecea",
        "eaeae",
-       "jeaej",
+       "j1a1j",
        "a[[[a"
       ],
       "bottom": [
@@ -2282,7 +2282,7 @@
    "scale": 0.55,
    "palette": {
     "a": "#150917",
-    "b": "#D1B900",
+    "b": "#f0e219",
     "c": "#D5C000",
     "d": "#D9C400",
     "e": "#D7C100",
@@ -2305,8 +2305,8 @@
     "v": "#573B5B",
     "w": "#5A3E5E",
     "y": "#F8D600",
-    "z": "#7779B5",
-    "A": "#6D71B3",
+    "z": "#adceff",
+    "A": "#cdd1f4",
     "B": "#666CB2",
     "C": "#6D72B3",
     "D": "#6D71B4",
@@ -2317,7 +2317,7 @@
     "I": "#F7DF00",
     "J": "#F9E300",
     "K": "#F3DD00",
-    "L": "#3F2545",
+    "L": "#262528",
     "M": "#402647",
     "N": "#442A4B",
     "O": "#44274B",
@@ -2334,12 +2334,12 @@
     "............",
     "............",
     "............",
-    "BAzdedcba...",
-    ".BCjihgaf...",
-    ".BAnnmalk...",
-    "BADiqgfpo...",
-    "..Ennmtsrrrr",
-    "...yeewvu..."
+    "zzzbbbbbL...",
+    ".zzbbbbLL...",
+    "..zbbbLLL...",
+    ".zzbbbApL...",
+    "..zbbbAAAAAA",
+    "...bbbAAA..."
    ],
    "parts": [
     {
@@ -2516,7 +2516,15 @@
     }
    ],
    "effects": [],
-   "grain": 0.08
+   "grain": 0.08,
+   "top": [
+    "............",
+    "............",
+    ".........LLL",
+    "............",
+    "............",
+    "............"
+   ]
   },
   {
    "id": "turtle-cream",
