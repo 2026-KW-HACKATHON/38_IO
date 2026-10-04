@@ -1,6 +1,6 @@
 {
  "v": 1,
- "updated": "2026-10-04T16:20:23.000Z",
+ "updated": "2026-10-04T19:13:44.332Z",
  "style": {
   "font": {
    "family": "\"Galmuri11\", \"DotGothic16\", \"Jua\", sans-serif",
@@ -1675,8 +1675,8 @@
    "motion": "fish",
    "scale": 0.5,
    "palette": {
-    "a": "#9C0109",
-    "b": "#AC000D",
+    "a": "#316068",
+    "b": "#28526c",
     "c": "#AF000F",
     "d": "#A2000B",
     "e": "#A10005",
@@ -1727,14 +1727,14 @@
    },
    "side": [
     "...st...A.Q....",
-    "..usvv..EsRQ...",
-    ".wwyzzA.QSTU...",
-    "..ABCCsabcbddef",
-    ".BDEFGugachiijk",
-    "..HIAJHlmnokpqr",
-    ".KLMNNO.RwVWUy.",
-    "..NNwP..Q.Yu.E.",
-    "...QR........y."
+    "..usvv..bsbQ...",
+    ".wwbzbA.bbbb...",
+    "..ABbbbbbbbbbbb",
+    ".BDqqqbbbbbhujb",
+    "..HIbbbbbbbbubb",
+    ".KLbNbO.bwbbUb.",
+    "..NNwP..Q.Yu.b.",
+    "...QR........a."
    ],
    "parts": [
     {
@@ -1813,9 +1813,9 @@
      ],
      "faces": {
       "front": [
-       "ff",
-       "ff",
-       "rr"
+       "aa",
+       "aa",
+       "aa"
       ],
       "back": [
        "rr",
@@ -1946,7 +1946,16 @@
      "v": 1
     }
    ],
-   "effects": []
+   "effects": [],
+   "grain": 0.08,
+   "top": [
+    "...............",
+    "...............",
+    ".............aa",
+    ".............aa",
+    "...............",
+    "..............."
+   ]
   },
   {
    "id": "clownfish",
@@ -2123,11 +2132,12 @@
    "top": [
     "........",
     "........",
-    "........",
-    "........",
+    "..r..r..",
+    "..r..r..",
     "........",
     "........"
-   ]
+   ],
+   "grain": 0.08
   },
   {
    "id": "blue-tang",
@@ -2260,7 +2270,8 @@
     "...........",
     "...........",
     "..........."
-   ]
+   ],
+   "grain": 0.08
   },
   {
    "id": "butterflyfish",
@@ -2381,12 +2392,12 @@
      "d": 2,
      "faces": {
       "front": [
-       "LL",
-       "MM",
+       "ff",
+       "ff",
        "ff",
        "NN",
        "OP",
-       "QR"
+       "QP"
       ],
       "top": [
        "eS",
@@ -2504,7 +2515,8 @@
      "v": 1
     }
    ],
-   "effects": []
+   "effects": [],
+   "grain": 0.08
   },
   {
    "id": "turtle-cream",
