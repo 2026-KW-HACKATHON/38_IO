@@ -4,79 +4,99 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>나의 공간</title>
-<style>@font-face{font-family:"Galmuri11";src:url("assets/fonts/Galmuri11.woff2") format("woff2");font-weight:400}@font-face{font-family:"Galmuri11";src:url("assets/fonts/Galmuri11-Bold.woff2") format("woff2");font-weight:700}
-/* 나의 공간: 물 배경 위에 옛날 컴퓨터 창이 떠 있는 화면 */
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@400;700&display=swap">
+<style>
+/* 나의 공간: 물 배경 위에 윈도우 XP(파란 테마) 창이 떠 있는 화면
+   창 테두리 · 제목줄 · 단추 그림 · 색은 XP.css(MIT)의 값을 그대로 따름 */
 :root{
-  --line:#8b8b8b;        /* 테두리 회색 */
-  --gray:#D2D2D4;        /* 창 바탕 회색 (조금 밝게) */
-  --gray-2:#E4E4E6;      /* 더 밝은 회색 */
-  --title:linear-gradient(90deg,#4A43E2,#32A4FD);   /* 제목줄 색 */
-  --shadow:rgba(70,80,100,.4);
+  --surface:#ece9d8;     /* XP 창 바탕색 */
+  --ui:Tahoma,"굴림",Gulim,"Nanum Gothic","Apple SD Gothic Neo",sans-serif;   /* 영문은 Tahoma, 한글은 굴림 (없으면 나눔고딕) */
+  --cap:"Trebuchet MS","굴림",Gulim,"Nanum Gothic",sans-serif;               /* 제목줄 글씨 */
 }
 html,body{height:100%;margin:0;overflow:hidden}
-body{background:#8CCFD8 url("assets/space/aero/bg.jpg") center/cover no-repeat;color:#1c2438;font-family:"Galmuri11",monospace}
+body{background:#5a7edc url("assets/space/aero/bg.jpg") center/cover no-repeat;color:#000;font-family:var(--ui);font-size:12px;
+  -webkit-font-smoothing:antialiased}
 button{font:inherit;color:inherit;cursor:pointer}
 #desk{position:fixed;inset:0}
 
+/* 왼쪽 위 안내 글: XP 노란 말풍선 모양 */
+#hint{position:fixed;left:10px;top:calc(10px + env(safe-area-inset-top,0px));z-index:9000;margin:0;
+  font-size:11px;color:#000;background:#ffffe1;border:1px solid #000;border-radius:3px;box-shadow:2px 2px 2px rgba(0,0,0,.25);
+  pointer-events:none;padding:4px 8px;max-width:calc(100vw - 40px);box-sizing:border-box}
 
-/* 위쪽 버튼과 안내 글: 회색 판 위에 글씨를 올림 */
-#back{position:fixed;left:10px;top:calc(10px + env(safe-area-inset-top,0px));z-index:9000;
-  background:var(--gray);color:#1c2438;border:2px solid var(--line);box-shadow:inset 1px 1px 0 #fff,3px 3px 0 var(--shadow);
-  padding:5px 10px;font-size:13px;text-decoration:none}
-#hint{position:fixed;left:130px;top:calc(10px + env(safe-area-inset-top,0px));z-index:9000;margin:0;text-align:left;
-  font-size:12px;color:#3b3b40;background:var(--gray);border:2px solid var(--line);box-shadow:inset 1px 1px 0 #fff,3px 3px 0 var(--shadow);
-  pointer-events:none;padding:6px 10px;max-width:calc(100vw - 150px);box-sizing:border-box}
-
-/* 창 */
-.win{position:absolute;background:var(--gray);border:2px solid var(--line);box-shadow:inset 1px 1px 0 #fff,5px 5px 0 var(--shadow);
+/* 창: 파란 테두리 3줄 + 위쪽만 둥근 모서리 */
+.win{position:absolute;background:var(--surface);border-radius:8px 8px 0 0;padding:0 0 3px;
+  box-shadow:inset -1px -1px #00138c,inset 1px 1px #0831d9,inset -2px -2px #001ea0,inset 2px 2px #166aee,
+    inset -3px -3px #003bda,inset 3px 3px #0855dd,2px 3px 8px rgba(0,0,0,.35);
   -webkit-user-select:none;user-select:none}
-.win.slide{transition:left .25s steps(6),top .25s steps(6)}
-.win .bar{height:28px;background:var(--title);display:flex;align-items:center;
-  gap:3px;padding:0 4px 0 8px;cursor:move;touch-action:none;margin:2px 2px 0}
-.win .ttl{flex:1;text-align:left;font-size:13px;font-weight:700;color:#fff;
+.win.slide{transition:left .2s ease-out,top .2s ease-out}
+.win .bar{height:21px;display:flex;align-items:center;justify-content:space-between;gap:2px;padding:3px 5px 3px 3px;
+  background:linear-gradient(180deg,#0997ff 0%,#0053ee 8%,#0050ee 40%,#0066ff 88%,#0066ff 93%,#005bff 95%,#003dd7 96%,#003dd7 100%);
+  border-top:1px solid #0831d9;border-left:1px solid #0831d9;border-right:1px solid #001ea0;border-radius:8px 7px 0 0;
+  cursor:move;touch-action:none}
+.win .ttl{flex:1;padding-left:3px;font-family:var(--cap);font-size:13px;font-weight:700;color:#fff;text-shadow:1px 1px #0f1089;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.win .btn{width:18px;height:18px;border:2px solid var(--line);background:var(--gray);box-shadow:inset 1px 1px 0 #fff;display:flex;align-items:center;
-  justify-content:center;font-size:11px;line-height:1;color:#3b3b40;cursor:default}
-.win .body{position:relative;margin:4px;border:2px solid var(--line);background:#fff;overflow:hidden;box-shadow:inset 1px 1px 0 #6f6f73}
+/* 제목줄 단추: 최소화 · 최대화 · 닫기 (누르거나 올리면 그림이 바뀜) */
+.win .btn{flex:none;width:21px;height:21px;margin-left:2px;background:center/21px 21px no-repeat;cursor:default}
+.win .btn.min{background-image:url("assets/space/xp/minimize.svg")}
+.win .btn.min:hover{background-image:url("assets/space/xp/minimize-hover.svg")}
+.win .btn.min:active{background-image:url("assets/space/xp/minimize-active.svg")}
+.win .btn.max{background-image:url("assets/space/xp/maximize.svg")}
+.win .btn.max:hover{background-image:url("assets/space/xp/maximize-hover.svg")}
+.win .btn.max:active{background-image:url("assets/space/xp/maximize-active.svg")}
+.win .btn.cls{background-image:url("assets/space/xp/close.svg")}
+.win .btn.cls:hover{background-image:url("assets/space/xp/close-hover.svg")}
+.win .btn.cls:active{background-image:url("assets/space/xp/close-active.svg")}
+/* 맨 앞이 아닌 창: XP처럼 제목줄과 테두리를 옅은 파랑으로 */
+.win:not(.front){box-shadow:inset -1px -1px #6582d0,inset 1px 1px #7d9be3,inset -2px -2px #7a96df,inset 2px 2px #a6bdf1,
+    inset -3px -3px #7a96df,inset 3px 3px #9db9eb,2px 3px 8px rgba(0,0,0,.25)}
+.win:not(.front) .bar{background:linear-gradient(180deg,#a6bdf1 0%,#7a96df 8%,#7a96df 40%,#9db9eb 88%,#9db9eb 93%,#8faaea 95%,#7a96df 96%,#7a96df 100%);
+  border-color:#7d9be3 #6582d0 #6582d0 #7d9be3}
+.win:not(.front) .ttl{color:#d8e4f8;text-shadow:none}
+.win:not(.front) .btn{opacity:.6}
+/* 창 안쪽: 테두리 3줄 안에 딱 붙임 */
+.win .body{position:relative;margin:0 3px;overflow:hidden;background:#fff}
 .win iframe{display:block;width:100%;height:100%;border:0;background:#A0D6D5}
 .win .shield{position:absolute;inset:0;z-index:2}   /* 맨 앞이 아닌 창의 내용을 덮어서 두 번 눌러 앞으로 보내게 함 */
 .win.front .shield{display:none}
 
 .win.fish .body{width:min(340px,calc(100vw - 40px));height:250px}
-.win.friends .body{width:min(300px,calc(100vw - 40px));height:170px;background:#fff;padding:14px;box-sizing:border-box;
-  font-size:13px;line-height:1.7;color:#4a4658}
-.win.gift .body{width:min(300px,calc(100vw - 40px));height:104px;background:var(--gray);box-sizing:border-box;padding:10px 14px;
-  display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:6px;box-shadow:none}
-.glabel{align-self:flex-start;font-size:12px;color:#3b3b40}
-.gin{width:100%;box-sizing:border-box;border:2px solid var(--line);background:#fff;color:#1c2438;font:inherit;font-size:13px;padding:5px 7px;
-  border-radius:0;outline:none;-webkit-user-select:text;user-select:text;box-shadow:inset 1px 1px 0 #6f6f73}
-.gin:focus{border-color:#4A43E2}
-.gok{min-width:64px;padding:3px 14px;font-size:12px;color:#1c2438;background:var(--gray);border:2px solid #5f5f66;border-radius:0;
-  box-shadow:inset -2px -2px 0 #a4a4a8,inset 2px 2px 0 #fff}
-.gok:active{box-shadow:inset 2px 2px 0 #a4a4a8,inset -2px -2px 0 #fff}
+.win.friends .body{width:min(300px,calc(100vw - 40px));height:170px;padding:10px 12px;box-sizing:border-box;line-height:1.7;color:#000}
+.win.gift .body{width:min(300px,calc(100vw - 40px));height:104px;background:var(--surface);box-sizing:border-box;padding:10px 12px;
+  display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:6px}
+.glabel{align-self:flex-start;font-size:12px}
+/* 글 입력 칸: XP의 얇은 파란 회색 테두리 */
+.gin{width:100%;height:23px;box-sizing:border-box;border:1px solid #7f9db9;background:#fff;color:#000;font:inherit;padding:3px 4px;
+  border-radius:0;outline:none;-webkit-appearance:none;appearance:none;-webkit-user-select:text;user-select:text}
+/* XP 단추: 둥근 모서리, 위가 밝은 그러데이션, 올리면 주황 테두리, 누르면 들어감 */
+.xbtn{min-width:75px;height:23px;padding:0 12px;font-size:12px;color:#000;box-sizing:border-box;border:1px solid #003c74;border-radius:3px;
+  background:linear-gradient(180deg,#fff 0%,#ecebe5 86%,#d8d0c4 100%)}
+.xbtn:hover{box-shadow:inset -1px 1px #fff0cf,inset 1px 2px #fdd889,inset -2px 2px #fbc761,inset 2px -2px #e5a01a}
+.xbtn:focus-visible{outline:1px dotted #000;outline-offset:-4px;
+  box-shadow:inset -1px 1px #cee7ff,inset 1px 2px #98b8ea,inset -2px 2px #bcd4f6,inset 1px -1px #89ade4,inset 2px -2px #89ade4}
+.xbtn:active{box-shadow:none;background:linear-gradient(180deg,#cdcac3 0%,#e3e3db 8%,#e5e5de 94%,#f2f2f1 100%)}
 .win.picture.cover .body{width:min(360px,calc(100vw - 40px));height:auto;aspect-ratio:420/215;background:#0a3d6b}
 .pic.cover{inset:0;width:100%;height:100%;object-fit:cover;image-rendering:auto;animation:none}
 .win.picture .body{width:min(300px,calc(100vw - 40px));height:250px;background:#EAF6FB}
 .pic{position:absolute;inset:6px;width:calc(100% - 12px);height:calc(100% - 12px);object-fit:contain;image-rendering:pixelated;
   animation:bob 2.4s steps(4) infinite}
 @keyframes bob{50%{transform:translateY(-4px)}}
-.win.map .body{width:min(440px,calc(100vw - 40px));aspect-ratio:1111/862}   /* 지도 그림 비율 그대로 (별 위치가 맞게) */
+.win.map .body{width:min(440px,calc(100vw - 40px));aspect-ratio:1111/862}   /* 지도 그림 비율 그대로 */
 .win.map.live .body{width:min(480px,calc(100vw - 40px));height:min(360px,calc(100vh - 160px));aspect-ratio:auto}
 .kmap{position:absolute;inset:0;z-index:0}   /* 카카오 지도가 들어가는 칸 */
-/* 잠깐 뜨는 안내 글 */
-#toast{position:fixed;left:50%;top:calc(52px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:9999;opacity:0;
-  background:var(--gray);border:2px solid var(--line);box-shadow:inset 1px 1px 0 #fff,3px 3px 0 var(--shadow);
-  padding:6px 10px;font-size:12px;max-width:88vw;pointer-events:none;transition:opacity .2s}
+
+/* 잠깐 뜨는 안내 글: XP 노란 말풍선 모양 */
+#toast{position:fixed;left:50%;top:calc(44px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:9999;opacity:0;
+  background:#ffffe1;border:1px solid #000;border-radius:3px;box-shadow:2px 2px 2px rgba(0,0,0,.25);
+  padding:5px 9px;font-size:12px;max-width:88vw;pointer-events:none;transition:opacity .2s}
 #toast.show{opacity:1}
 
 /* 지도와 내 위치 별 */
 .mapimg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
 .me{position:relative;width:0;height:0}   /* 별과 말풍선을 내 위치 한 점에 붙이는 틀 */
-.me .pbubble{left:-17px;bottom:25px}
-/* 내 위치로 가는 버튼 */
-.mebtn{position:absolute;left:6px;top:6px;z-index:1;padding:3px 8px;font-size:12px;color:#1c2438;background:var(--gray);
-  border:2px solid #5f5f66;box-shadow:inset -2px -2px 0 #a4a4a8,inset 2px 2px 0 #fff}
-.mebtn:active{box-shadow:inset 2px 2px 0 #a4a4a8,inset -2px -2px 0 #fff}
+.me .pbubble{left:-17px;bottom:24px}
+.mebtn{position:absolute;left:6px;top:6px;z-index:1;min-width:0}   /* 내 위치로 가는 단추 */
 /* 별: 한 칸씩 위아래로 흔들리고 주변에 노란 빛 */
 .star{position:absolute;width:26px;height:26px;transform:translate(-50%,-50%);image-rendering:pixelated;cursor:pointer;z-index:1;
   filter:drop-shadow(0 0 3px rgba(255,214,64,.95)) drop-shadow(0 0 7px rgba(255,200,40,.55));
@@ -84,32 +104,36 @@ button{font:inherit;color:inherit;cursor:pointer}
 @keyframes starBob{0%{transform:translate(-50%,-50%)}25%{transform:translate(-50%,calc(-50% - 2px))}
   50%{transform:translate(-50%,calc(-50% - 4px))}75%{transform:translate(-50%,calc(-50% - 2px))}}
 
-/* 픽셀 말풍선: 테두리 네 변을 그림자로 그려서 모서리가 깎인 모양이 됨 */
-.pbubble{position:absolute;z-index:3;background:#FFFDF8;color:#3B3350;font-size:13px;font-weight:700;white-space:nowrap;
-  padding:6px 10px;box-shadow:0 -3px 0 0 #3B3350,0 3px 0 0 #3B3350,-3px 0 0 0 #3B3350,3px 0 0 0 #3B3350;
-  animation:pop .24s steps(4,end);pointer-events:none}
-.pbubble::after{content:"";position:absolute;left:var(--tail,14px);bottom:-9px;width:6px;height:6px;background:#FFFDF8;
-  box-shadow:-3px 0 0 #3B3350,3px 0 0 #3B3350,0 3px 0 #3B3350}
-@keyframes pop{from{transform:scale(.5);opacity:0}to{transform:none;opacity:1}}
+/* 말풍선: XP 노란 풍선 도움말 모양 (아래에 꼬리) */
+.pbubble{position:absolute;z-index:3;background:#ffffe1;color:#000;font-size:12px;white-space:nowrap;
+  padding:5px 9px;border:1px solid #000;border-radius:6px;box-shadow:2px 2px 2px rgba(0,0,0,.25);
+  animation:pop .15s ease-out;pointer-events:none}
+.pbubble::after{content:"";position:absolute;left:var(--tail,12px);bottom:-8px;width:10px;height:8px;background:#000;
+  clip-path:polygon(0 0,100% 0,0 100%)}
+.pbubble::before{content:"";position:absolute;left:calc(var(--tail,12px) + 1px);bottom:-6px;width:8px;height:7px;background:#ffffe1;
+  clip-path:polygon(0 0,100% 0,0 100%);z-index:1}
+@keyframes pop{from{opacity:0}to{opacity:1}}
 
-/* 아이콘 줄: 컴퓨터는 오른쪽 아래, 모바일은 아래쪽 전체 */
+/* 아이콘 줄: 컴퓨터는 오른쪽 아래 바탕화면 아이콘, 모바일은 아래쪽 XP 작업 표시줄 */
 #dock{position:fixed;z-index:9000;display:flex;gap:6px;right:16px;bottom:calc(14px + env(safe-area-inset-bottom,0px))}
-.dk{appearance:none;background:transparent;border:0;padding:4px;width:84px;display:flex;flex-direction:column;align-items:center;gap:5px}
+.dk{appearance:none;background:transparent;border:0;padding:4px;width:84px;display:flex;flex-direction:column;align-items:center;gap:4px}
 .dk .ic{height:64px;display:flex;align-items:center;justify-content:center}
 .dk .ic img{width:64px;height:64px;object-fit:contain;display:block;image-rendering:pixelated}
-.dk .nm{font-size:12px;line-height:1.25;color:#fff;text-align:center;text-shadow:1px 1px 0 #2b5a66,-1px 1px 0 #2b5a66,1px -1px 0 #2b5a66,-1px -1px 0 #2b5a66}
-.dk:hover .nm,.dk:focus-visible .nm{background:#2b5a66}
-.dk:active .ic{transform:translateY(2px)}
+/* 바탕화면 아이콘 이름: 흰 글씨 + 그림자, 고르면 파란 칸 */
+.dk .nm{font-size:11px;line-height:1.3;color:#fff;text-align:center;padding:0 2px;text-shadow:1px 1px 1px #000}
+.dk:hover .nm,.dk:focus-visible .nm{background:#316ac5}
+.dk:active .ic{filter:brightness(.8) sepia(1) hue-rotate(180deg) saturate(3)}
 @media (max-width:700px){
-  #dock{left:0;right:0;bottom:0;gap:0;justify-content:space-around;padding:6px 4px calc(6px + env(safe-area-inset-bottom,0px));
-    background:rgba(210,210,212,.94);border-top:2px solid var(--line)}
-  .dk{width:auto;flex:1;min-width:0;padding:2px}
-  .dk .ic{height:32px}.dk .ic img{width:32px;height:32px}
-  .dk .nm{font-size:10.5px;color:#3b3b40;text-shadow:none}
+  #dock{left:0;right:0;bottom:0;gap:0;justify-content:space-around;padding:4px 4px calc(4px + env(safe-area-inset-bottom,0px));
+    background:linear-gradient(180deg,#1f2f86 0,#3165c4 3%,#3682e5 6%,#4490e6 10%,#3883e5 12%,#2b71e0 15%,#2663da 18%,#235bd6 20%,
+      #2258d5 23%,#2157d6 38%,#245ddb 54%,#2562df 86%,#245fdc 89%,#2158d4 92%,#1d4ec0 95%,#1941a5 98%)}
+  .dk{width:auto;flex:1;min-width:0;padding:2px;border-radius:3px}
+  .dk .ic{height:30px}.dk .ic img{width:30px;height:30px}
+  .dk .nm{font-size:10.5px}
   .dk:hover .nm,.dk:focus-visible .nm{background:transparent}
+  .dk:active{background:#1e52b7;box-shadow:inset 1px 1px 1px rgba(0,0,0,.4)}
 }
-
-#hint{left:0}</style>
+</style>
 </head>
 <body>
 <div id="desk"></div>
@@ -159,8 +183,8 @@ button{font:inherit;color:inherit;cursor:pointer}
     var bar = document.createElement('div'); bar.className = 'bar';
     var ttl = document.createElement('span'); ttl.className = 'ttl'; ttl.textContent = def.title;
     bar.appendChild(ttl);
-    ['_', '□', '×'].forEach(function (g) {
-      var b = document.createElement('span'); b.className = 'btn'; b.textContent = g; bar.appendChild(b);
+    [['min', '최소화'], ['max', '최대화'], ['cls', '닫기']].forEach(function (g) {
+      var b = document.createElement('span'); b.className = 'btn ' + g[0]; b.title = g[1]; bar.appendChild(b);
     });
     var body = document.createElement('div'); body.className = 'body';
     w.appendChild(bar); w.appendChild(body);
@@ -178,7 +202,7 @@ button{font:inherit;color:inherit;cursor:pointer}
       // 코드 입력 창 (아직 기능은 없음)
       body.innerHTML = '<label class="glabel" for="gift-code">코드 입력</label>' +
         '<input id="gift-code" class="gin" type="text" maxlength="24" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="선물 코드를 입력하세요">' +
-        '<button class="gok" type="button">OK</button>';
+        '<button class="xbtn" type="button">확인</button>';
     } else if (def.kind === 'friends') {
       body.innerHTML = '친구 목록이 비어 있어요.<br>친구 관리 기능은 준비 중이에요.';
     } else if (def.kind === 'map') {
@@ -260,7 +284,7 @@ button{font:inherit;color:inherit;cursor:pointer}
       timer = setTimeout(function () { bubble.remove(); }, 2200);
     });
     // 지도 왼쪽 위 버튼: 누르면 내 위치로 이동
-    var btn = document.createElement('button'); btn.type = 'button'; btn.className = 'mebtn'; btn.textContent = '내 위치';
+    var btn = document.createElement('button'); btn.type = 'button'; btn.className = 'xbtn mebtn'; btn.textContent = '내 위치';
     btn.addEventListener('click', function () {
       if (here) map.panTo(here);
       else if (window.Core) Core.toast('아직 위치를 찾는 중이에요');
