@@ -1,14 +1,14 @@
 {
  "v": 1,
- "updated": "2026-10-04T16:08:50.000Z",
+ "updated": "2026-10-04T16:12:24.354Z",
  "style": {
   "font": {
-   "family": "\"DotGothic16\", \"Jua\", system-ui, sans-serif",
+   "family": "\"Galmuri11\", \"DotGothic16\", \"Jua\", sans-serif",
    "google": [
     "DotGothic16",
     "Jua"
    ],
-   "cssUrl": ""
+   "cssUrl": "https://cdn.jsdelivr.net/npm/galmuri@2.40.3/dist/galmuri.css"
   },
   "bubble": {
    "bg": "#FFFDF8",
