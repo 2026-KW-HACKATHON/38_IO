@@ -259,8 +259,10 @@
 
   /* ── 로그인 영역 (위쪽 오른쪽) ── */
   var authBox = document.getElementById('auth');
+  var mySpace = document.getElementById('mySpace');
   function drawAuth(state) {
     authBox.innerHTML = '';
+    mySpace.classList.toggle('hidden', !state.user);
     if (!Core.ready) return;
     if (!state.user) {
       var b = document.createElement('button'); b.className = 'kakao'; b.type = 'button'; b.textContent = '카카오 로그인';
