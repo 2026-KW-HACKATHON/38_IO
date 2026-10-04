@@ -732,6 +732,7 @@ function renderModels(){
       <div class="tabs" role="tablist" id="paneTabs">
         <button role="tab" data-p="parts">부위</button>
         <button role="tab" data-p="motion">움직임</button>
+        ${isItem ? '' : '<button role="tab" data-p="says">할 말</button>'}
         <button role="tab" data-p="info">정보</button>
         <button role="tab" data-p="claude">클로드</button>
         <button role="tab" data-p="json">JSON</button>
@@ -1205,7 +1206,7 @@ function floodFill(g, c, r, ch){
 function renderPane(){
   const box = $('#pane'); if (!box) return;
   const m = curModel();
-  ({ parts: panePartsHtml, motion: paneMotion, info: paneInfo, claude: paneClaude, json: paneJson }[ui.pane] || panePartsHtml)(box, m);
+  ({ parts: panePartsHtml, motion: paneMotion, says: paneSays, info: paneInfo, claude: paneClaude, json: paneJson }[ui.pane] || panePartsHtml)(box, m);
 }
 
 function field(label, key, val, type, extra){
@@ -1379,6 +1380,19 @@ function linesEditor(host, arr, onChange, placeholder){
   host.appendChild(add);
 }
 
+// 물고기가 하는 말: 모든 reef에서 기본으로 씀 (reef 경로에 따로 적은 말이 있으면 그게 먼저)
+function paneSays(box, m){
+  if (ui.tab === 'items') return panePartsHtml(box, m);
+  m.says = m.says || [];
+  const used = D.reefs.filter(r => (r.config.lanes || []).some(l => l.species === m.id && l.says && l.says.some(x => String(x).trim()))).map(r => r.name);
+  box.innerHTML = `
+    <p class="hint" style="margin-top:0">누르면 아래 말을 차례대로 해요. 한 줄에 하나씩, 20자 안쪽이 보기 좋아요.</p>
+    <div class="lines" id="sSays"></div>
+    <div class="row" style="margin-top:8px"><button class="btn small" id="sTry" type="button">말해보기</button></div>
+    ${used.length ? `<p class="hint">이 reef들은 경로에 따로 적은 말을 먼저 써요: ${used.map(esc).join(', ')} (하위 reef에서 고침)</p>` : ''}`;
+  linesEditor($('#sSays'), m.says, (fn, force) => edit(() => fn(m.says), force), '짧은 한마디');
+  $('#sTry').addEventListener('click', () => PV.say());
+}
 function paneInfo(box, m){
   const isItem = ui.tab === 'items';
   const reefOpts = D.reefs.map((r, i) => `<option value="${i}">${esc(r.name)} (${r.kind})</option>`).join('');
@@ -1386,7 +1400,6 @@ function paneInfo(box, m){
     <div class="g2">${field('id (영어·숫자·-)', 'id', m.id, 'text')}${field('이름', 'name', m.name, 'text')}</div>
     <div class="g2" style="margin-top:6px">${field('학명', 'sci', m.sci || '', 'text')}${field('실제 크기 (cm)', 'sizeCm', m.sizeCm || '', 'number')}</div>
     <h3>기본 이펙트 (모든 reef에서 항상)</h3><div class="chips" id="iFx"></div>
-    ${isItem ? '' : '<h3>할 말</h3><div class="lines" id="iSays"></div>'}
     <h3>색 변형</h3><div id="iVars" class="lines"></div>
     <h3>내보내기</h3>
     <div class="row"><select id="iReef" class="grow" style="width:auto">${reefOpts}</select><button class="btn small" id="iSend" type="button">이 reef에 넣기</button></div>
@@ -1412,7 +1425,6 @@ function paneInfo(box, m){
     fxb.appendChild(b);
   });
   if (!D.effects.length) fxb.innerHTML = '<span class="hint">이펙트 메뉴에서 먼저 만들어요.</span>';
-  if (!isItem) linesEditor($('#iSays'), m.says, (fn, force) => edit(() => fn(m.says), force), '짧은 한마디');
   drawVariants(m);
   $('#iSend').addEventListener('click', () => {
     const r = D.reefs[+$('#iReef').value]; if (!r) return;
