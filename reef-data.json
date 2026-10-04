@@ -1,6 +1,6 @@
 {
  "v": 1,
- "updated": "2026-09-27T20:51:28.000Z",
+ "updated": "2026-10-04T12:55:35.814Z",
  "style": {
   "font": {
    "family": "\"DotGothic16\", \"Jua\", system-ui, sans-serif",
@@ -377,28 +377,30 @@
    "motion": "turtle",
    "scale": 0.52,
    "palette": {
-    "b": "#fef5d2",
-    "s": "#83C43C",
-    "L": "#63A128",
-    "e": "#1F1C26",
-    "a": "#ffffff"
+    "b": "#698551",
+    "s": "#535c37",
+    "L": "#3e4729",
+    "e": "#283120",
+    "a": "#d2dfc8",
+    "c": "#464f30",
+    "d": "#5f764c"
    },
    "side": [
-    "....ssLsssLss..",
-    "bbbbssLsssLss..",
-    "bbeassLsssLss..",
-    "bbbb.bbbbbbb.bb",
+    "....csscscssc..",
+    "bbbbcsscscssc..",
+    "bbeaLLLLLLLLL..",
+    "ddbb.bbbbbbb.bb",
     ".....bbbbbbb..."
    ],
    "top": [
-    "....ssLsssLss..",
-    "....ssLsssLss..",
-    ".bbbLLLLLLLLL..",
-    ".bbbssLsssLssbb",
-    ".bbbssLsssLssbb",
-    ".bbbLLLLLLLLL..",
-    "....ssLsssLss..",
-    "....ssLsssLss.."
+    "....csscscssc..",
+    "....sLLLLLLLs..",
+    ".bbbcLscscsLc..",
+    ".bbbsLcscscLsbb",
+    ".bbbsLcscscLsbb",
+    ".bbbcLscscsLc..",
+    "....sLLLLLLLs..",
+    "...scsscscssc.."
    ],
    "parts": [
     {
@@ -511,15 +513,18 @@
     "b": "#CBDC8E",
     "s": "#C79272",
     "L": "#A6735A",
-    "e": "#1F1C26",
-    "a": "#b5856c",
-    "c": "#b5c676"
+    "e": "#292c21",
+    "a": "#ab7c63",
+    "c": "#b5c676",
+    "d": "#faffe5",
+    "f": "#bfcc8a",
+    "g": "#d0946d"
    },
    "side": [
     "..assasassa....",
     "..assasassabbbb",
-    "..LLLLLLLLLcceb",
-    "bb.bbbbbbb.bbbb",
+    "..LLLLLLLLLdesb",
+    "bb.bbbbbbb.bbff",
     "...bbbbbbb....."
    ],
    "top": [
@@ -637,25 +642,26 @@
    "motion": "turtle",
    "scale": 0.52,
    "palette": {
-    "b": "#d8c07d",
+    "b": "#ede1c0",
     "s": "#69ce9a",
     "L": "#8db9a2",
-    "e": "#3B2A22",
+    "e": "#795849",
     "c": "#FFFDF7",
     "r": "#B8332B",
     "t": "#4A3222",
     "a": "#5aa07d",
-    "d": "#65b88d"
+    "d": "#65b38c",
+    "f": "#ddd2b6"
    },
    "side": [
     "...............",
     "......cc.......",
-    ".....ccc.......",
-    "....ccccc......",
+    ".....cccc......",
+    "....cccccc.....",
     "..dssdsdssd....",
     "..dssdsdssdbbbb",
-    "..dssdsdssdbbeb",
-    "bb.bbbbbbb.bbbb",
+    "..dddddddddcebb",
+    "bb.bbbbbbb.bbff",
     "...bbbbbbb....."
    ],
    "top": [
@@ -1581,9 +1587,10 @@
     ],
     "chargeEvery": 6,
     "chargeEffect": "charge-violet",
-    "markerSepCm": 50,
     "fovDeg": 62,
-    "drop": 14
+    "drop": 14,
+    "cubeCm": 4,
+    "wallGap": 8
    }
   },
   {
@@ -1650,7 +1657,16 @@
        "멋진 인테리어~"
       ]
      }
-    ]
+    ],
+    "props": [],
+    "sliders": [
+     "swim",
+     "flap"
+    ],
+    "talk": {
+     "tap": true,
+     "auto": 0
+    }
    }
   }
  ]
