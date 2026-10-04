@@ -1,6 +1,6 @@
 {
  "v": 1,
- "updated": "2026-10-04T12:55:35.814Z",
+ "updated": "2026-10-04T15:41:34.000Z",
  "style": {
   "font": {
    "family": "\"DotGothic16\", \"Jua\", system-ui, sans-serif",
@@ -24,14 +24,2359 @@
    "anim": "pop"
   },
   "title": {
-   "family": "\"IBM Plex Sans KR\", sans-serif",
+   "family": "\"Quicksand\", \"Jua\", system-ui, sans-serif",
    "google": [
-    "IBM Plex Sans KR:wght@400;600"
+    "Quicksand:wght@500;600;700"
    ]
   }
  },
  "guide": "[물고기 설계 지침]\n1. 모델은 '옆모습 도트(side)' 한 장 + 그 위에 얹는 부위(parts)로 만든다. 머리는 항상 오른쪽(열 번호가 큰 쪽).\n2. side는 같은 길이의 문자열 배열. '.'은 빈칸, 나머지 한 글자는 palette의 색 이름.\n3. 격자 크기는 가로 12~28칸, 세로 8~18칸. 실제 비율보다 살짝 뭉툭하고 크게.\n4. 몸은 직육면체(box) 2~4개로: head(머리) / body(몸통) / stock(꼬리자루). 칸 좌표 x,y는 왼쪽 위 칸, w,h는 칸 수, d는 두께(칸).\n5. 얇은 부분(꼬리, 등·뒷지느러미)은 평면(plane). 꼬리는 role \"caudal\", 등·뒷지느러미는 role \"body\".\n6. 가슴지느러미는 plane + role \"pect\" + 자체 도트(paint, 'X'=color 색) + z(몸 옆으로 떨어진 거리). 한쪽만 쓰면 반대쪽은 자동.\n7. 눈은 머리 박스 안 옆모습에 어두운 색 1칸.\n8. 색은 5~9개. 순백(#FFFFFF)은 쓰지 말고 따뜻한 흰색(#FBF2E6 근처). 카메라 화면 위에서도 보이게 채도는 약간 높게.\n9. 줄무늬·무늬는 지느러미까지 이어서 칠한다.\n10. 규격 밖 모양이 필요하면 kind \"free\" (shape: box/cylinder/cone/sphere/wedge/mesh, size, pos[열,행,z], rot[도], color)로 추가.\n11. swim: speed(1=보통), beat(초당 꼬리 박자 0.3~1.2), wag(꼬리 흔들기 0.2~0.9), bend(몸 휘기 0~1), pect, bob, roll.\n12. says: 그 물고기가 할 짧은 말 2~3개 (한국어, 20자 안쪽).",
  "species": [
+  {
+   "id": "goldfish",
+   "name": "금붕어",
+   "sci": "Carassius auratus",
+   "sizeCm": 15,
+   "motion": "fish",
+   "scale": 0.5,
+   "palette": {
+    "a": "#F2BFA9",
+    "b": "#F2D0BD",
+    "c": "#F3DCCE",
+    "d": "#D6694B",
+    "e": "#DE7A4C",
+    "f": "#C65351",
+    "g": "#C52929",
+    "h": "#C52729",
+    "i": "#DD4824",
+    "j": "#EB5F27",
+    "k": "#FFEBD6",
+    "l": "#F3DCCF",
+    "m": "#282524",
+    "n": "#FFE4CD",
+    "o": "#FFF0DD",
+    "p": "#ECB4A0",
+    "q": "#F6C3AC",
+    "r": "#F6D5C2",
+    "s": "#F5D5C2",
+    "t": "#F5C4AD",
+    "u": "#F7E1D4"
+   },
+   "side": [
+    "..aed....cba...",
+    ".baadf..cbaa...",
+    "llbaedf.kjihg..",
+    ".llbaeokoknjinm",
+    "..lbaennooknjko",
+    "llbaedf.okokk..",
+    ".baaef..kokok..",
+    "..aed....qp....",
+    ".........rq....",
+    "..........r...."
+   ],
+   "parts": [
+    {
+     "id": "머리",
+     "kind": "box",
+     "role": "head",
+     "x": 13,
+     "y": 3,
+     "w": 2,
+     "h": 2,
+     "d": 3,
+     "faces": {
+      "front": [
+       "kkk",
+       "ooo"
+      ],
+      "top": [
+       "ko",
+       "ko",
+       "ko"
+      ],
+      "back": [
+       "oko",
+       "knk"
+      ],
+      "bottom": [
+       "kk",
+       "kk",
+       "kk"
+      ]
+     }
+    },
+    {
+     "id": "몸통",
+     "kind": "box",
+     "role": "body",
+     "x": 8,
+     "y": 2,
+     "w": 5,
+     "h": 5,
+     "d": 5,
+     "faces": {
+      "front": [
+       "ggggg",
+       "ggggg",
+       "iiiii",
+       "knnnk",
+       "kkkkk"
+      ],
+      "top": [
+       "ojigg",
+       "oojig",
+       "oojig",
+       "oojig",
+       "ojigg"
+      ],
+      "back": [
+       "nkkkn",
+       "ookoo",
+       "kkokk",
+       "nokon",
+       "kkkkk"
+      ],
+      "bottom": [
+       "nokkk",
+       "kkkko",
+       "okkoo",
+       "kkkko",
+       "nokkk"
+      ]
+     }
+    },
+    {
+     "id": "꼬리자루",
+     "kind": "box",
+     "role": "stock",
+     "x": 6,
+     "y": 3,
+     "w": 2,
+     "h": 2,
+     "d": 2,
+     "faces": {
+      "top": [
+       "oo",
+       "oo"
+      ],
+      "front": [
+       "oo",
+       "nn"
+      ],
+      "back": [
+       "oo",
+       "kk"
+      ],
+      "bottom": [
+       "ko",
+       "ko"
+      ]
+     }
+    },
+    {
+     "id": "등지느러미",
+     "kind": "plane",
+     "role": "body",
+     "x": 8,
+     "y": 0,
+     "w": 4,
+     "h": 2,
+     "opacity": 0.7
+    },
+    {
+     "id": "꼬리지느러미",
+     "kind": "plane",
+     "role": "caudal",
+     "x": 0,
+     "y": 0,
+     "w": 7,
+     "h": 8,
+     "opacity": 0.7
+    },
+    {
+     "id": "가슴지느러미",
+     "kind": "plane",
+     "role": "pect",
+     "x": 9,
+     "y": 5,
+     "w": 3,
+     "h": 2,
+     "z": 2.55,
+     "pivot": "top",
+     "rot": [
+      -25,
+      0,
+      0
+     ],
+     "paint": [
+      "stp",
+      "ust"
+     ],
+     "opacity": 0.7
+    },
+    {
+     "id": "배지느러미",
+     "swing": {
+      "axis": "z",
+      "min": -12,
+      "max": 4,
+      "rate": 0.85,
+      "alt": 1
+     },
+     "kind": "plane",
+     "role": "body",
+     "x": 9,
+     "y": 7,
+     "w": 2,
+     "h": 3,
+     "z": 0.5,
+     "mirror": true,
+     "pivot": "top",
+     "rot": [
+      -15,
+      0,
+      0
+     ],
+     "opacity": 0.7
+    }
+   ],
+   "swim": {
+    "speed": 0.8,
+    "beat": 0.6,
+    "wag": 0.6,
+    "bend": 0.5,
+    "pect": 0.6,
+    "pectAmp": 0.5,
+    "bob": 0.3,
+    "roll": 0.8
+   },
+   "says": [],
+   "variants": [
+    {
+     "h": 0,
+     "s": 1,
+     "v": 1,
+     "name": "원본"
+    },
+    {
+     "h": 0,
+     "s": 1,
+     "v": 1,
+     "name": "검정",
+     "palette": {
+      "a": "#2B272A",
+      "b": "#2A2A2E",
+      "c": "#2A2D31",
+      "d": "#2C2A2E",
+      "e": "#2D2D2E",
+      "f": "#28262E",
+      "g": "#28272E",
+      "h": "#28272D",
+      "i": "#2D2B2E",
+      "j": "#2F2F2F",
+      "k": "#2B292D",
+      "l": "#2A2D32",
+      "n": "#2B2426",
+      "o": "#2A2D32",
+      "p": "#2A2529",
+      "q": "#2C282B",
+      "r": "#2B2B2F",
+      "s": "#2B2B2F",
+      "t": "#2C282B",
+      "u": "#2B2D33"
+     }
+    },
+    {
+     "h": 0,
+     "s": 1,
+     "v": 1,
+     "name": "주황",
+     "palette": {
+      "h": "#EB6319",
+      "g": "#FF732D",
+      "i": "#FE791D",
+      "j": "#FF9521",
+      "n": "#FF992F",
+      "k": "#FFA81F",
+      "o": "#FFB22D",
+      "f": "#E86634",
+      "d": "#E77511",
+      "e": "#FB781C",
+      "p": "#FF7C2C",
+      "a": "#FA951C",
+      "q": "#FF971B",
+      "t": "#FFA225",
+      "b": "#FFA822",
+      "s": "#FFAB1F",
+      "r": "#FEB633",
+      "c": "#FFC240",
+      "l": "#FFC53C",
+      "u": "#E9D784"
+     }
+    }
+   ],
+   "effects": []
+  },
+  {
+   "id": "deep-anglerfish",
+   "name": "심해아귀",
+   "sci": "Melanocetus johnsonii",
+   "sizeCm": 18,
+   "motion": "fish",
+   "scale": 0.5,
+   "palette": {
+    "a": "#42403F",
+    "b": "#3F4041",
+    "c": "#413F3E",
+    "d": "#070708",
+    "e": "#3E484B",
+    "f": "#414141",
+    "g": "#BABDC3",
+    "h": "#3C3C3D",
+    "i": "#393D3E",
+    "j": "#3B3C3D",
+    "k": "#42403E",
+    "l": "#3D3D3D",
+    "m": "#3E4041",
+    "n": "#3A3D3E",
+    "o": "#3C3D3D",
+    "p": "#3C464A",
+    "q": "#3D3F41",
+    "r": "#3B454A",
+    "s": "#3D3F40",
+    "t": "#3D4041",
+    "u": "#3A4346",
+    "v": "#3A3C3D",
+    "w": "#CCFFFF",
+    "y": "#424241",
+    "z": "#45413F",
+    "A": "#44403F",
+    "B": "#E6E6EA",
+    "C": "#4B3232",
+    "D": "#543534",
+    "E": "#493232",
+    "F": "#543535",
+    "G": "#523535",
+    "H": "#443232",
+    "I": "#4C3232",
+    "J": "#4A3333",
+    "K": "#463232",
+    "L": "#513534",
+    "M": "#746262"
+   },
+   "side": [
+    "...........w...",
+    "...........j...",
+    "...........a...",
+    "...........a...",
+    "...bpm.cabaa...",
+    "q..bkkjfecdbB..",
+    "rstacmlefbga...",
+    "rrubaonihaaa...",
+    "tq.canoaabbc..B",
+    ".......jvjiyzyA",
+    ".......jijvzAzy",
+    "...........yzyA"
+   ],
+   "parts": [
+    {
+     "id": "꼬리지느러미",
+     "kind": "plane",
+     "role": "caudal",
+     "x": 0,
+     "y": 5,
+     "w": 3,
+     "h": 4,
+     "opacity": 0.7
+    },
+    {
+     "id": "몸통",
+     "kind": "box",
+     "role": "body",
+     "x": 3,
+     "y": 5,
+     "w": 4,
+     "h": 4,
+     "d": 3,
+     "faces": {
+      "front": [
+       "iyi",
+       "fof",
+       "aza",
+       "iai"
+      ],
+      "back": [
+       "ubu",
+       "eye",
+       "ata",
+       "vav"
+      ],
+      "top": [
+       "icpb",
+       "baaa",
+       "icpb"
+      ],
+      "bottom": [
+       "yujA",
+       "alam",
+       "yujA"
+      ]
+     }
+    },
+    {
+     "id": "등지느러미",
+     "kind": "plane",
+     "role": "body",
+     "x": 3,
+     "y": 4,
+     "w": 3,
+     "h": 1,
+     "opacity": 0.7
+    },
+    {
+     "id": "머리",
+     "kind": "box",
+     "role": "head",
+     "x": 7,
+     "y": 4,
+     "w": 5,
+     "h": 5,
+     "d": 5,
+     "faces": {
+      "front": [
+       "CDEFC",
+       "CGHGI",
+       "DJJJD",
+       "GJKJL",
+       "MKMKM"
+      ],
+      "back": [
+       "jzyzj",
+       "cscsc",
+       "mjajm",
+       "bvzvb",
+       "ejaje"
+      ],
+      "top": [
+       "ajcya",
+       "qynqn",
+       "ykzci",
+       "qynqn",
+       "ajcya"
+      ],
+      "bottom": [
+       "vyjbr",
+       "arAzy",
+       "rfaqa",
+       "arAzy",
+       "vyjbr"
+      ]
+     }
+    },
+    {
+     "id": "아래머리",
+     "kind": "box",
+     "role": "head",
+     "x": 7,
+     "y": 9,
+     "w": 4,
+     "h": 2,
+     "d": 4,
+     "faces": {
+      "front": [
+       "abba",
+       "mqqm"
+      ],
+      "back": [
+       "aaaa",
+       "yccy"
+      ],
+      "top": [
+       "aycA",
+       "kyis",
+       "kyis",
+       "aycA"
+      ],
+      "bottom": [
+       "Ajyt",
+       "tbaA",
+       "tbaA",
+       "Ajyt"
+      ]
+     }
+    },
+    {
+     "id": "턱",
+     "kind": "box",
+     "role": "jaw",
+     "x": 11,
+     "y": 9,
+     "w": 4,
+     "h": 3,
+     "d": 5,
+     "faces": {
+      "front": [
+       "yzyAA",
+       "zAzyz",
+       "yzyAy"
+      ],
+      "top": [
+       "MKMK",
+       "MKMK",
+       "MKMK",
+       "MKMK",
+       "MKMK"
+      ],
+      "back": [
+       "hzzzh",
+       "bjejb",
+       "aryra"
+      ],
+      "bottom": [
+       "yjvz",
+       "kysy",
+       "ytaq",
+       "kysy",
+       "yjvz"
+      ]
+     }
+    },
+    {
+     "id": "아랫니",
+     "kind": "box",
+     "role": "jaw",
+     "x": 14,
+     "y": 8,
+     "w": 1,
+     "h": 1,
+     "d": 1,
+     "z": 0,
+     "faces": {
+      "front": [
+       "B"
+      ],
+      "back": [
+       "B"
+      ],
+      "top": [
+       "B"
+      ],
+      "bottom": [
+       "B"
+      ]
+     }
+    },
+    {
+     "id": "아랫니2",
+     "kind": "box",
+     "role": "jaw",
+     "x": 14,
+     "y": 8,
+     "w": 1,
+     "h": 1,
+     "d": 1,
+     "z": 2,
+     "mirror": true,
+     "faces": {
+      "front": [
+       "B"
+      ],
+      "back": [
+       "B"
+      ],
+      "top": [
+       "B"
+      ],
+      "bottom": [
+       "B"
+      ]
+     }
+    },
+    {
+     "id": "윗니",
+     "kind": "plane",
+     "role": "head",
+     "x": 12,
+     "y": 5,
+     "w": 1,
+     "h": 1,
+     "z": 0
+    },
+    {
+     "id": "윗니2",
+     "kind": "plane",
+     "role": "head",
+     "x": 12,
+     "y": 5,
+     "w": 1,
+     "h": 1,
+     "z": 2,
+     "mirror": true
+    },
+    {
+     "id": "미끼줄기",
+     "kind": "plane",
+     "role": "head",
+     "x": 11,
+     "y": 1,
+     "w": 1,
+     "h": 3
+    },
+    {
+     "id": "미끼",
+     "kind": "box",
+     "role": "head",
+     "x": 11,
+     "y": 0,
+     "w": 1,
+     "h": 1,
+     "d": 1,
+     "faces": {
+      "front": [
+       "w"
+      ],
+      "back": [
+       "w"
+      ],
+      "top": [
+       "w"
+      ],
+      "bottom": [
+       "w"
+      ]
+     }
+    },
+    {
+     "id": "가슴지느러미",
+     "kind": "plane",
+     "role": "pect",
+     "x": 6,
+     "y": 6,
+     "w": 2,
+     "h": 2,
+     "z": 2.55,
+     "opacity": 0.7
+    }
+   ],
+   "swim": {
+    "speed": 0.5,
+    "beat": 0.35,
+    "wag": 0.4,
+    "bend": 0.35,
+    "pect": 0.5,
+    "pectAmp": 0.7,
+    "bob": 0.3,
+    "roll": 0.5
+   },
+   "says": [],
+   "variants": [
+    {
+     "h": 0,
+     "s": 1,
+     "v": 1
+    }
+   ],
+   "effects": [
+    "lure-glow"
+   ],
+   "jaw": {
+    "open": 5,
+    "amp": 9,
+    "rate": 0.12,
+    "pivot": [
+     11,
+     9
+    ],
+    "close": 0.2
+   }
+  },
+  {
+   "id": "discus",
+   "name": "디스커스",
+   "sci": "Symphysodon aequifasciatus",
+   "sizeCm": 15,
+   "motion": "fish",
+   "scale": 0.6,
+   "palette": {
+    "a": "#F0E6B5",
+    "b": "#F8F1C0",
+    "c": "#F0E6B4",
+    "d": "#EEE5B4",
+    "e": "#F9F0C6",
+    "f": "#EAE1B1",
+    "g": "#F8EDBE",
+    "h": "#ECE3B2",
+    "i": "#F9F4CC",
+    "j": "#FAF6D4",
+    "k": "#E6DDB1",
+    "l": "#F8F0C0",
+    "m": "#E9E0B3",
+    "n": "#FAF7D0",
+    "o": "#FAF8D6",
+    "p": "#FBFADA",
+    "q": "#FBFADB",
+    "r": "#292424",
+    "s": "#FBFAD8",
+    "t": "#FBF9D7",
+    "u": "#FAF6CE",
+    "v": "#E8DFB2",
+    "w": "#F8ECBD",
+    "y": "#EEE3BA",
+    "z": "#F0E5BB",
+    "A": "#EBE2C5",
+    "B": "#E4DCB4",
+    "C": "#E9E0C3",
+    "D": "#EDE3B3",
+    "E": "#F0E6BB",
+    "F": "#EFE7BC",
+    "G": "#EDE4BA"
+   },
+   "side": [
+    ".ygzgzgz..",
+    ".zlabcbde.",
+    ".hlfghihj.",
+    ".klklmnmo.",
+    "AbBklmnmo.",
+    "AbBkpqnrsi",
+    "Cwwkttuvsi",
+    ".Dlfwhihoi",
+    ".gllF.EG..",
+    ".wlll.lw.."
+   ],
+   "parts": [
+    {
+     "id": "몸통",
+     "kind": "box",
+     "role": "body",
+     "x": 3,
+     "y": 1,
+     "w": 5,
+     "h": 7,
+     "d": 2,
+     "sheen": [
+      {
+       "color": "#FFA9C9",
+       "strength": 0.6,
+       "power": 1,
+       "center": [
+        6,
+        4.5
+       ],
+       "radius": 4.5,
+       "mode": "tint"
+      }
+     ],
+     "faces": {
+      "front": [
+       "hh",
+       "hh",
+       "DD",
+       "CC",
+       "rr",
+       "dd",
+       "mm"
+      ],
+      "back": [
+       "ff",
+       "ff",
+       "CC",
+       "vv",
+       "ff",
+       "AA",
+       "kk"
+      ],
+      "top": [
+       "Dqfga",
+       "Dqfga"
+      ],
+      "bottom": [
+       "kgkFC",
+       "kgkFC"
+      ]
+     }
+    },
+    {
+     "id": "머리",
+     "kind": "box",
+     "role": "head",
+     "x": 8,
+     "y": 1,
+     "w": 1,
+     "h": 7,
+     "d": 2,
+     "sheen": [
+      {
+       "color": "#FFA9C9",
+       "strength": 0.6,
+       "power": 1,
+       "center": [
+        6,
+        4.5
+       ],
+       "radius": 4.5,
+       "mode": "tint"
+      }
+     ],
+     "faces": {
+      "front": [
+       "bb",
+       "ww",
+       "zz",
+       "tt",
+       "ll",
+       "ll",
+       "nn"
+      ],
+      "back": [
+       "bb",
+       "ll",
+       "ww",
+       "bb",
+       "bb",
+       "bb",
+       "ll"
+      ],
+      "top": [
+       "l",
+       "l"
+      ],
+      "bottom": [
+       "b",
+       "b"
+      ]
+     }
+    },
+    {
+     "id": "주둥이",
+     "kind": "box",
+     "role": "head",
+     "x": 9,
+     "y": 5,
+     "w": 1,
+     "h": 3,
+     "d": 2,
+     "sheen": [
+      {
+       "color": "#FFA9C9",
+       "strength": 0.6,
+       "power": 1,
+       "center": [
+        6,
+        4.5
+       ],
+       "radius": 4.5,
+       "mode": "tint"
+      }
+     ],
+     "faces": {
+      "front": [
+       "ii",
+       "ll",
+       "qq"
+      ],
+      "back": [
+       "gg",
+       "ll",
+       "bb"
+      ],
+      "top": [
+       "z",
+       "z"
+      ],
+      "bottom": [
+       "n",
+       "n"
+      ]
+     }
+    },
+    {
+     "id": "꼬리자루",
+     "kind": "box",
+     "role": "stock",
+     "x": 2,
+     "y": 4,
+     "w": 1,
+     "h": 3,
+     "d": 1,
+     "sheen": [
+      {
+       "color": "#A8DCFF",
+       "strength": 0.5,
+       "power": 1,
+       "mode": "tint"
+      },
+      {
+       "color": "#4D7CFF",
+       "strength": 0.175,
+       "power": 1
+      }
+     ],
+     "faces": {
+      "front": [
+       "C",
+       "v",
+       "g"
+      ],
+      "back": [
+       "h",
+       "m",
+       "o"
+      ],
+      "top": [
+       "m"
+      ],
+      "bottom": [
+       "l"
+      ]
+     }
+    },
+    {
+     "id": "꼬리",
+     "kind": "box",
+     "role": "caudal",
+     "x": 0,
+     "y": 4,
+     "w": 2,
+     "h": 3,
+     "d": 2,
+     "opacity": 0.7,
+     "sheen": [
+      {
+       "color": "#A8DCFF",
+       "strength": 0.5,
+       "power": 1,
+       "mode": "tint"
+      },
+      {
+       "color": "#4D7CFF",
+       "strength": 0.175,
+       "power": 1
+      }
+     ],
+     "faces": {
+      "front": [
+       "nn",
+       "FF",
+       "gg"
+      ],
+      "back": [
+       "kk",
+       "aa",
+       "kk"
+      ],
+      "top": [
+       "hl",
+       "hl"
+      ],
+      "bottom": [
+       "fo",
+       "fo"
+      ]
+     }
+    },
+    {
+     "id": "등지느러미",
+     "kind": "plane",
+     "role": "body",
+     "x": 3,
+     "y": 0,
+     "w": 5,
+     "h": 1,
+     "opacity": 0.7,
+     "sheen": [
+      {
+       "color": "#A8DCFF",
+       "strength": 0.5,
+       "power": 1,
+       "mode": "tint"
+      },
+      {
+       "color": "#4D7CFF",
+       "strength": 0.175,
+       "power": 1
+      }
+     ]
+    },
+    {
+     "id": "뒤지느러미_위",
+     "kind": "plane",
+     "role": "stock",
+     "x": 1,
+     "y": 0,
+     "w": 2,
+     "h": 4,
+     "opacity": 0.7,
+     "sheen": [
+      {
+       "color": "#A8DCFF",
+       "strength": 0.5,
+       "power": 1,
+       "mode": "tint"
+      },
+      {
+       "color": "#4D7CFF",
+       "strength": 0.175,
+       "power": 1
+      }
+     ]
+    },
+    {
+     "id": "뒤지느러미_아래",
+     "kind": "plane",
+     "role": "stock",
+     "x": 1,
+     "y": 7,
+     "w": 2,
+     "h": 3,
+     "opacity": 0.7,
+     "sheen": [
+      {
+       "color": "#A8DCFF",
+       "strength": 0.5,
+       "power": 1,
+       "mode": "tint"
+      },
+      {
+       "color": "#4D7CFF",
+       "strength": 0.175,
+       "power": 1
+      }
+     ]
+    },
+    {
+     "id": "배지느러미",
+     "swing": {
+      "axis": "z",
+      "min": -22,
+      "max": 6,
+      "rate": 0.85
+     },
+     "kind": "plane",
+     "role": "body",
+     "x": 3,
+     "y": 8,
+     "w": 2,
+     "h": 2,
+     "pivot": "top",
+     "opacity": 0.7,
+     "sheen": [
+      {
+       "color": "#A8DCFF",
+       "strength": 0.5,
+       "power": 1,
+       "mode": "tint"
+      },
+      {
+       "color": "#4D7CFF",
+       "strength": 0.175,
+       "power": 1
+      }
+     ]
+    },
+    {
+     "id": "뒷지느러미",
+     "kind": "plane",
+     "role": "body",
+     "x": 6,
+     "y": 8,
+     "w": 2,
+     "h": 2,
+     "opacity": 0.7,
+     "sheen": [
+      {
+       "color": "#A8DCFF",
+       "strength": 0.5,
+       "power": 1,
+       "mode": "tint"
+      },
+      {
+       "color": "#4D7CFF",
+       "strength": 0.175,
+       "power": 1
+      }
+     ]
+    },
+    {
+     "id": "가슴지느러미",
+     "kind": "plane",
+     "role": "pect",
+     "x": 4,
+     "y": 5,
+     "w": 2,
+     "h": 2,
+     "z": 1.05,
+     "opacity": 0.7,
+     "sheen": [
+      {
+       "color": "#A8DCFF",
+       "strength": 0.5,
+       "power": 1,
+       "mode": "tint"
+      },
+      {
+       "color": "#4D7CFF",
+       "strength": 0.175,
+       "power": 1
+      }
+     ],
+     "paint": [
+      "pq",
+      "tt"
+     ]
+    }
+   ],
+   "swim": {
+    "speed": 0.6,
+    "beat": 0.45,
+    "wag": 0.35,
+    "bend": 0.3,
+    "pect": 0.7,
+    "pectAmp": 1.1,
+    "bob": 0.3,
+    "roll": 0.6
+   },
+   "says": [],
+   "variants": [
+    {
+     "h": 0,
+     "s": 1,
+     "v": 1
+    }
+   ],
+   "effects": []
+  },
+  {
+   "id": "koi",
+   "name": "잉어",
+   "sci": "Cyprinus rubrofuscus",
+   "sizeCm": 60,
+   "motion": "fish",
+   "scale": 0.45,
+   "palette": {
+    "a": "#5C5641",
+    "b": "#5D5541",
+    "c": "#585042",
+    "d": "#61573E",
+    "e": "#5B5442",
+    "f": "#645C44",
+    "g": "#524C39",
+    "h": "#5C5741",
+    "i": "#635A45",
+    "j": "#4C4638",
+    "k": "#595141",
+    "l": "#574F42",
+    "m": "#625845",
+    "n": "#635B45",
+    "o": "#493F36",
+    "p": "#544C3B",
+    "q": "#433C31",
+    "r": "#514939",
+    "s": "#514B39",
+    "t": "#615745",
+    "u": "#574E3D",
+    "v": "#433C30",
+    "w": "#3C362C",
+    "y": "#594D40",
+    "z": "#39342C",
+    "A": "#4F473A",
+    "B": "#625945",
+    "C": "#5C5441",
+    "D": "#514A3A",
+    "E": "#5A5342",
+    "F": "#514B3A",
+    "G": "#4E463A",
+    "H": "#4E4839",
+    "I": "#4C4538",
+    "J": "#120F16",
+    "K": "#706856",
+    "L": "#706956",
+    "M": "#574F40",
+    "N": "#50493B",
+    "O": "#574E42",
+    "P": "#413B31",
+    "Q": "#423C31",
+    "R": "#444238",
+    "S": "#4F483B",
+    "T": "#484135",
+    "U": "#5C5841",
+    "V": "#524D39",
+    "W": "#C8C6DF",
+    "Y": "#A9A6C3",
+    "Z": "#AAA8C2",
+    "0": "#605645",
+    "1": "#332D25",
+    "2": "#C6C3DE",
+    "3": "#C5C2DE",
+    "4": "#CAC9DD",
+    "5": "#A6A3C3",
+    "6": "#9C9BBA",
+    "7": "#655F44",
+    "8": "#504A3B",
+    "9": "#39332A",
+    "!": "#443C30",
+    "$": "#41372B",
+    "%": "#645D44",
+    "&": "#695D41",
+    "*": "#C9C8DE",
+    "+": "#BDBBD6",
+    "-": "#CAC7DE",
+    "/": "#918FB1",
+    ":": "#5D5941",
+    ";": "#5F5545",
+    "<": "#473D35",
+    "=": "#655E44",
+    ">": "#564737",
+    "?": "#5F5445",
+    "@": "#C9C7DF",
+    "^": "#B4AFCB",
+    "_": "#C0BCDA",
+    "~": "#A19DBE",
+    "(": "#5B5542",
+    ")": "#51473C",
+    "[": "#FEC5B4",
+    "]": "#CEC3DC",
+    "{": "#ABAAC2"
+   },
+   "side": [
+    "............RlweIja.......",
+    "............hjwaeEa.......",
+    "aa..........efABafgiC.....",
+    "bcd.....astqCDBAcAngeeeaaa",
+    ".eafgmkngfaiDieiDBEiDeeaaI",
+    "..agioagfgagnDeFfgagieeJKL",
+    ".chicpqreuvpjmsnafgfaeMeea",
+    "ejk..gfgwqyzaqpvcGtDHNOPQa",
+    "lj.......aj......SQ..U....",
+    ".................cT..e....",
+    ".................jb.......",
+    ".................je......."
+   ],
+   "parts": [
+    {
+     "id": "꼬리지느러미",
+     "kind": "plane",
+     "role": "caudal",
+     "x": 0,
+     "y": 2,
+     "w": 4,
+     "h": 7,
+     "opacity": 0.7
+    },
+    {
+     "id": "꼬리자루",
+     "kind": "box",
+     "role": "stock",
+     "x": 3,
+     "y": 4,
+     "w": 2,
+     "h": 3,
+     "d": 3,
+     "faces": {
+      "top": [
+       "iV",
+       "Di",
+       "ph"
+      ],
+      "bottom": [
+       "WW",
+       "YZ",
+       "WW"
+      ],
+      "front": [
+       "AqA",
+       "BfB",
+       "bab"
+      ],
+      "back": [
+       "nfn",
+       "qgq",
+       "yuy"
+      ]
+     }
+    },
+    {
+     "id": "몸통_뒤",
+     "kind": "box",
+     "role": "stock",
+     "x": 5,
+     "y": 4,
+     "w": 3,
+     "h": 4,
+     "d": 4,
+     "faces": {
+      "top": [
+       "pe0",
+       "1eD",
+       "fD0",
+       "giq"
+      ],
+      "bottom": [
+       "234",
+       "Z56",
+       "Z56",
+       "234"
+      ],
+      "front": [
+       "ffff",
+       "FggF",
+       "yffy",
+       "DDDD"
+      ],
+      "back": [
+       "fnnf",
+       "goog",
+       "BiiB",
+       "DqqD"
+      ]
+     }
+    },
+    {
+     "id": "몸통_가운데",
+     "kind": "box",
+     "role": "body",
+     "x": 8,
+     "y": 3,
+     "w": 4,
+     "h": 5,
+     "d": 5,
+     "faces": {
+      "top": [
+       "D7af",
+       "f8c9",
+       "I!Di",
+       "$Dpg",
+       "q%b&"
+      ],
+      "bottom": [
+       "*W+W",
+       "-W2+",
+       "YZ/6",
+       "-W2+",
+       "*W+W"
+      ],
+      "front": [
+       "DgFgD",
+       "mtBtm",
+       "goqog",
+       "fpBpf",
+       "gAgAg"
+      ],
+      "back": [
+       "eeEee",
+       "DgzgD",
+       "iifii",
+       "caaac",
+       "ajEja"
+      ]
+     }
+    },
+    {
+     "id": "몸통_앞",
+     "kind": "box",
+     "role": "body",
+     "x": 12,
+     "y": 2,
+     "w": 9,
+     "h": 6,
+     "d": 6,
+     "faces": {
+      "top": [
+       "gij%8iciD",
+       "0F:gigQD;",
+       "ei<ya0Gfh",
+       "cg=gcgpge",
+       "q%a7G%:fg",
+       "fgaqfge>?"
+      ],
+      "bottom": [
+       "*WW@+W3^4",
+       "4*@WW*++_",
+       "~Z~ZZZZYY",
+       "~Z~ZZZZYY",
+       "4*@WW*++_",
+       "*WW@+W3^4"
+      ],
+      "front": [
+       "elUUle",
+       "cjEEjc",
+       "DAssAD",
+       "nffffn",
+       "jeccej",
+       "MabbaM"
+      ],
+      "back": [
+       "ceeeec",
+       "ceccec",
+       "oDDDDo",
+       "fpffpf",
+       "deaaed",
+       "hlQQlh"
+      ]
+     }
+    },
+    {
+     "id": "머리",
+     "kind": "box",
+     "role": "head",
+     "x": 21,
+     "y": 3,
+     "w": 5,
+     "h": 5,
+     "d": 5,
+     "faces": {
+      "front": [
+       "(:):(",
+       "aecea",
+       "eaeae",
+       "jeaej",
+       "a[[[a"
+      ],
+      "bottom": [
+       "-W*24",
+       "W+W*]",
+       "6{YZY",
+       "W+W*]",
+       "-W*24"
+      ],
+      "back": [
+       "hdCdh",
+       "McTcM",
+       "jaeaj",
+       "aeaea",
+       "aIIIa"
+      ],
+      "top": [
+       "PelaE",
+       "jQjaH",
+       "eaeja",
+       "jQjaH",
+       "PelaE"
+      ]
+     }
+    },
+    {
+     "id": "등지느러미",
+     "kind": "plane",
+     "role": "body",
+     "x": 12,
+     "y": 0,
+     "w": 7,
+     "h": 2,
+     "opacity": 0.7
+    },
+    {
+     "id": "배지느러미",
+     "swing": {
+      "axis": "z",
+      "min": -22,
+      "max": 6,
+      "rate": 0.85
+     },
+     "kind": "plane",
+     "role": "body",
+     "x": 17,
+     "y": 8,
+     "w": 2,
+     "h": 4,
+     "z": 3.05,
+     "mirror": true,
+     "pivot": "top",
+     "rot": [
+      -40,
+      0,
+      0
+     ],
+     "opacity": 0.7
+    },
+    {
+     "id": "앞지느러미",
+     "kind": "plane",
+     "role": "head",
+     "x": 21,
+     "y": 8,
+     "w": 1,
+     "h": 2,
+     "z": 2.55,
+     "mirror": true,
+     "pivot": "top",
+     "rot": [
+      -35,
+      0,
+      0
+     ],
+     "opacity": 0.7
+    },
+    {
+     "id": "작은배지느러미",
+     "kind": "plane",
+     "role": "body",
+     "x": 9,
+     "y": 8,
+     "w": 2,
+     "h": 1,
+     "z": 2.55,
+     "mirror": true,
+     "pivot": "top",
+     "rot": [
+      -35,
+      0,
+      0
+     ],
+     "opacity": 0.7
+    }
+   ],
+   "swim": {
+    "speed": 0.55,
+    "beat": 0.4,
+    "wag": 0.45,
+    "bend": 0.8,
+    "pect": 0.4,
+    "pectAmp": 0.3,
+    "bob": 0.15,
+    "roll": 0.7
+   },
+   "says": [],
+   "variants": [
+    {
+     "h": 0,
+     "s": 1,
+     "v": 1
+    }
+   ],
+   "effects": []
+  },
+  {
+   "id": "betta",
+   "name": "베타",
+   "sci": "Betta splendens",
+   "sizeCm": 7,
+   "motion": "fish",
+   "scale": 0.5,
+   "palette": {
+    "a": "#9C0109",
+    "b": "#AC000D",
+    "c": "#AF000F",
+    "d": "#A2000B",
+    "e": "#A10005",
+    "f": "#A00006",
+    "g": "#A0030C",
+    "h": "#AA000C",
+    "i": "#9F0006",
+    "j": "#282428",
+    "k": "#9F0008",
+    "l": "#A6000C",
+    "m": "#AE000E",
+    "n": "#AD000D",
+    "o": "#A4000B",
+    "p": "#910000",
+    "q": "#8F0000",
+    "r": "#9D0001",
+    "s": "#9A080B",
+    "t": "#B20211",
+    "u": "#9A050A",
+    "v": "#9A070A",
+    "w": "#9B0A0B",
+    "y": "#9F050C",
+    "z": "#9C0A0B",
+    "A": "#9A090B",
+    "B": "#9A0109",
+    "C": "#9B090B",
+    "D": "#9B030A",
+    "E": "#9E080C",
+    "F": "#9B0C0C",
+    "G": "#9C070B",
+    "H": "#9B0009",
+    "I": "#9B0008",
+    "J": "#9B010A",
+    "K": "#9C0C0C",
+    "L": "#9C0B0C",
+    "M": "#9C0A0C",
+    "N": "#9A060A",
+    "O": "#9C0007",
+    "P": "#9B070B",
+    "Q": "#A5070E",
+    "R": "#9F060C",
+    "S": "#9A0209",
+    "T": "#A20007",
+    "U": "#9A0008",
+    "V": "#A0060C",
+    "W": "#9B0007",
+    "Y": "#9F070C"
+   },
+   "side": [
+    "...st...A.Q....",
+    "..usvv..EsRQ...",
+    ".wwyzzA.QSTU...",
+    "..ABCCsabcbddef",
+    ".BDEFGugachiijk",
+    "..HIAJHlmnokpqr",
+    ".KLMNNO.RwVWUy.",
+    "..NNwP..Q.Yu.E.",
+    "...QR........y."
+   ],
+   "parts": [
+    {
+     "id": "몸통",
+     "kind": "box",
+     "role": "body",
+     "x": 7,
+     "y": 3,
+     "w": 6,
+     "h": 3,
+     "d": 2,
+     "sheen": [
+      {
+       "color": "#C8B4FF",
+       "strength": 0.6,
+       "power": 3,
+       "center": [
+        11,
+        4.5
+       ],
+       "radius": 4.5
+      }
+     ],
+     "faces": {
+      "front": [
+       "dd",
+       "oo",
+       "cc"
+      ],
+      "back": [
+       "gg",
+       "bb",
+       "ll"
+      ],
+      "top": [
+       "klpieb",
+       "klpieb"
+      ],
+      "bottom": [
+       "laiika",
+       "laiika"
+      ]
+     }
+    },
+    {
+     "id": "머리",
+     "kind": "box",
+     "role": "head",
+     "x": 13,
+     "y": 3,
+     "w": 2,
+     "h": 3,
+     "d": 2,
+     "sheen": [
+      {
+       "color": "#C8B4FF",
+       "strength": 0.6,
+       "power": 3,
+       "center": [
+        11,
+        4.5
+       ],
+       "radius": 4.5,
+       "exclude": [
+        [
+         13,
+         4,
+         14,
+         5
+        ]
+       ]
+      }
+     ],
+     "faces": {
+      "front": [
+       "ff",
+       "ff",
+       "rr"
+      ],
+      "back": [
+       "rr",
+       "jj",
+       "kk"
+      ],
+      "top": [
+       "gf",
+       "gf"
+      ],
+      "bottom": [
+       "ob",
+       "ob"
+      ]
+     }
+    },
+    {
+     "id": "꼬리지느러미",
+     "kind": "plane",
+     "role": "caudal",
+     "x": 1,
+     "y": 0,
+     "w": 6,
+     "h": 9,
+     "alphaGrad": {
+      "near": 1.0,
+      "far": 0.7
+     },
+     "sheen": {
+      "color": "#C8B4FF",
+      "strength": 0.6,
+      "power": 3
+     }
+    },
+    {
+     "id": "등지느러미",
+     "kind": "plane",
+     "role": "body",
+     "x": 8,
+     "y": 0,
+     "w": 4,
+     "h": 3,
+     "opacity": 0.7,
+     "sheen": {
+      "color": "#C8B4FF",
+      "strength": 0.6,
+      "power": 3
+     }
+    },
+    {
+     "id": "뒷지느러미",
+     "kind": "plane",
+     "role": "body",
+     "x": 8,
+     "y": 6,
+     "w": 5,
+     "h": 2,
+     "opacity": 0.7,
+     "sheen": {
+      "color": "#C8B4FF",
+      "strength": 0.6,
+      "power": 3
+     }
+    },
+    {
+     "id": "배지느러미",
+     "swing": {
+      "axis": "z",
+      "min": -12,
+      "max": 4,
+      "rate": 0.85,
+      "alt": 1
+     },
+     "kind": "plane",
+     "role": "head",
+     "x": 13,
+     "y": 6,
+     "w": 1,
+     "h": 3,
+     "z": 0.6,
+     "mirror": true,
+     "pivot": "top",
+     "rot": [
+      -15,
+      0,
+      0
+     ],
+     "opacity": 0.7,
+     "sheen": {
+      "color": "#C8B4FF",
+      "strength": 0.6,
+      "power": 3
+     }
+    }
+   ],
+   "swim": {
+    "speed": 0.55,
+    "beat": 0.5,
+    "wag": 0.5,
+    "bend": 0.45,
+    "pect": 0.8,
+    "pectAmp": 0.6,
+    "bob": 0.25,
+    "roll": 0.6
+   },
+   "says": [],
+   "variants": [
+    {
+     "h": 0,
+     "s": 1,
+     "v": 1
+    }
+   ],
+   "effects": []
+  },
+  {
+   "id": "clownfish",
+   "name": "흰동가리",
+   "sci": "Amphiprion ocellaris",
+   "sizeCm": 9,
+   "motion": "fish",
+   "scale": 0.6,
+   "palette": {
+    "a": "#D89527",
+    "b": "#E3E4E8",
+    "c": "#D29327",
+    "d": "#D49427",
+    "e": "#0A0708",
+    "f": "#D19226",
+    "g": "#D59428",
+    "h": "#D39327",
+    "i": "#D6CDCA",
+    "j": "#F3FDFF",
+    "k": "#D69527",
+    "l": "#CE9027",
+    "m": "#CFCACC",
+    "n": "#D59427",
+    "o": "#BABFC9",
+    "p": "#D29227",
+    "q": "#C3C9D2"
+   },
+   "side": [
+    "........",
+    "........",
+    "..cbdcba",
+    "..fbfdbe",
+    "..cbgfbc"
+   ],
+   "parts": [
+    {
+     "id": "몸통",
+     "kind": "box",
+     "role": "body",
+     "x": 2,
+     "y": 2,
+     "w": 4,
+     "h": 3,
+     "d": 2,
+     "faces": {
+      "top": [
+       "hihh",
+       "hjhh"
+      ],
+      "front": [
+       "dd",
+       "gg",
+       "cc"
+      ],
+      "back": [
+       "dd",
+       "cc",
+       "cc"
+      ],
+      "bottom": [
+       "cbcf",
+       "cbcf"
+      ]
+     }
+    },
+    {
+     "id": "머리",
+     "kind": "box",
+     "role": "head",
+     "x": 6,
+     "y": 2,
+     "w": 2,
+     "h": 3,
+     "d": 2,
+     "faces": {
+      "front": [
+       "kk",
+       "kk",
+       "ll"
+      ],
+      "top": [
+       "mh",
+       "jh"
+      ],
+      "back": [
+       "bb",
+       "bb",
+       "bb"
+      ],
+      "bottom": [
+       "bf",
+       "bf"
+      ]
+     }
+    },
+    {
+     "id": "등지느러미",
+     "kind": "plane",
+     "role": "body",
+     "x": 3,
+     "y": 1,
+     "w": 4,
+     "h": 1,
+     "paint": [
+      "nnnn"
+     ],
+     "opacity": 0.7
+    },
+    {
+     "id": "꼬리지느러미",
+     "kind": "plane",
+     "role": "caudal",
+     "x": 0,
+     "y": 2,
+     "w": 2,
+     "h": 3,
+     "paint": [
+      "op",
+      ".p",
+      "op"
+     ],
+     "opacity": 0.7
+    },
+    {
+     "id": "가슴지느러미",
+     "kind": "plane",
+     "role": "pect",
+     "x": 4,
+     "y": 3,
+     "w": 2,
+     "h": 2,
+     "z": 1.05,
+     "paint": [
+      "pq",
+      "pb"
+     ],
+     "opacity": 0.7
+    }
+   ],
+   "swim": {
+    "speed": 0.9,
+    "beat": 0.7,
+    "wag": 0.6,
+    "bend": 0.4,
+    "pect": 0.9,
+    "pectAmp": 1,
+    "bob": 0.25,
+    "roll": 0.8
+   },
+   "says": [],
+   "variants": [
+    {
+     "h": 0,
+     "s": 1,
+     "v": 1
+    }
+   ],
+   "effects": []
+  },
+  {
+   "id": "blue-tang",
+   "name": "블루탱",
+   "sci": "Paracanthurus hepatus",
+   "sizeCm": 25,
+   "motion": "fish",
+   "scale": 0.55,
+   "palette": {
+    "a": "#350E42",
+    "b": "#350E42",
+    "c": "#4159D8",
+    "d": "#350E42",
+    "e": "#350E42",
+    "f": "#350E42",
+    "g": "#4159D8",
+    "h": "#4159D8",
+    "i": "#350E42",
+    "j": "#350E42",
+    "k": "#350E42",
+    "l": "#4159D8",
+    "m": "#350E42",
+    "n": "#4159D8",
+    "o": "#4159D8",
+    "p": "#350E42",
+    "q": "#350E42",
+    "r": "#350E42",
+    "s": "#4159D8",
+    "t": "#350E42",
+    "u": "#4159D8",
+    "v": "#000000",
+    "w": "#4159D8",
+    "y": "#350E42",
+    "z": "#350E42",
+    "A": "#4159D8",
+    "B": "#4159D8",
+    "C": "#DAB535",
+    "D": "#4159D8",
+    "E": "#4159D8",
+    "F": "#350E42",
+    "G": "#4159D8",
+    "H": "#4159D8",
+    "I": "#4159D8",
+    "J": "#4159D8",
+    "K": "#4159D8",
+    "L": "#350E42",
+    "M": "#350E42",
+    "N": "#350E42",
+    "O": "#350E42",
+    "P": "#4159D8",
+    "Q": "#350E42",
+    "R": "#350E42",
+    "S": "#350E42",
+    "T": "#350E42",
+    "U": "#350E42",
+    "V": "#350E42",
+    "W": "#4159D8",
+    "Y": "#4159D8",
+    "Z": "#DAB535",
+    "0": "#DAB535",
+    "1": "#DAB535",
+    "2": "#DAB535",
+    "3": "#DAB535",
+    "4": "#DAB535",
+    "5": "#DAB535",
+    "6": "#DAB535",
+    "7": "#DAB535"
+   },
+   "side": [
+    "...........",
+    "...abcdefgh",
+    "...ijklcmno",
+    "...pqrstuvw",
+    "...yzABCuDE",
+    "...FGHIJKLM",
+    "...NOPQQRST",
+    "..........."
+   ],
+   "parts": [
+    {
+     "id": "몸통",
+     "kind": "box",
+     "role": "body",
+     "x": 3,
+     "y": 1,
+     "w": 6,
+     "h": 6,
+     "d": 2
+    },
+    {
+     "id": "머리",
+     "kind": "box",
+     "role": "head",
+     "x": 9,
+     "y": 1,
+     "w": 2,
+     "h": 6,
+     "d": 2,
+     "faces": {
+      "front": [
+       "hh",
+       "oo",
+       "ww",
+       "EE",
+       "MM",
+       "TT"
+      ]
+     }
+    },
+    {
+     "id": "등지느러미",
+     "kind": "plane",
+     "role": "body",
+     "x": 4,
+     "y": 0,
+     "w": 5,
+     "h": 1,
+     "paint": [
+      "UVGWY"
+     ],
+     "opacity": 0.7
+    },
+    {
+     "id": "꼬리지느러미",
+     "kind": "plane",
+     "role": "caudal",
+     "x": 0,
+     "y": 2,
+     "w": 3,
+     "h": 3,
+     "paint": [
+      "Z01",
+      "234",
+      "567"
+     ],
+     "opacity": 0.7
+    },
+    {
+     "id": "배지느러미",
+     "kind": "plane",
+     "role": "body",
+     "x": 5,
+     "y": 7,
+     "w": 4,
+     "h": 1,
+     "pivot": "top",
+     "paint": [
+      "TTTT"
+     ],
+     "opacity": 0.7
+    },
+    {
+     "id": "가슴지느러미",
+     "kind": "plane",
+     "role": "pect",
+     "x": 6,
+     "y": 3,
+     "w": 2,
+     "h": 2,
+     "z": 1.05,
+     "paint": [
+      "00",
+      "00"
+     ],
+     "opacity": 0.7
+    }
+   ],
+   "swim": {
+    "speed": 0.7,
+    "beat": 0.5,
+    "wag": 0.5,
+    "bend": 0.35,
+    "pect": 0.8,
+    "pectAmp": 0.9,
+    "bob": 0.25,
+    "roll": 0.7
+   },
+   "says": [],
+   "variants": [
+    {
+     "h": 0,
+     "s": 1,
+     "v": 1
+    }
+   ],
+   "effects": []
+  },
+  {
+   "id": "butterflyfish",
+   "name": "나비고기",
+   "sci": "Forcipiger flavissimus",
+   "sizeCm": 22,
+   "motion": "fish",
+   "scale": 0.55,
+   "palette": {
+    "a": "#150917",
+    "b": "#D1B900",
+    "c": "#D5C000",
+    "d": "#D9C400",
+    "e": "#D7C100",
+    "f": "#170C1A",
+    "g": "#CDB200",
+    "h": "#D3BA00",
+    "i": "#D8BE00",
+    "j": "#D7BE00",
+    "k": "#110918",
+    "l": "#110616",
+    "m": "#CBAF00",
+    "n": "#D2B400",
+    "o": "#412847",
+    "p": "#000000",
+    "q": "#D4B900",
+    "r": "#452B4C",
+    "s": "#3F2847",
+    "t": "#482F60",
+    "u": "#553958",
+    "v": "#573B5B",
+    "w": "#5A3E5E",
+    "y": "#F8D600",
+    "z": "#7779B5",
+    "A": "#6D71B3",
+    "B": "#666CB2",
+    "C": "#6D72B3",
+    "D": "#6D71B4",
+    "E": "#7779B4",
+    "F": "#D8C200",
+    "G": "#D9C300",
+    "H": "#F9E400",
+    "I": "#F7DF00",
+    "J": "#F9E300",
+    "K": "#F3DD00",
+    "L": "#3F2545",
+    "M": "#402647",
+    "N": "#442A4B",
+    "O": "#44274B",
+    "P": "#4C3152",
+    "Q": "#553959",
+    "R": "#7F75AF",
+    "S": "#DBC300",
+    "T": "#EBD400",
+    "U": "#DAC500",
+    "V": "#F4D200"
+   },
+   "side": [
+    "............",
+    "............",
+    "............",
+    "............",
+    "BAzdedcba...",
+    ".BCjihgaf...",
+    ".BAnnmalk...",
+    "BADiqgfpo...",
+    "..Ennmtsrrrr",
+    "...yeewvu..."
+   ],
+   "parts": [
+    {
+     "id": "몸통",
+     "kind": "box",
+     "role": "body",
+     "x": 3,
+     "y": 4,
+     "w": 4,
+     "h": 6,
+     "d": 2,
+     "faces": {
+      "top": [
+       "eFdG",
+       "HIJK"
+      ],
+      "front": [
+       "dd",
+       "ee",
+       "aa",
+       "ff",
+       "rr",
+       "uu"
+      ],
+      "back": [
+       "ee",
+       "mm",
+       "ii",
+       "mm",
+       "yy",
+       "gg"
+      ],
+      "bottom": [
+       "hemo",
+       "hemo"
+      ]
+     }
+    },
+    {
+     "id": "머리",
+     "kind": "box",
+     "role": "head",
+     "x": 7,
+     "y": 4,
+     "w": 2,
+     "h": 6,
+     "d": 2,
+     "faces": {
+      "front": [
+       "LL",
+       "MM",
+       "ff",
+       "NN",
+       "OP",
+       "QR"
+      ],
+      "top": [
+       "eS",
+       "TT"
+      ],
+      "back": [
+       "gg",
+       "aa",
+       "ll",
+       "pp",
+       "ww",
+       "rr"
+      ],
+      "bottom": [
+       "or",
+       "or"
+      ]
+     }
+    },
+    {
+     "id": "주둥이",
+     "kind": "box",
+     "role": "head",
+     "x": 9,
+     "y": 8,
+     "w": 3,
+     "h": 1,
+     "d": 1,
+     "faces": {
+      "front": [
+       "u"
+      ],
+      "back": [
+       "t"
+      ],
+      "top": [
+       "rrv"
+      ],
+      "bottom": [
+       "ooo"
+      ]
+     }
+    },
+    {
+     "id": "꼬리지느러미",
+     "kind": "plane",
+     "role": "caudal",
+     "x": 0,
+     "y": 3,
+     "w": 3,
+     "h": 6,
+     "opacity": 0.7
+    },
+    {
+     "id": "등지느러미",
+     "kind": "plane",
+     "role": "body",
+     "x": 3,
+     "y": 0,
+     "w": 6,
+     "h": 4,
+     "paint": [
+      "...U..",
+      ".U.U.U",
+      ".U.U.U",
+      "UUUUUU"
+     ],
+     "opacity": 0.7
+    },
+    {
+     "id": "가슴지느러미",
+     "kind": "plane",
+     "role": "pect",
+     "x": 5,
+     "y": 7,
+     "w": 2,
+     "h": 2,
+     "z": 1.05,
+     "paint": [
+      "VV",
+      "VV"
+     ],
+     "opacity": 0.7
+    }
+   ],
+   "swim": {
+    "speed": 0.7,
+    "beat": 0.5,
+    "wag": 0.45,
+    "bend": 0.35,
+    "pect": 0.8,
+    "pectAmp": 0.9,
+    "bob": 0.25,
+    "roll": 0.7
+   },
+   "says": [],
+   "variants": [
+    {
+     "h": 0,
+     "s": 1,
+     "v": 1
+    }
+   ],
+   "effects": []
+  },
   {
    "id": "clown",
    "name": "흰동가리",
@@ -1158,6 +3503,21 @@
  ],
  "effects": [
   {
+   "id": "lure-glow",
+   "name": "미끼 빛 (심해아귀)",
+   "type": "glow",
+   "params": {
+    "color": "#CCFFFF",
+    "strength": 0.9,
+    "rate": 0.12,
+    "parts": [
+     "미끼"
+    ],
+    "halo": 0.3,
+    "haloOpacity": 0.25
+   }
+  },
+  {
    "id": "charge-violet",
    "name": "전기 (보라)",
    "type": "charge",
@@ -1218,6 +3578,32 @@
    }
   }
  ],
+ "addons": {
+  "presets": {},
+  "fit": {
+   "pencil-yellow": {
+    "deep-anglerfish": {
+     "mouthAt": [
+      13,
+      8.7
+     ]
+    },
+    "koi": {
+     "mouthAt": [
+      25.8,
+      7.3
+     ]
+    },
+    "butterflyfish": {
+     "mouthAt": [
+      12,
+      8.5
+     ],
+     "thick": 1.0
+    }
+   }
+  }
+ },
  "reefs": [
   {
    "id": "voxel",
@@ -1656,6 +4042,198 @@
       "says": [
        "멋진 인테리어~"
       ]
+     }
+    ],
+    "props": [],
+    "sliders": [
+     "swim",
+     "flap"
+    ],
+    "talk": {
+     "tap": true,
+     "auto": 0
+    }
+   }
+  },
+  {
+   "id": "pptreef",
+   "name": "PPT Reef",
+   "file": "ppt-reef.html",
+   "kind": "showcase",
+   "config": {
+    "title": "물고기 종류 Reef",
+    "subtitle": "",
+    "radius": 66,
+    "lanes": [
+     {
+      "species": "goldfish",
+      "path": "loop",
+      "cx": -14,
+      "cy": 11,
+      "cz": 0,
+      "rx": 4,
+      "ry": 0.8,
+      "rz": 4,
+      "sp": 0.5,
+      "ph": 0.0,
+      "scale": 1,
+      "variant": 0,
+      "effects": [],
+      "says": [],
+      "addons": []
+     },
+     {
+      "species": "goldfish",
+      "path": "loop",
+      "cx": 0,
+      "cy": 11,
+      "cz": 0,
+      "rx": 4,
+      "ry": 0.8,
+      "rz": 4,
+      "sp": 0.55,
+      "ph": 1.1,
+      "scale": 1,
+      "variant": 1,
+      "effects": [],
+      "says": [],
+      "addons": []
+     },
+     {
+      "species": "goldfish",
+      "path": "loop",
+      "cx": 14,
+      "cy": 11,
+      "cz": 0,
+      "rx": 4,
+      "ry": 0.8,
+      "rz": 4,
+      "sp": 0.6,
+      "ph": 2.2,
+      "scale": 1,
+      "variant": 2,
+      "effects": [],
+      "says": [],
+      "addons": []
+     },
+     {
+      "species": "deep-anglerfish",
+      "path": "loop",
+      "cx": -15,
+      "cy": 1,
+      "cz": 0,
+      "rx": 4.5,
+      "ry": 0.8,
+      "rz": 4.5,
+      "sp": 0.4,
+      "ph": 0.7,
+      "scale": 1,
+      "variant": 0,
+      "effects": [],
+      "says": [],
+      "addons": []
+     },
+     {
+      "species": "koi",
+      "path": "loop",
+      "cx": 0,
+      "cy": 1,
+      "cz": 0,
+      "rx": 6.5,
+      "ry": 0.8,
+      "rz": 5,
+      "sp": 0.45,
+      "ph": 1.9,
+      "scale": 1,
+      "variant": 0,
+      "effects": [],
+      "says": [],
+      "addons": []
+     },
+     {
+      "species": "betta",
+      "path": "loop",
+      "cx": 15,
+      "cy": 1,
+      "cz": 0,
+      "rx": 4.5,
+      "ry": 0.8,
+      "rz": 4.5,
+      "sp": 0.55,
+      "ph": 3.1,
+      "scale": 1,
+      "variant": 0,
+      "effects": [],
+      "says": [],
+      "addons": []
+     },
+     {
+      "species": "discus",
+      "path": "loop",
+      "cx": -16.5,
+      "cy": -9,
+      "cz": 0,
+      "rx": 3.5,
+      "ry": 0.8,
+      "rz": 4,
+      "sp": 0.5,
+      "ph": 0.4,
+      "scale": 1,
+      "variant": 0,
+      "effects": [],
+      "says": [],
+      "addons": []
+     },
+     {
+      "species": "clownfish",
+      "path": "loop",
+      "cx": -5.5,
+      "cy": -9,
+      "cz": 0,
+      "rx": 3.5,
+      "ry": 0.8,
+      "rz": 4,
+      "sp": 0.65,
+      "ph": 1.6,
+      "scale": 1,
+      "variant": 0,
+      "effects": [],
+      "says": [],
+      "addons": []
+     },
+     {
+      "species": "blue-tang",
+      "path": "loop",
+      "cx": 5.5,
+      "cy": -9,
+      "cz": 0,
+      "rx": 3.5,
+      "ry": 0.8,
+      "rz": 4,
+      "sp": 0.55,
+      "ph": 2.8,
+      "scale": 1,
+      "variant": 0,
+      "effects": [],
+      "says": [],
+      "addons": []
+     },
+     {
+      "species": "butterflyfish",
+      "path": "loop",
+      "cx": 16.5,
+      "cy": -9,
+      "cz": 0,
+      "rx": 3.5,
+      "ry": 0.8,
+      "rz": 4,
+      "sp": 0.6,
+      "ph": 4.0,
+      "scale": 1,
+      "variant": 0,
+      "effects": [],
+      "says": [],
+      "addons": []
      }
     ],
     "props": [],

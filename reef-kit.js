@@ -51,7 +51,7 @@
     kit.color = function (hex) { return new THREE.Color(hex).convertSRGBToLinear(); };
 
     /* ───────── 데이터 정리 ───────── */
-    var ROLES = ['head', 'body', 'stock', 'caudal', 'pect', 'flipF', 'flipB', 'still'];
+    var ROLES = ['head', 'body', 'stock', 'caudal', 'pect', 'flipF', 'flipB', 'still', 'jaw'];
     var KINDS = ['box', 'plane', 'free'];
     var SHAPES = ['box', 'cylinder', 'cone', 'sphere', 'wedge', 'mesh'];
     var MOTIONS = ['fish', 'turtle', 'float', 'spin', 'still'];
@@ -82,6 +82,11 @@
         p.z = num(p.z, 0);
         if (p.kind === 'box') p.d = Math.max(1, Math.round(num(p.d, 3)));
         if (p.kind === 'plane' && ['z', 'y', 'x'].indexOf(p.axis) < 0) p.axis = 'z';
+        if (p.rot) p.rot = vec3(p.rot, [0, 0, 0]);
+        // 흔들기: pivot 모서리를 축으로 amp도만큼 왔다 갔다 (alt=1 이면 왼쪽·오른쪽이 엇갈림)
+        if (p.swing) p.swing = { axis: ['x', 'y', 'z'].indexOf(p.swing.axis) >= 0 ? p.swing.axis : 'x', amp: num(p.swing.amp, 12),
+                                 rate: num(p.swing.rate, 0.8), phase: num(p.swing.phase, 0), alt: num(p.swing.alt, 0),
+                                 min: p.swing.min == null ? null : num(p.swing.min, 0), max: p.swing.max == null ? null : num(p.swing.max, 0) };
         if (p.paint && !Array.isArray(p.paint)) delete p.paint;
         if (p.paint) p.paint = p.paint.map(function (r) { return pad(r, p.w); }).slice(0, p.h);
         if (p.paint) while (p.paint.length < p.h) p.paint.push(pad('', p.w));
@@ -105,10 +110,13 @@
       var sw = m.swim || {};
       m.swim = {
         speed: num(sw.speed, 1), beat: num(sw.beat, 0.6), wag: num(sw.wag, 0.55), bend: num(sw.bend, 0.5),
-        pect: num(sw.pect, 1), bob: num(sw.bob, 0.2), roll: num(sw.roll, 1)
+        pect: num(sw.pect, 1), bob: num(sw.bob, 0.2), roll: num(sw.roll, 1), pectAmp: num(sw.pectAmp, 1)
       };
       m.parts = (Array.isArray(m.parts) ? m.parts : []).map(normPart);
       m.says = (Array.isArray(m.says) ? m.says : []).map(String);
+      // 턱: open = 기본으로 벌린 각도, amp = 더 벌어지는 폭(도), rate = 1초에 몇 번
+      if (m.jaw) m.jaw = { open: num(m.jaw.open, 4), amp: num(m.jaw.amp, 8), rate: num(m.jaw.rate, 0.15), pivot: Array.isArray(m.jaw.pivot) ? m.jaw.pivot : null,
+                           close: m.jaw.close == null ? null : clamp(num(m.jaw.close, 0.5), 0.05, 0.95) };
       m.variants = Array.isArray(m.variants) ? m.variants : [];
       m.effects = Array.isArray(m.effects) ? m.effects : [];
       return m;
@@ -324,11 +332,12 @@
 
     function bake(m, variant) {
       var S = new Sampler(m), pal = m.palette, shade = num(m.shade, 0.06);
+      var vpal = (variant && variant.palette) || null;
       var colorCache = {};
       // 글자 하나 → 색 (위쪽일수록 살짝 어둡고 아래쪽일수록 살짝 밝게)
       function col(ch, rowFrac) {
         if (!ch) return null;
-        var hex = pal[ch] || (ch.charAt(0) === '#' ? ch : '#ff00ff');
+        var hex = (vpal && vpal[ch]) || pal[ch] || (ch.charAt(0) === '#' ? ch : '#ff00ff');
         var lift = (rowFrac == null) ? 0 : (rowFrac - 0.5) * shade;
         var key = hex + '|' + Math.round(lift * 1000);
         return colorCache[key] || (colorCache[key] = tint(hex, variant, lift));
@@ -354,6 +363,22 @@
             { w: p.w, h: p.h, f: function (i, j) { return col(cells(i, j), rf(j)); } },
             { w: p.w, h: p.h, f: function (i, j) { return col(cells(p.w - 1 - i, j), rf(j)); } }
           ];
+          // faces가 있으면 그 면은 따로 칠함 (없는 칸은 원래대로)
+          if (p.faces) {
+            var FC = p.faces;
+            var fget = function (g, i, j) {
+              if (!Array.isArray(g) || !g.length) return null;
+              var r = String(g[clamp(j, 0, g.length - 1)] || ''), ch = r.charAt(clamp(i, 0, r.length - 1));
+              return S.empty(ch) ? null : ch;
+            };
+            [['front', 0, function (j) { return rf(j); }], ['back', 1, function (j) { return rf(j); }],
+             ['top', 2, function () { return rf(0) - 0.08; }], ['bottom', 3, function () { return rf(p.h - 1) + 0.08; }]
+            ].forEach(function (q) {
+              if (!FC[q[0]]) return;
+              var old = list[q[1]].f, g = FC[q[0]], lf = q[2];
+              list[q[1]].f = function (i, j) { var ch = fget(g, i, j); return ch ? col(ch, lf(j)) : old(i, j); };
+            });
+          }
         } else if (p.kind === 'plane') {
           var fn;
           if (p.paint) fn = function (i, j) { return col(paintAt(p, i, j), null); };
@@ -361,6 +386,10 @@
           else if (p.axis === 'x') fn = function (i, j) { return col(S.side(p.x, p.y + j), (p.y + j) / S.H); };
           else fn = function (i, j) { return col(S.side(p.x + i, p.y + j), (p.y + j) / S.H); };
           list = [{ w: p.w, h: p.h, f: fn }];
+          if (p.alphaGrad) {
+            var ag = p.alphaGrad, an = num(ag.near, 1), af = num(ag.far, 0.7);
+            list[0].a = function (i) { return af + (an - af) * (i + 0.5) / p.w; };   // 몸 쪽으로 갈수록 진하게
+          }
         }
         list.forEach(function (r) { rects.push(r); });
         faces[k] = list;
@@ -375,7 +404,7 @@
         for (var j = 0; j < r.h; j++) for (var i = 0; i < r.w; i++) {
           var c = r.f(i, j); if (!c) continue;
           var o = ((r.v + j) * AW + r.u + i) * 4;
-          d[o] = c[0]; d[o + 1] = c[1]; d[o + 2] = c[2]; d[o + 3] = 255;
+          d[o] = c[0]; d[o + 1] = c[1]; d[o + 2] = c[2]; d[o + 3] = r.a ? Math.round(255 * clamp(r.a(i, j), 0, 1)) : 255;
           md[o] = md[o + 1] = md[o + 2] = md[o + 3] = 255;
         }
       });
@@ -452,12 +481,56 @@
     }
 
     /* ───────── 재질 ───────── */
+    // 광택: 빛을 정면으로 받는 면일수록 sheen 색이 피부 위에 더해짐 (따로 띄운 껍질 없음)
+    // sheen은 한 겹 {color, strength, power} 또는 여러 겹 배열.
+    // 겹마다 rect:[열0,행0,열1,행1] (그 칸 안에서만) 또는 center:[열,행]+radius (가운데서 번지며 옅어짐)
+    function f4(v) { return (+v).toFixed(4); }
+    function sheenMat(o, sh, S) {
+      var layers = Array.isArray(sh) ? sh : [sh];
+      o.specular = new THREE.Color(0, 0, 0); o.shininess = 1;
+      var mt = new THREE.MeshPhongMaterial(o), off = new THREE.Vector3();
+      mt.userData.sheenOff = off;
+      var body = '';
+      layers.forEach(function (L) {
+        var c = kit.color(L.color || '#C8B4FF'), mask = '1.0';
+        // 칸 사각형 [열0,행0,열1,행1] 안이면 1, 밖이면 0
+        var inRect = function (R) {
+          var x0 = R[0] - S.W / 2, x1 = R[2] - S.W / 2, y1 = S.H / 2 - R[1], y0 = S.H / 2 - R[3];
+          return 'step(' + f4(x0) + ', sp.x) * step(sp.x, ' + f4(x1) + ') * step(' + f4(y0) + ', sp.y) * step(sp.y, ' + f4(y1) + ')';
+        };
+        if (Array.isArray(L.rect)) {
+          mask = inRect(L.rect);
+        } else if (Array.isArray(L.center)) {
+          var cx = L.center[0] - S.W / 2, cy = S.H / 2 - L.center[1];
+          mask = 'pow(clamp(1.0 - length(sp.xy - vec2(' + f4(cx) + ', ' + f4(cy) + ')) / ' + f4(num(L.radius, 4)) + ', 0.0, 1.0), 1.5)';
+        }
+        if (Array.isArray(L.exclude)) L.exclude.forEach(function (R) { mask = '(' + mask + ') * (1.0 - ' + inRect(R) + ')'; });
+        var amt = '(' + f4(num(L.strength, 0.5)) + ' * ' + mask + ') * pow(nl, ' + f4(num(L.power, 3)) + ')';
+        var cv = 'vec3(' + f4(c.r) + ', ' + f4(c.g) + ', ' + f4(c.b) + ')';
+        if (L.mode === 'tint') body += '    tn = mix(tn, tn * ' + cv + ', clamp(' + amt + ', 0.0, 1.0));\n';
+        else body += '    sh += ' + cv + ' * ' + amt + ';\n';
+      });
+      mt.onBeforeCompile = function (shader) {
+        shader.uniforms.sheenOff = { value: off };
+        shader.vertexShader = 'varying vec3 vSheenLocal;\n' + shader.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n  vSheenLocal = position;');
+        shader.fragmentShader = 'uniform vec3 sheenOff;\nvarying vec3 vSheenLocal;\n' +
+          shader.fragmentShader.replace('#include <lights_fragment_end>',
+            '#include <lights_fragment_end>\n#if NUM_DIR_LIGHTS > 0\n{\n  vec3 sp = vSheenLocal + sheenOff;\n  vec3 tn = vec3(1.0);\n  for (int si = 0; si < NUM_DIR_LIGHTS; si++) {\n' +
+            '    float nl = clamp(dot(normal, directionalLights[si].direction), 0.0, 1.0);\n    vec3 sh = vec3(0.0);\n' + body +
+            '    reflectedLight.directSpecular += sh * directionalLights[si].color;\n  }\n' +
+            '  reflectedLight.directDiffuse *= tn; reflectedLight.indirectDiffuse *= tn;\n}\n#endif');
+      };
+      mt.customProgramCacheKey = function () { return 'sheen|' + body; };
+      return mt;
+    }
     function matFor(skin, p, isPlane) {
-      var key = (isPlane ? 'P' : 'B') + '|' + p.opacity + '|' + p.shine;
+      var key = (isPlane ? 'P' : 'B') + '|' + p.opacity + '|' + p.shine + '|' + (p.sheen ? p.id + JSON.stringify(p.sheen) : '') + (p.alphaGrad ? '|ag' : '');
       if (skin.mats[key]) return skin.mats[key];
       var o = { map: skin.tex };
       if (isPlane) { o.side = THREE.DoubleSide; o.alphaTest = 0.5; }
-      if (p.opacity < 1) { o.transparent = true; o.opacity = p.opacity; }
+      if (p.opacity < 1) { o.transparent = true; o.opacity = p.opacity; if (isPlane) o.depthWrite = false; }
+      if (p.alphaGrad) { o.transparent = true; if (isPlane) o.depthWrite = false; }
+      if (p.sheen) return (skin.mats[key] = sheenMat(o, p.sheen, skin.S));
       var mt;
       if (p.shine > 0) {
         o.shininess = 4 + p.shine * 60;
@@ -467,7 +540,7 @@
       return (skin.mats[key] = mt);
     }
     function freeMat(skin, m, p, variant) {
-      var hex = m.palette[p.color] || (String(p.color).charAt(0) === '#' ? p.color : '#888888');
+      var hex = (variant && variant.palette && variant.palette[p.color]) || m.palette[p.color] || (String(p.color).charAt(0) === '#' ? p.color : '#888888');
       var c = kit.color(rgbHex(tint(hex, variant, 0)));
       var o = { color: c };
       if (p.opacity < 1) { o.transparent = true; o.opacity = p.opacity; }
@@ -512,7 +585,16 @@
       var caudal = new THREE.Object3D(); caudal.position.x = J.sc - J.bs; stock.add(caudal);
       var bones = { head: head, body: body, stock: stock, caudal: caudal, still: bob };
       var boneX = { head: 0, body: J.hb, stock: J.bs, caudal: J.sc, still: 0 };
-      var pects = [], flips = [], meshes = [], halfH = S.H / 2;
+      // 턱: 턱 부위들의 뒤쪽 위 모서리(또는 jaw.pivot)를 축으로 머리에 붙임
+      var jawY = 0, jawParts = m.parts.filter(function (p) { return p.role === 'jaw' && p.kind !== 'free'; });
+      if (jawParts.length) {
+        var jl = Infinity, jt = -Infinity;
+        jawParts.forEach(function (p) { jl = Math.min(jl, p.x - S.W / 2); jt = Math.max(jt, S.H / 2 - p.y); });
+        var jp = (m.jaw && m.jaw.pivot) ? [m.jaw.pivot[0] - S.W / 2, S.H / 2 - m.jaw.pivot[1]] : [jl, jt];
+        var jawBone = new THREE.Object3D(); jawBone.position.set(jp[0], jp[1], 0); head.add(jawBone);
+        bones.jaw = jawBone; boneX.jaw = jp[0]; jawY = jp[1];
+      }
+      var pects = [], flips = [], meshes = [], swings = [], halfH = S.H / 2;
 
       m.parts.forEach(function (p, k) {
         var role = p.role;
@@ -535,6 +617,7 @@
           cx = S.fx(p.pos[0]); cy = S.fy(p.pos[1]); cz = p.pos[2];
           halfLen = p.size[0] / 2; halfDepth = p.size[2] / 2;
         }
+        if (mat && mat.userData && mat.userData.sheenOff) mat.userData.sheenOff.set(cx, cy, cz);
         var s0 = cz < 0 ? -1 : 1;
         (mirror ? [1, -1] : [1]).forEach(function (side) {
           var mesh = new THREE.Mesh(geo, mat);
@@ -545,10 +628,20 @@
             var r = p.rot;
             mesh.rotation.set(r[0] * Math.PI / 180 * side, r[1] * Math.PI / 180 * side, r[2] * Math.PI / 180);
           }
+          // 기울인 판/상자: pivot 모서리를 축으로 rot만큼 돌려 둠 (반대쪽은 거울로)
+          var tilt = null, po = [0, 0];
+          if (p.kind !== 'free' && (p.rot || p.swing || (p.pivot && p.pivot !== 'center'))) {
+            var r3 = p.rot || [0, 0, 0];
+            tilt = new THREE.Object3D();
+            tilt.rotation.set(r3[0] * Math.PI / 180 * side, r3[1] * Math.PI / 180 * side, r3[2] * Math.PI / 180);
+            var pw = (isPlane && p.axis === 'x') ? 0 : p.w, ph = (isPlane && p.axis === 'y') ? 0 : p.h;
+            po = { top: [0, ph / 2], bottom: [0, -ph / 2], front: [pw / 2, 0], back: [-pw / 2, 0] }[p.pivot] || [0, 0];
+          }
+          var jy = role === 'jaw' ? jawY : 0;
           if (role === 'pect') {
             // 가슴지느러미: 앞쪽 끝을 축으로 부채질
-            holder.position.set(cx + halfLen - bx, cy, side * cz);
-            mesh.position.x = -halfLen;
+            holder.position.set(cx + halfLen - bx, cy + po[1], side * cz);
+            mesh.position.x = -halfLen; mesh.position.y = -po[1];
             holder.userData.side = side;
             pects.push(holder);
           } else if (role === 'flipF' || role === 'flipB') {
@@ -557,9 +650,16 @@
             mesh.position.z = side * s0 * halfDepth;
             flips.push({ holder: holder, dir: side * s0, front: role === 'flipF' });
           } else {
-            holder.position.set(cx - bx, cy, side * cz);
+            holder.position.set(cx - bx + po[0], cy - jy + po[1], side * cz);
+            mesh.position.x -= po[0]; mesh.position.y -= po[1];
           }
-          holder.add(mesh);
+          if (tilt) { holder.add(tilt); tilt.add(mesh); } else holder.add(mesh);
+          if (tilt && p.swing) {
+            var sw = p.swing;
+            swings.push({ n: tilt, axis: sw.axis, base: tilt.rotation[sw.axis], amp: sw.amp * Math.PI / 180, rate: sw.rate,
+                          lo: sw.min == null ? null : sw.min * Math.PI / 180, hi: sw.max == null ? null : sw.max * Math.PI / 180,
+                          ph: sw.phase + (side < 0 ? Math.PI * sw.alt : 0), sg: sw.axis === 'z' ? 1 : side });
+          }
           parent.add(holder);
           if (p.kind !== 'free') meshes.push({ mesh: mesh, k: k, part: p, plane: isPlane });
           else meshes.push({ mesh: mesh, k: k, part: p, free: true });
@@ -568,7 +668,7 @@
 
       obj.userData = {
         reef: true, model: m, skin: skin, swimRoot: swimRoot, bob: bob, bones: bones,
-        pects: pects, flips: flips, meshes: meshes, fx: [], halfH: halfH, halfW: S.W / 2,
+        pects: pects, flips: flips, meshes: meshes, swings: swings, fx: [], halfH: halfH, halfW: S.W / 2,
         phase: num(opts.phase, 0), roll: 0
       };
       obj.scale.setScalar(m.scale * num(opts.scale, 1));
@@ -676,9 +776,29 @@
         var pf = t * 5.0 * flap * s.pect + ph;
         for (k = 0; k < u.pects.length; k++) {
           var pv = u.pects[k];
-          pv.rotation.y = pv.userData.side * (0.42 + Math.sin(pf + k * 0.7) * 0.42);
-          pv.rotation.z = Math.sin(pf * 0.7 + k) * 0.16;
+          pv.rotation.y = pv.userData.side * (0.42 + Math.sin(pf + k * 0.7) * 0.42) * s.pectAmp;
+          pv.rotation.z = Math.sin(pf * 0.7 + k) * 0.16 * s.pectAmp;
         }
+      }
+      // 턱을 천천히 벌렸다 닫기
+      // 흔들리는 지느러미 (FINS 슬라이더 만큼 크게)
+      if (u.swings) for (var si = 0; si < u.swings.length; si++) {
+        var sv = u.swings[si];
+        var sw0 = Math.sin(t * sv.rate * PI2 + ph + sv.ph);
+        // min/max가 있으면 그 사이를 오감 (z축: -는 뒤로, +는 앞으로)
+        var off = sv.lo == null ? sv.amp * sw0 : sv.lo + (sv.hi - sv.lo) * (0.5 + 0.5 * sw0);
+        sv.n.rotation[sv.axis] = sv.base + sv.sg * off * flap;
+      }
+      if (u.bones.jaw && m.jaw) {
+        var jw = m.jaw, jk;
+        if (jw.close == null) jk = 0.5 + 0.5 * Math.sin(t * jw.rate * PI2 + ph);
+        else {
+          // 천천히 벌리고 빠르게 닫기
+          var ju = ((t * jw.rate + ph / PI2) % 1 + 1) % 1, jo = 1 - jw.close;
+          jk = ju < jo ? 0.5 - 0.5 * Math.cos(Math.PI * ju / jo) : 0.5 + 0.5 * Math.cos(Math.PI * (ju - jo) / jw.close);
+        }
+        var ja = jw.open + jw.amp * jk;
+        u.bones.jaw.rotation.z = -ja * Math.PI / 180;
       }
       var dt = u.lastT == null ? 0 : clamp(t - u.lastT, 0, 0.1);
       u.lastT = t;
@@ -769,17 +889,32 @@
           }
         };
       } else if (e.type === 'glow') {
-        var gc = kit.color(P.color || '#FFB070'), st = num(P.strength, 0.35), rate = num(P.rate, 1.2), glowMats = [];
+        var gc = kit.color(P.color || '#FFB070'), st = num(P.strength, 0.35), rate = num(P.rate, 1.2), glowMats = [], halos = [];
+        var only = Array.isArray(P.parts) && P.parts.length ? P.parts : null;
+        var hs = num(P.halo, 0), hop = num(P.haloOpacity, 0.3);
         u.meshes.forEach(function (it) {
+          if (only && only.indexOf(it.part.id) < 0) return;
           it.mesh.material = it.mesh.material.clone();
           it.mesh.material.emissive = gc.clone();
           glowMats.push(it.mesh.material);
+          // 상자 둘레에 빛 껍질 두 겹
+          if (hs > 0 && !it.plane && !it.free) {
+            [1, 2.2].forEach(function (k2, n) {
+              var hm = new THREE.MeshBasicMaterial({ color: gc.clone(), transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
+              var e2 = hs * k2, hg = new THREE.BoxBufferGeometry(it.part.w + e2 * 2, it.part.h + e2 * 2, it.part.d + e2 * 2);
+              var h1 = new THREE.Mesh(hg, hm);
+              h1.position.copy(it.mesh.position); h1.rotation.copy(it.mesh.rotation); h1.renderOrder = 3;
+              it.mesh.parent.add(h1); halos.push({ m: hm, k: n ? 0.45 : 1 });
+            });
+          }
         });
         fx = {
           type: 'glow', mats: glowMats,
           update: function (t) {
-            var v = st * (0.6 + 0.4 * Math.sin(t * rate * PI2 + ph));
+            var w = 0.5 + 0.5 * Math.sin(t * rate * PI2 + ph);
+            var v = st * (0.55 + 0.45 * w);
             for (var i = 0; i < glowMats.length; i++) glowMats[i].emissiveIntensity = v;
+            for (var j = 0; j < halos.length; j++) halos[j].m.opacity = hop * halos[j].k * (0.35 + 0.65 * w);
           }
         };
       } else if (e.type === 'bubbles') {
