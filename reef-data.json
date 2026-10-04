@@ -1,6 +1,6 @@
 {
  "v": 1,
- "updated": "2026-10-04T19:36:04.542Z",
+ "updated": "2026-10-04T19:44:40.493Z",
  "style": {
   "font": {
    "family": "\"Galmuri11\", \"DotGothic16\", \"Jua\", sans-serif",
@@ -52,7 +52,7 @@
     "j": "#EB5F27",
     "k": "#FFEBD6",
     "l": "#F3DCCF",
-    "m": "#282524",
+    "m": "#000000",
     "n": "#FFE4CD",
     "o": "#FFF0DD",
     "p": "#ECB4A0",
