@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>물고기 종류 Reef</title>
+<title>Basic Reef</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+KR:wght@400;600&display=swap">
@@ -38,7 +38,10 @@
   body{background:var(--ground);color:var(--ink);overflow:hidden;
     font-family:"Quicksand","IBM Plex Sans KR",ui-rounded,system-ui,sans-serif}
   #stage{position:relative;height:100%;width:100%;overflow:hidden}
-  #stage.lit{background:radial-gradient(120% 90% at 50% 0%, var(--ground-2) 0%, var(--ground) 62%)}
+  /* 배경: 물속 사진 (BACKDROP 버튼으로 끄고 켬) */
+  #stage.lit{background:#1d7fc4 url("assets/reef/water-basic.jpg") center/cover no-repeat}
+  #stage.lit .brand h1{color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.45)}
+  #stage.lit .brand p{color:rgba(255,255,255,.75)}
   canvas{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
   canvas:active{cursor:grabbing}
   .hud{position:absolute;pointer-events:none;z-index:5}
@@ -127,7 +130,7 @@
 <div id="stage" class="lit">
   <div class="hud" id="masthead">
     <div class="brand">
-      <h1 id="title">물고기 종류 Reef</h1>
+      <h1 id="title">Basic Reef</h1>
       <p id="sub">loading…</p>
     </div>
     <button class="iconbtn" id="reset" type="button">RESET VIEW</button>
@@ -511,7 +514,10 @@
     for (var i = 0; i < fishes.length; i++){
       var f = fishes[i];
       if (!f.visible) continue;
-      kit.steer(f, f.userData.lane, pathT);
+      // 무리 물고기는 앞 물고기를 따라가고, 나머지는 자기 길을 헤엄침
+      var lead = fishes[f.userData.lane.follow];
+      if (lead && lead !== f && lead.userData.lane.follow == null) kit.follow(f, lead, pathT, t);
+      else kit.steer(f, f.userData.lane, pathT);
       kit.animate(f, t, mul);
     }
     for (var j = 0; j < props.length; j++) kit.animate(props[j], t, mul);
