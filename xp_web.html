@@ -15,7 +15,7 @@
   --cap:"Trebuchet MS","굴림",Gulim,"Nanum Gothic",sans-serif;               /* 제목줄 글씨 */
 }
 html,body{height:100%;margin:0;overflow:hidden}
-body{background:#5a7edc url("assets/space/aero/bg.jpg") center/cover no-repeat;color:#000;font-family:var(--ui);font-size:12px;
+body{background:#3cc3cf url("assets/space/xp/bg.jpg") center/cover no-repeat;color:#000;font-family:var(--ui);font-size:12px;
   -webkit-font-smoothing:antialiased}
 button{font:inherit;color:inherit;cursor:pointer}
 #desk{position:fixed;inset:0}
@@ -117,8 +117,8 @@ button{font:inherit;color:inherit;cursor:pointer}
 /* 아이콘 줄: 컴퓨터는 오른쪽 아래 바탕화면 아이콘, 모바일은 아래쪽 XP 작업 표시줄 */
 #dock{position:fixed;z-index:9000;display:flex;gap:6px;right:16px;bottom:calc(14px + env(safe-area-inset-bottom,0px))}
 .dk{appearance:none;background:transparent;border:0;padding:4px;width:84px;display:flex;flex-direction:column;align-items:center;gap:4px}
-.dk .ic{height:64px;display:flex;align-items:center;justify-content:center}
-.dk .ic img{width:56px;height:56px;object-fit:contain;display:block}
+.dk .ic{height:48px;display:flex;align-items:center;justify-content:center}
+.dk .ic img{width:48px;height:48px;display:block;image-rendering:pixelated}   /* 48픽셀 아이콘을 도트 그대로 */
 /* 바탕화면 아이콘 이름: 흰 글씨 + 그림자, 고르면 파란 칸 */
 .dk .nm{font-size:11px;line-height:1.3;color:#fff;text-align:center;padding:0 2px;text-shadow:1px 1px 1px #000}
 .dk:hover .nm,.dk:focus-visible .nm{background:#316ac5}
@@ -128,7 +128,7 @@ button{font:inherit;color:inherit;cursor:pointer}
     background:linear-gradient(180deg,#1f2f86 0,#3165c4 3%,#3682e5 6%,#4490e6 10%,#3883e5 12%,#2b71e0 15%,#2663da 18%,#235bd6 20%,
       #2258d5 23%,#2157d6 38%,#245ddb 54%,#2562df 86%,#245fdc 89%,#2158d4 92%,#1d4ec0 95%,#1941a5 98%)}
   .dk{width:auto;flex:1;min-width:0;padding:2px;border-radius:3px}
-  .dk .ic{height:30px}.dk .ic img{width:30px;height:30px}
+  .dk .ic{height:32px}.dk .ic img{width:32px;height:32px;image-rendering:auto}
   .dk .nm{font-size:10.5px}
   .dk:hover .nm,.dk:focus-visible .nm{background:transparent}
   .dk:active{background:#1e52b7;box-shadow:inset 1px 1px 1px rgba(0,0,0,.4)}
