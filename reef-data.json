@@ -1,6 +1,6 @@
 {
  "v": 1,
- "updated": "2026-10-04T16:03:42.990Z",
+ "updated": "2026-10-04T16:05:17.581Z",
  "style": {
   "font": {
    "family": "\"DotGothic16\", \"Jua\", system-ui, sans-serif",
@@ -3458,7 +3458,7 @@
    "config": {
     "fishTotal": 18,
     "mix": [
-     "goldfish"
+     "deep-anglerfish"
     ],
     "shells": [
      22,
