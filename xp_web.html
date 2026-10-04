@@ -63,6 +63,11 @@ button{font:inherit;color:inherit;cursor:pointer}
 .win.map .body{width:min(440px,calc(100vw - 40px));aspect-ratio:1111/862}   /* 지도 그림 비율 그대로 (별 위치가 맞게) */
 .win.map.live .body{width:min(480px,calc(100vw - 40px));height:min(360px,calc(100vh - 160px));aspect-ratio:auto}
 .kmap{position:absolute;inset:0;z-index:0}   /* 카카오 지도가 들어가는 칸 */
+/* 잠깐 뜨는 안내 글 */
+#toast{position:fixed;left:50%;top:calc(52px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:9999;opacity:0;
+  background:var(--gray);border:2px solid var(--line);box-shadow:inset 1px 1px 0 #fff,3px 3px 0 var(--shadow);
+  padding:6px 10px;font-size:12px;max-width:88vw;pointer-events:none;transition:opacity .2s}
+#toast.show{opacity:1}
 
 /* 지도와 별 */
 .mapimg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
@@ -192,12 +197,17 @@ button{font:inherit;color:inherit;cursor:pointer}
     var win = body.parentNode; win.classList.add('live');
     var box = document.createElement('div'); box.className = 'kmap'; body.appendChild(box);
     var sh = document.createElement('div'); sh.className = 'shield'; body.appendChild(sh);
-    function fail() { win.classList.remove('live'); box.remove(); sh.remove(); buildPictureMap(body); }
+    // 못 불러오면 그림 지도로 바꾸고 이유를 잠깐 보여 줌
+    function fail(why) {
+      win.classList.remove('live'); box.remove(); sh.remove(); buildPictureMap(body);
+      if (window.Core) Core.toast('카카오 지도를 못 불러왔어요: ' + why);
+      console.warn('카카오 지도 실패:', why, location.origin);
+    }
     var sc = document.createElement('script');
     sc.src = 'https://dapi.kakao.com/v2/maps/sdk.js?autoload=false&libraries=services&appkey=' + encodeURIComponent(key);
-    sc.onerror = fail;
+    sc.onerror = function () { fail('지도 파일을 받지 못함 (키 또는 등록한 사이트 주소 확인)'); };
     sc.onload = function () {
-      if (!window.kakao || !kakao.maps) { fail(); return; }
+      if (!window.kakao || !kakao.maps) { fail('지도 기능이 없음'); return; }
       kakao.maps.load(function () {
         var map = new kakao.maps.Map(box, { center: new kakao.maps.LatLng(CENTER[0], CENTER[1]), level: 4 });
         map.addControl(new kakao.maps.ZoomControl(), kakao.maps.ControlPosition.RIGHT);   // 확대 · 축소 버튼
