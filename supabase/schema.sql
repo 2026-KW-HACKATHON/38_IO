@@ -1,4 +1,4 @@
--- Supabase 화면의 SQL Editor에 통째로 붙여넣고 Run 하면 됩니다.
+-- Supabase SQL Editor에 통째로 붙여넣고 Run
 
 -- 1) 계정 정보 표 (카카오 로그인하면 자동으로 한 줄씩 생김)
 create table if not exists public.profiles (
