@@ -130,7 +130,7 @@
       d.style = d.style || {};
       d.style.font = Object.assign({ family: 'system-ui, sans-serif', google: [], cssUrl: '' }, d.style.font || {});
       d.style.bubble = Object.assign({
-        bg: '#FFFDF8', ink: '#3B3350', border: '#3B3350', px: 3, size: 14, pad: 8,
+        bg: '#FFFDF8', ink: '#3B3350', border: '#3B3350', px: 1, size: 14, pad: 8,
         maxWidth: 190, tail: true, pixel: true, duration: 3.2, anim: 'pop'
       }, d.style.bubble || {});
       d.style.title = Object.assign({ family: '', google: [] }, d.style.title || {});
@@ -752,6 +752,50 @@
       obj.rotation.x = clamp(u.roll, -lim, lim);
     };
 
+    // 무리짓기: 앞 물고기가 지나온 길을 몸길이 몇 배만큼 뒤에서 따라감
+    // lane.follow: 따라갈 앞 물고기 순서, lane.gap: 몸길이 몇 배 뒤, lane.side: 옆으로 비킬 정도 (-1 왼쪽 ~ 1 오른쪽)
+    // lane.sway: 앞뒤로 밀고 당기는 정도 (몸길이 배수), 박자가 다르면 서로 앞서거니 뒤서거니 함
+    var _bp = new THREE.Vector3(), _bq = new THREE.Vector3(), _ahead = new THREE.Vector3();
+    function bodyLen(obj) {
+      var u = obj.userData;
+      if (!u.bodyLen) {
+        var box = new THREE.Box3().setFromObject(obj), sz = box.getSize(new THREE.Vector3());
+        u.bodyLen = Math.max(0.5, Math.max(sz.x, sz.z));
+      }
+      return u.bodyLen;
+    }
+    // 길 위에서 st 시점보다 거리 dist만큼 뒤 (앞 물고기가 그만큼 전에 있던 곳)
+    function behind(lane, st, dist, out) {
+      kit.lanePos(lane, st, _bp);
+      var went = 0, step = 0.01, k = st;
+      for (var i = 0; i < 4000 && went < dist; i++) {
+        k -= step;
+        kit.lanePos(lane, k, _bq);
+        went += _bq.distanceTo(_bp);
+        _bp.copy(_bq);
+      }
+      return out.copy(_bp);
+    }
+    kit.follow = function (obj, leader, time, t) {
+      var lane = obj.userData.lane || {}, lead = leader.userData, m = lead.model;
+      var L = bodyLen(leader), st = time * m.swim.speed;
+      var gap = num(lane.gap, 1.2) * L + Math.sin(t * 0.6 + num(lane.ph, 0)) * num(lane.sway, 0.4) * L;
+      behind(lead.lane, st, Math.max(0.6 * L, gap), obj.position);
+      behind(lead.lane, st, Math.max(0.6 * L, gap) - 0.3, _ahead);
+      var d = _ahead.sub(obj.position), flat = Math.hypot(d.x, d.z) || 1e-4;
+      // 가는 방향의 옆쪽으로 살짝 비켜서 겹치지 않게
+      var sx = -d.z / flat, sz = d.x / flat, off = num(lane.side, 0) * L * 0.45;
+      obj.position.x += sx * off; obj.position.z += sz * off;
+      obj.position.y += Math.sin(t * 0.9 + num(lane.ph, 0)) * 0.12 * L;
+      obj.rotation.y = Math.atan2(-d.z, d.x);
+      obj.rotation.z = Math.atan2(d.y, flat) * 0.75;
+      var u = obj.userData, yaw = obj.rotation.y;
+      if (u.prevYaw !== undefined) u.roll = u.roll * 0.9 + Math.atan2(Math.sin(yaw - u.prevYaw), Math.cos(yaw - u.prevYaw)) * 8;
+      u.prevYaw = yaw;
+      var lim = 0.4 * u.model.swim.roll;
+      obj.rotation.x = clamp(u.roll, -lim, lim);
+    };
+
     // 몸 움직임: 꼬리 흔들기, 지느러미, 거북 발, 둥실둥실
     kit.animate = function (obj, t, mul) {
       mul = mul || {};
@@ -1063,10 +1107,10 @@
       var edge = b.pixel
         ? 'box-shadow:0 -' + B + 'px 0 0 ' + bd + ',0 ' + B + 'px 0 0 ' + bd + ',-' + B + 'px 0 0 0 ' + bd + ',' + B + 'px 0 0 0 ' + bd + ';border-radius:0;'
         : 'border:' + B + 'px solid ' + bd + ';border-radius:' + (B * 4) + 'px;';
+      var T = Math.max(B, 3);   // 꼬리 크기 (테두리가 얇아도 꼬리는 보이게)
       var tail = b.tail
-        ? '.reef-say::after{content:"";position:absolute;left:12px;bottom:-' + (B * 3) + 'px;width:' + (B * 2) + 'px;height:' + (B * 2) + 'px;background:' + bg + ';' +
-          'box-shadow:' + B + 'px 0 0 0 ' + bd + ',-' + B + 'px 0 0 0 ' + bd + ',0 ' + B + 'px 0 0 ' + bd + ';}' +
-          (b.pixel ? '' : '.reef-say::after{bottom:-' + (B * 3) + 'px;}')
+        ? '.reef-say::after{content:"";position:absolute;left:12px;bottom:-' + (T * 2 + B) + 'px;width:' + (T * 2) + 'px;height:' + (T * 2) + 'px;background:' + bg + ';' +
+          'box-shadow:' + B + 'px 0 0 0 ' + bd + ',-' + B + 'px 0 0 0 ' + bd + ',0 ' + B + 'px 0 0 ' + bd + ';}'
         : '';
       return '.reef-layer{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:4}' +
         '.reef-say{position:absolute;left:0;top:0;max-width:' + num(b.maxWidth, 190) + 'px;padding:' + num(b.pad, 8) + 'px ' + (num(b.pad, 8) + 2) + 'px;' +

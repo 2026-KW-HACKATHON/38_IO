@@ -1,6 +1,6 @@
 {
  "v": 1,
- "updated": "2026-10-04T19:44:40.493Z",
+ "updated": "2026-10-04T19:45:48.000Z",
  "style": {
   "font": {
    "family": "\"Galmuri11\", \"DotGothic16\", \"Jua\", sans-serif",
@@ -14,7 +14,7 @@
    "bg": "#FFFDF8",
    "ink": "#3B3350",
    "border": "#3B3350",
-   "px": 3,
+   "px": 1,
    "size": 14,
    "pad": 8,
    "maxWidth": 190,
@@ -3532,23 +3532,23 @@
   },
   {
    "id": "pptreef",
-   "name": "PPT Reef",
+   "name": "Basic Reef",
    "file": "ppt-reef.html",
    "kind": "showcase",
    "config": {
-    "title": "물고기 종류 Reef",
+    "title": "Basic Reef",
     "subtitle": "",
     "radius": 66,
     "lanes": [
      {
       "species": "goldfish",
       "path": "loop",
-      "cx": -14,
+      "cx": 0,
       "cy": 11,
       "cz": 0,
-      "rx": 4,
-      "ry": 0.8,
-      "rz": 4,
+      "rx": 15,
+      "ry": 1.2,
+      "rz": 5,
       "sp": 0.5,
       "ph": 0,
       "scale": 1,
@@ -3576,7 +3576,11 @@
       "says": [
        "비마 넓고 깊어도~"
       ],
-      "addons": []
+      "addons": [],
+      "follow": 0,
+      "gap": 1.15,
+      "side": -0.6,
+      "sway": 0.35
      },
      {
       "species": "goldfish",
@@ -3588,14 +3592,18 @@
       "ry": 0.8,
       "rz": 4,
       "sp": 0.6,
-      "ph": 2.2,
+      "ph": 4.24,
       "scale": 1,
       "variant": 2,
       "effects": [],
       "says": [
        "우리 사는 광운대 아주 작고 작은 곳"
       ],
-      "addons": []
+      "addons": [],
+      "follow": 0,
+      "gap": 2,
+      "side": 0.6,
+      "sway": 0.35
      },
      {
       "species": "deep-anglerfish",
