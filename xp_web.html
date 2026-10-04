@@ -45,6 +45,10 @@ button{font:inherit;color:inherit;cursor:pointer}
 .win .btn.max{background-image:url("assets/space/xp/maximize.svg")}
 .win .btn.max:hover{background-image:url("assets/space/xp/maximize-hover.svg")}
 .win .btn.max:active{background-image:url("assets/space/xp/maximize-active.svg")}
+.win .btn.rst{background-image:url("assets/space/xp/restore.svg")}
+.win .btn.rst:hover{background-image:url("assets/space/xp/restore-hover.svg")}
+.win .btn.rst:active{background-image:url("assets/space/xp/restore-active.svg")}
+.win .btn.max,.win .btn.rst,.win .btn.cls{cursor:pointer}
 .win .btn.cls{background-image:url("assets/space/xp/close.svg")}
 .win .btn.cls:hover{background-image:url("assets/space/xp/close-hover.svg")}
 .win .btn.cls:active{background-image:url("assets/space/xp/close-active.svg")}
@@ -55,6 +59,14 @@ button{font:inherit;color:inherit;cursor:pointer}
   border-color:#7d9be3 #6582d0 #6582d0 #7d9be3}
 .win:not(.front) .ttl{color:#d8e4f8;text-shadow:none}
 .win:not(.front) .btn{opacity:.6}
+.win.shut{display:none}   /* 닫힌 창 */
+body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글은 숨김 */
+.win.gift.maxed .body{justify-content:flex-start;gap:10px}
+/* 최대화한 창: 화면을 꽉 채움 (모바일은 아래 작업 표시줄만큼 비움) */
+.win.maxed{left:0!important;top:0!important;width:100%;height:calc(100% - var(--gap,0px));box-sizing:border-box;
+  display:flex;flex-direction:column;border-radius:0}
+.win.maxed .bar{flex:none;border-radius:0;cursor:default}
+.win.maxed .body{flex:1;min-height:0;width:auto!important;height:auto!important;aspect-ratio:auto!important}
 /* 창 안쪽: 테두리 3줄 안에 딱 붙임 */
 .win .body{position:relative;margin:0 3px;overflow:hidden;background:#fff}
 .win iframe{display:block;width:100%;height:100%;border:0;background:#A0D6D5}
@@ -139,7 +151,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 </head>
 <body>
 <div id="desk"></div>
-<p id="hint">제목줄을 끌면 창이 움직여요 · 창을 두 번 누르면 맨 앞으로 와요</p>
+<p id="hint">아이콘을 누르면 창이 열려요 · 제목줄을 끌면 움직여요</p>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/config.js"></script>
 <script src="js/core.js"></script>
@@ -185,15 +197,31 @@ button{font:inherit;color:inherit;cursor:pointer}
     var bar = document.createElement('div'); bar.className = 'bar';
     var ttl = document.createElement('span'); ttl.className = 'ttl'; ttl.textContent = def.title;
     bar.appendChild(ttl);
+    var btn = {};
     [['min', '최소화'], ['max', '최대화'], ['cls', '닫기']].forEach(function (g) {
-      var b = document.createElement('span'); b.className = 'btn ' + g[0]; b.title = g[1]; bar.appendChild(b);
+      var b = document.createElement('span'); b.className = 'btn ' + g[0]; b.title = g[1]; bar.appendChild(b); btn[g[0]] = b;
     });
     var body = document.createElement('div'); body.className = 'body';
     w.appendChild(bar); w.appendChild(body);
+    w.classList.add('shut');
+    desk.appendChild(w);
+    var entry = { def: def, el: w, bar: bar, body: body, maxBtn: btn.max, built: false };
+    wins.push(entry);
+    dragSetup(entry);
+    onDouble(w, function () { bringFront(entry); });
+    onDouble(bar, function (e) { if (!e.target.classList.contains('btn')) toggleMax(entry); });   // 제목줄 두 번 누르면 최대화 / 복원
+    btn.max.addEventListener('click', function () { toggleMax(entry); });
+    btn.cls.addEventListener('click', function () { closeWin(entry); });
+    return entry;
+  }
+
+  /* ── 창 내용 채우기 (처음 열 때 한 번) ── */
+  function buildBody(entry) {
+    var def = entry.def, body = entry.body;
 
     if (def.kind === 'reef') {
       var fr = document.createElement('iframe');
-      fr.src = def.page; fr.title = def.title; fr.setAttribute('loading', 'lazy');
+      fr.title = def.title; entry.frame = fr;   // 주소는 열 때 넣고 닫을 때 비움 (카메라 등이 계속 켜져 있지 않게)
       var sh = document.createElement('div'); sh.className = 'shield';
       body.appendChild(fr); body.appendChild(sh);
     } else if (def.kind === 'picture') {
@@ -210,13 +238,50 @@ button{font:inherit;color:inherit;cursor:pointer}
     } else if (def.kind === 'map') {
       buildMap(body);
     }
+    entry.built = true;
+  }
 
-    desk.appendChild(w);
-    var entry = { def: def, el: w, bar: bar };
-    wins.push(entry);
-    dragSetup(entry);
-    onDouble(w, function () { bringFront(entry); });
-    return entry;
+  /* ── 열기 · 닫기 · 최대화 ── */
+  function isOpen(entry) { return !entry.el.classList.contains('shut'); }
+  function saveOpen() {
+    saved.open = wins.filter(isOpen).map(function (o) { return o.def.id; });
+    document.body.classList.toggle('has-open', saved.open.length > 0);
+    save();
+  }
+  function openWin(entry) {
+    if (isOpen(entry)) { bringCenter(entry); return; }
+    entry.el.classList.remove('shut');
+    if (!entry.built) buildBody(entry);
+    if (entry.frame) entry.frame.src = entry.def.page;
+    var pos = saved[entry.def.id] || defaultPos(entry);
+    place(entry, pos[0], pos[1]);
+    bringFront(entry);
+    refitMaps();
+    saveOpen();
+  }
+  function closeWin(entry) {
+    if (entry.el.classList.contains('maxed')) toggleMax(entry);
+    entry.el.classList.add('shut');
+    entry.el.classList.remove('front');
+    if (entry.frame) entry.frame.src = 'about:blank';
+    // 남은 창 중 가장 위에 있는 창을 맨 앞으로
+    var rest = wins.filter(isOpen).sort(function (a, b) { return (+b.el.style.zIndex || 0) - (+a.el.style.zIndex || 0); });
+    if (rest[0]) bringFront(rest[0]);
+    saveOpen();
+  }
+  function toggleMax(entry) {
+    var on = !entry.el.classList.contains('maxed');
+    entry.el.classList.toggle('maxed', on);
+    entry.maxBtn.className = 'btn ' + (on ? 'rst' : 'max');
+    entry.maxBtn.title = on ? '이전 크기로' : '최대화';
+    if (on) bringFront(entry);
+    refitMaps();
+  }
+  // 지도 칸 크기가 바뀌면 가운데를 그대로 두고 다시 맞춤
+  function refitMaps() {
+    setTimeout(function () {
+      maps.forEach(function (m) { var c = m.getCenter(); m.relayout(); m.setCenter(c); });
+    }, 0);
   }
 
   /* ── 지도: 카카오 지도를 광운대학교 · 월계1동 둘레로 띄움 (키가 없거나 못 불러오면 그림 지도) ── */
@@ -333,7 +398,7 @@ button{font:inherit;color:inherit;cursor:pointer}
   function dragSetup(entry) {
     var drag = null;
     entry.bar.addEventListener('pointerdown', function (e) {
-      if (e.button > 0) return;
+      if (e.button > 0 || e.target.classList.contains('btn') || entry.el.classList.contains('maxed')) return;
       var r = entry.el.getBoundingClientRect();
       drag = { ox: e.clientX - r.left, oy: e.clientY - r.top };
       try { entry.bar.setPointerCapture(e.pointerId); } catch (er) {}
@@ -352,24 +417,20 @@ button{font:inherit;color:inherit;cursor:pointer}
     entry.bar.addEventListener('pointercancel', end);
   }
 
-  /* ── 처음 배치: 저장된 위치가 있으면 그대로, 없으면 기본 위치 ── */
-  function layout() {
-    var narrow = window.innerWidth < 700;
-    WINDOWS.forEach(function (def, i) {
-      var e = wins[i], pos = saved[def.id];
-      var x, y;
-      if (pos) { x = pos[0]; y = pos[1]; }
-      else if (narrow) { x = 10 + i * 14; y = 56 + i * 48; }
-      else { var gap = dock.offsetWidth + 16; x = gap + def.at[0] * (window.innerWidth - gap); y = def.at[1] * window.innerHeight; }
-      place(e, x, y);
-    });
+  /* ── 기본 위치: 모바일은 계단식, 컴퓨터는 왼쪽 아이콘 줄을 비켜서 ── */
+  function defaultPos(entry) {
+    var i = wins.indexOf(entry), def = entry.def;
+    if (window.innerWidth < 700) return [10 + i * 14, 56 + i * 48];
+    var gap = dock.offsetWidth + 16;
+    return [gap + def.at[0] * (window.innerWidth - gap), def.at[1] * window.innerHeight];
   }
 
-  /* ── 아이콘 줄: 누르면 그 창이 맨 앞으로 오고 화면 가운데로 옴 ── */
+  /* ── 아이콘 줄: 누르면 창이 열림 (이미 열려 있으면 맨 앞 · 화면 가운데로) ── */
   var dock = document.createElement('div'); dock.id = 'dock';
   document.body.appendChild(dock);
   function bringCenter(entry) {
     bringFront(entry);
+    if (entry.el.classList.contains('maxed')) return;
     var r = entry.el.getBoundingClientRect();
     var x = (window.innerWidth - r.width) / 2, y = (window.innerHeight - bottomGap() - r.height) / 2;
     entry.el.classList.add('slide');
@@ -389,25 +450,29 @@ button{font:inherit;color:inherit;cursor:pointer}
       ic.appendChild(im);
       var nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = def.title;
       b.appendChild(ic); b.appendChild(nm);
-      b.addEventListener('click', function () { bringCenter(wins[i]); });
+      b.addEventListener('click', function () { openWin(wins[i]); });
       dock.appendChild(b);
     });
   }
 
   WINDOWS.forEach(makeWindow);
   makeDock();
-  layout();
-  // 저장된 쌓임 순서 복원, 없으면 마지막 창이 맨 앞
-  var order = saved.order && saved.order.length === WINDOWS.length ? saved.order : WINDOWS.map(function (d) { return d.id; });
+  // 모바일 아래 작업 표시줄 높이를 최대화한 창이 비켜 가도록 알려 줌
+  function setGap() { document.documentElement.style.setProperty('--gap', bottomGap() + 'px'); }
+  setGap();
+  // 지난번에 열어 둔 창을 쌓였던 순서대로 다시 엶 (처음이면 모두 닫힌 채 시작)
+  var order = (saved.order || []).concat(WINDOWS.map(function (d) { return d.id; }));
+  var opened = saved.open || [];
   order.forEach(function (id) {
     var e = wins.filter(function (o) { return o.def.id === id; })[0];
-    if (e) { e.el.style.zIndex = ++zTop; }
+    if (e && opened.indexOf(id) >= 0 && !isOpen(e)) openWin(e);
   });
-  var topId = order[order.length - 1];
-  wins.forEach(function (o) { o.el.classList.toggle('front', o.def.id === topId); });
   window.addEventListener('resize', function () {
-    wins.forEach(function (e) { place(e, parseFloat(e.el.style.left) || 0, parseFloat(e.el.style.top) || 0); });
-    maps.forEach(function (m) { m.relayout(); });   // 창 크기가 바뀌면 지도도 다시 맞춤
+    setGap();
+    wins.forEach(function (e) {
+      if (isOpen(e) && !e.el.classList.contains('maxed')) place(e, parseFloat(e.el.style.left) || 0, parseFloat(e.el.style.top) || 0);
+    });
+    refitMaps();
   });
 
   /* ── 로그인한 경우에만 방문 기록을 남김 (로그인은 필요 없음) ── */
@@ -416,162 +481,6 @@ button{font:inherit;color:inherit;cursor:pointer}
     Core.onChange(function (s) { if (s.user && !logged) { logged = true; Core.log('my_space'); } });
     Core.start();
   }
-})();
-
-/* 하늘에 떠다니는 비눗방울 (창보다 뒤, 배경 사진보다 앞)
-   - 방울 한 개마다 그림을 미리 한 번 그려 두고, 매 프레임에는 옮기고 살짝 늘였다 줄이기만 함
-   - 무지갯빛 막 + 가장자리일수록 진해지는 색 + 창문 모양 반사광 + 작은 반짝임
-   - 멀리 있는 작은 방울은 흐리게, 가까운 큰 방울은 살짝 번지게 해서 거리감을 줌 */
-(function () {
-  "use strict";
-  var desk = document.getElementById('desk');
-  if (!desk) return;
-  var cv = document.createElement('canvas'); cv.id = 'skyBubbles';
-  cv.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0';
-  desk.insertBefore(cv, desk.firstChild);
-  var ctx = cv.getContext('2d');
-  var DPR = Math.min(window.devicePixelRatio || 1, 2);
-  var W = 0, H = 0;
-  var still = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;   // 움직임 줄이기 설정이면 멈춘 그림만
-
-  function rnd(a, b) { return a + Math.random() * (b - a); }
-
-  /* ── 방울 한 개 그림 만들기 ──
-     진짜 비눗방울처럼: 가운데는 뒤 하늘이 살짝 어둡게 비치고,
-     얇은 테두리에만 청록·보라빛 무지개가 진하게 돌고, 하얀 반짝점이 또렷하게 찍힘 */
-  function makeSprite(r, blur, hue0) {
-    var pad = Math.ceil(r * 0.35 + blur * 2 + 3);
-    var S = Math.ceil((r + pad) * 2);
-    var c = document.createElement('canvas'); c.width = c.height = S;
-    var g = c.getContext('2d');
-    var cx = S / 2, cy = S / 2, TAU = Math.PI * 2;
-
-    // 1) 안쪽: 둥근 유리처럼 가운데는 거의 투명, 가장자리 쪽으로 살짝 어두운 파랑
-    var inner = g.createRadialGradient(cx - r * 0.15, cy - r * 0.15, 0, cx, cy, r);
-    inner.addColorStop(0.00, 'rgba(10,30,90,0.02)');
-    inner.addColorStop(0.70, 'rgba(8,24,80,0.10)');
-    inner.addColorStop(0.92, 'rgba(6,18,70,0.20)');
-    inner.addColorStop(1.00, 'rgba(6,18,70,0)');
-    g.fillStyle = inner; g.beginPath(); g.arc(cx, cy, r, 0, TAU); g.fill();
-
-    // 2) 테두리 무지개: 색 바퀴를 칠한 뒤, 얇은 고리 모양만 남김
-    var ring = document.createElement('canvas'); ring.width = ring.height = S;
-    var q = ring.getContext('2d');
-    var hues = [180, 195, 285, 320, 200, 170, 260, 300, 180];   // 청록 · 보라 · 분홍 위주 (사진 속 방울 색)
-    if (q.createConicGradient) {
-      var cg = q.createConicGradient(rnd(0, TAU), cx, cy);
-      hues.forEach(function (h, i) {
-        cg.addColorStop(i / (hues.length - 1), 'hsla(' + ((h + hue0) % 360) + ',100%,' + (i % 2 ? 72 : 62) + '%,1)');
-      });
-      q.fillStyle = cg;
-    } else q.fillStyle = 'hsl(' + (180 + hue0) % 360 + ',100%,65%)';
-    q.fillRect(0, 0, S, S);
-    q.globalCompositeOperation = 'destination-in';
-    var band = q.createRadialGradient(cx, cy, 0, cx, cy, r * 1.02);
-    band.addColorStop(0.00, 'rgba(0,0,0,0)');
-    band.addColorStop(0.72, 'rgba(0,0,0,0)');
-    band.addColorStop(0.80, 'rgba(0,0,0,.12)');   // 뒤쪽 벽이 비친 옅은 안쪽 고리
-    band.addColorStop(0.85, 'rgba(0,0,0,.05)');
-    band.addColorStop(0.92, 'rgba(0,0,0,.55)');
-    band.addColorStop(0.965, 'rgba(0,0,0,.95)');
-    band.addColorStop(1.00, 'rgba(0,0,0,0)');
-    q.fillStyle = band; q.fillRect(0, 0, S, S);
-    g.globalCompositeOperation = 'lighter';       // 빛이 더해지듯 밝게 얹음
-    g.globalAlpha = 0.85;
-    g.drawImage(ring, 0, 0);
-    g.globalAlpha = 1;
-
-    // 3) 테두리 바깥에 번지는 아주 옅은 청록 빛
-    var halo = g.createRadialGradient(cx, cy, r * 0.95, cx, cy, r * 1.25);
-    halo.addColorStop(0, 'rgba(120,220,255,.18)'); halo.addColorStop(1, 'rgba(120,220,255,0)');
-    g.fillStyle = halo; g.beginPath(); g.arc(cx, cy, r * 1.25, 0, TAU); g.fill();
-
-    // 4) 반짝점: 왼쪽 위 큰 점 하나 + 오른쪽 아래 작은 점 (가운데 하양, 둘레로 번짐)
-    function glint(x, y, core, glow, a) {
-      var gl = g.createRadialGradient(x, y, 0, x, y, glow);
-      gl.addColorStop(0, 'rgba(255,255,255,' + a + ')');
-      gl.addColorStop(core / glow, 'rgba(255,250,240,' + (a * 0.85) + ')');
-      gl.addColorStop(Math.min(0.99, core / glow * 2.2), 'rgba(255,240,230,' + (a * 0.25) + ')');
-      gl.addColorStop(1, 'rgba(255,255,255,0)');
-      g.fillStyle = gl; g.beginPath(); g.arc(x, y, glow, 0, TAU); g.fill();
-    }
-    var ang = rnd(-2.6, -2.0);                     // 빛이 왼쪽 위에서 옴 (방울마다 조금씩 다름)
-    glint(cx + Math.cos(ang) * r * 0.78, cy + Math.sin(ang) * r * 0.78, Math.max(0.9, r * 0.07), Math.max(3, r * 0.3), 1);
-    glint(cx - Math.cos(ang) * r * 0.8, cy - Math.sin(ang) * r * 0.8, Math.max(0.6, r * 0.04), Math.max(2, r * 0.18), 0.75);
-    g.globalCompositeOperation = 'source-over';
-
-    if (blur > 0.3) {                              // 초점이 안 맞은 방울은 번지게
-      var b = document.createElement('canvas'); b.width = b.height = S;
-      var bg = b.getContext('2d');
-      if (!('filter' in bg)) return { c: c, S: S };
-      bg.filter = 'blur(' + blur + 'px)'; bg.drawImage(c, 0, 0);
-      return { c: b, S: S };
-    }
-    return { c: c, S: S };
-  }
-
-  /* ── 방울 여러 개 만들기 ── */
-  var bubbles = [];
-  function spawn(fromBottom) {
-    var depth = Math.random();                                     // 0 = 멀리, 1 = 가까이
-    // 사진처럼 대부분 작은 방울, 가끔 중간 크기
-    var r = depth < 0.35 ? rnd(5, 10) : depth < 0.85 ? rnd(10, 20) : depth < 0.97 ? rnd(20, 30) : rnd(30, 40);
-    var blur = depth < 0.12 ? 1.2 : depth > 0.97 ? 1.4 : 0;
-    var sp = makeSprite(r * DPR, blur * DPR, rnd(-20, 20));
-    // 방울이 몇 개씩 몰려다니도록, 가끔은 바로 전 방울 근처에 만듦
-    var prev = bubbles.length && Math.random() < 0.45 ? bubbles[Math.floor(Math.random() * bubbles.length)] : null;
-    var x = rnd(-0.05, 1.05) * W, y = fromBottom ? H + r * 2 + rnd(0, H * 0.3) : rnd(-0.05, 1.05) * H;
-    if (prev && !fromBottom) { x = prev.x + rnd(-70, 70); y = prev.y + rnd(-70, 70); }
-    return {
-      sp: sp, r: r, depth: depth, x: x, y: y,
-      vx: rnd(6, 20) * (0.5 + depth), vy: -rnd(5, 16) * (0.5 + depth),
-      ph: rnd(0, 6.28), wob: rnd(0.6, 1.4), alpha: depth < 0.12 ? 0.75 : 1
-    };
-  }
-  function count() { return Math.round(Math.min(90, Math.max(30, W * H / 13000))); }
-
-  function resize() {
-    W = desk.clientWidth || innerWidth; H = desk.clientHeight || innerHeight;
-    cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
-    var want = count();
-    while (bubbles.length < want) bubbles.push(spawn(false));
-    if (bubbles.length > want) bubbles.length = want;
-    bubbles.sort(function (a, b) { return a.depth - b.depth; });  // 먼 것부터 그려서 가까운 게 위로
-  }
-
-  /* ── 매 프레임: 바람 따라 오른쪽 위로 흘러가며 모양이 살짝 출렁임 ── */
-  var last = performance.now(), t = 0;
-  function frame(now) {
-    var dt = Math.min(0.05, (now - last) / 1000); last = now; t += dt;
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.clearRect(0, 0, cv.width, cv.height);
-    var gust = 1 + 0.35 * Math.sin(t * 0.23);
-    for (var i = 0; i < bubbles.length; i++) {
-      var b = bubbles[i];
-      if (!still) {
-        b.x += (b.vx * gust + Math.sin(t * 0.7 + b.ph) * 6) * dt;
-        b.y += (b.vy + Math.cos(t * 0.9 + b.ph) * 4) * dt;
-      }
-      var m = b.r * 2.4;
-      if (b.x - m > W || b.y + m < 0) {                             // 화면 밖으로 나가면 왼쪽 아래에서 새로 나옴
-        var n = spawn(true);
-        n.x = rnd(-0.3, 0.9) * W;
-        bubbles[i] = n; continue;
-      }
-      var sx = 1 + 0.035 * Math.sin(t * 2.1 * b.wob + b.ph);      // 막이 출렁여서 가로세로가 번갈아 늘어남
-      var sy = 1 - 0.035 * Math.sin(t * 2.1 * b.wob + b.ph);
-      ctx.globalAlpha = b.alpha * 0.8;   // 방울 전체를 20% 더 투명하게
-      ctx.setTransform(sx * 1, 0, 0, sy * 1, b.x * DPR, b.y * DPR);
-      ctx.rotate(Math.sin(t * 0.3 + b.ph) * 0.25);                 // 천천히 돌면서 무늬가 바뀌어 보임
-      ctx.drawImage(b.sp.c, -b.sp.S / 2, -b.sp.S / 2);
-    }
-    ctx.globalAlpha = 1;
-    if (!still) requestAnimationFrame(frame);
-  }
-
-  resize();
-  window.addEventListener('resize', resize);
-  requestAnimationFrame(frame);
 })();
 
 </script>
