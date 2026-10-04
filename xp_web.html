@@ -111,6 +111,10 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
 .mapimg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
 .me{position:relative;width:0;height:0}   /* 별과 말풍선을 내 위치 한 점에 붙이는 틀 */
 .me .pbubble{left:-17px;bottom:24px}
+/* 장소 하트: 위아래로 살짝 뛰는 XP 하트 */
+.heart{position:absolute;width:28px;height:28px;transform:translate(-50%,-50%);cursor:pointer;z-index:1;
+  filter:drop-shadow(1px 2px 1px rgba(0,0,0,.35));animation:beat 1.6s ease-in-out infinite}
+@keyframes beat{0%,100%{transform:translate(-50%,-50%) scale(1)}12%{transform:translate(-50%,-50%) scale(1.15)}24%{transform:translate(-50%,-50%) scale(1)}}
 .mebtn{position:absolute;left:6px;top:6px;z-index:1;min-width:0}   /* 내 위치로 가는 단추 */
 /* 별: 위아래로 살짝 흔들리고 주변에 노란 빛 */
 .star{position:absolute;width:30px;height:30px;transform:translate(-50%,-50%);cursor:pointer;z-index:1;
@@ -158,6 +162,7 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/config.js"></script>
 <script src="js/core.js"></script>
+<script src="js/spots.js"></script>
 <script>
 /* 나의 공간: 끌어서 옮기는 가짜 창들, 두 번 누르면 맨 앞으로, 지도의 별 */
 (function () {
@@ -289,9 +294,8 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
     }, 0);
   }
 
-  /* ── 지도: 카카오 지도를 광운대학교 · 월계1동 둘레로 띄움 (키가 없거나 못 불러오면 그림 지도) ── */
+  /* ── 지도: 카카오 지도를 광운대학교 둘레로 띄우고 장소들을 하트로 표시 (키가 없거나 못 불러오면 그림 지도) ── */
   var CENTER = [37.6195, 127.0598];   // 광운대학교 근처
-  var PLACES = ['광운대학교', '월계1동 주민센터'];
   var maps = [];
   function buildMap(body) {
     var key = (window.APP_CONFIG || {}).KAKAO_MAP_KEY;
@@ -315,23 +319,43 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
         map.addControl(new kakao.maps.ZoomControl(), kakao.maps.ControlPosition.RIGHT);   // 확대 · 축소 버튼
         maps.push(map);
         watchMe(map, body);
-        // 두 곳을 이름으로 찾아 표시하고, 둘 다 보이게 화면을 맞춤
-        var ps = new kakao.maps.services.Places();
-        var bounds = new kakao.maps.LatLngBounds(), found = 0, done = 0;
-        PLACES.forEach(function (q) {
-          ps.keywordSearch(q, function (res, st) {
-            done++;
-            if (st === kakao.maps.services.Status.OK) {
-              var pos = new kakao.maps.LatLng(+res[0].y, +res[0].x);
-              new kakao.maps.Marker({ map: map, position: pos, title: q });
-              bounds.extend(pos); found++;
-            }
-            if (done === PLACES.length && found > 1) map.setBounds(bounds);
-          }, { location: new kakao.maps.LatLng(CENTER[0], CENTER[1]), radius: 3000 });
-        });
+        showSpots(map);
       });
     };
     document.head.appendChild(sc);
+  }
+
+  /* ── 장소 하트: 좌표가 있으면 그대로, 없으면 주소로 찾아서 놓고, 모두 보이게 화면을 맞춤 ── */
+  function showSpots(map) {
+    var list = window.SPOTS || [], geo = new kakao.maps.services.Geocoder();
+    var bounds = new kakao.maps.LatLngBounds(), found = 0, done = 0;
+    function put(spot, lat, lng) {
+      spot.lat = lat; spot.lng = lng;   // 찾은 좌표는 QR 위치 확인에도 씀
+      var pos = new kakao.maps.LatLng(lat, lng);
+      var wrap = document.createElement('div'); wrap.className = 'me';
+      var h = document.createElement('img'); h.className = 'heart'; h.src = "assets/space/xp/heart.png"; h.alt = spot.name;
+      h.draggable = false; wrap.appendChild(h);
+      var timer = null;
+      // 하트를 누르면 장소 이름 말풍선
+      h.addEventListener('click', function () {
+        var old = wrap.querySelector('.pbubble'); if (old) old.remove();
+        clearTimeout(timer);
+        var b = document.createElement('div'); b.className = 'pbubble'; b.textContent = spot.name;
+        wrap.appendChild(b);
+        timer = setTimeout(function () { b.remove(); }, 2600);
+      });
+      new kakao.maps.CustomOverlay({ map: map, content: wrap, position: pos, xAnchor: 0, yAnchor: 0, zIndex: 2 });
+      bounds.extend(pos); found++;
+    }
+    function step() { if (++done === list.length && found > 1) map.setBounds(bounds, 40, 40, 40, 40); }
+    list.forEach(function (spot) {
+      if (spot.lat && spot.lng) { put(spot, spot.lat, spot.lng); step(); return; }
+      geo.addressSearch(spot.addr, function (res, st) {
+        if (st === kakao.maps.services.Status.OK) put(spot, +res[0].y, +res[0].x);
+        else console.warn('주소로 장소를 못 찾음:', spot.name, spot.addr);
+        step();
+      });
+    });
   }
 
   /* ── 그림 지도 ── */
