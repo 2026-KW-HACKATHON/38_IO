@@ -226,6 +226,7 @@
     <span class="chip" id="saved">저장됨</span>
     <button class="btn" id="undo" type="button" title="되돌리기 (Ctrl+Z)">되돌리기</button>
     <button class="btn" id="zipBtn" type="button">전체 파일 받기</button>
+    <span class="chip" id="pending" title="이 브라우저에 저장만 되고 아직 깃허브에 안 올린 것" hidden></span>
     <button class="btn primary" id="pushBtn" type="button">깃허브에 올리기</button>
   </header>
   <nav id="nav" aria-label="메뉴">
@@ -311,6 +312,32 @@ const IN_CLAUDE = !!(window.claude && window.claude.use);
 let D = null;            // 지금 고치고 있는 전체 데이터
 let fileData = null;     // 같은 폴더의 reef-data.json (처음 받은 그대로)
 let repoBase = '';       // 지금 작업이 바탕으로 삼은 레포 reef-data.json의 updated 값
+let baseData = null;     // 그 레포 데이터 (올리지 않은 변경을 셀 때 씀)
+function setBase(d){ baseData = d ? JSON.parse(JSON.stringify(d)) : null; repoBase = d ? String(d.updated || '') : ''; showPending(); }
+// 레포와 달라진 물고기·reef 이름들
+function pendingList(){
+  if (!baseData || !D) return [];
+  const out = [], same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+  [['species', '물고기'], ['items', '아이템'], ['effects', '이펙트'], ['reefs', 'reef']].forEach(([k]) => {
+    const a = {}, b = {};
+    (baseData[k] || []).forEach(x => { a[x.id] = x; });
+    (D[k] || []).forEach(x => { b[x.id] = x; });
+    Object.keys(b).forEach(id => { if (!a[id]) out.push('+' + (b[id].name || id)); else if (!same(a[id], b[id])) out.push(b[id].name || id); });
+    Object.keys(a).forEach(id => { if (!b[id]) out.push('-' + (a[id].name || id)); });
+  });
+  if (!same(baseData.style, D.style)) out.push('말풍선·글꼴');
+  if (!same(baseData.guide, D.guide)) out.push('설계 지침');
+  return out;
+}
+function showPending(){
+  const el = document.getElementById('pending'); if (!el) return;
+  const list = pendingList();
+  el.hidden = !list.length;
+  el.textContent = '안 올린 변경 ' + list.length + '개';
+  el.title = '이 브라우저에 저장됨 · 아직 깃허브에 안 올림\n' + list.join(', ');
+  const pb = document.getElementById('pushBtn');
+  if (pb) pb.textContent = list.length ? '깃허브에 올리기 (' + list.length + ')' : '깃허브에 올리기';
+}
 const ui = {
   tab: 'species',
   sel: { species: 0, items: 0, effects: 0, reefs: 0 },
@@ -375,10 +402,13 @@ function changed(noStamp){
   if (!noStamp) D.updated = new Date().toISOString();
   setSaved('busy');
   clearTimeout(saveTimer); saveTimer = setTimeout(saveNow, 700);
+  clearTimeout(changed.t); changed.t = setTimeout(showPending, 300);
   schedulePreview();
   broadcast();
   counts();
 }
+// 창을 닫거나 새로고침할 때 아직 안 쓴 작업본을 바로 저장
+window.addEventListener('pagehide', () => { if (saveTimer){ clearTimeout(saveTimer); saveTimer = null; if (D) saveNow(); } });
 function saveNow(){
   const raw = JSON.stringify(D);
   // 브라우저 작업본은 어느 레포 버전 위에서 고친 건지 같이 저장 (레포가 바뀌면 버림)
@@ -987,7 +1017,11 @@ function drawPalette(){
         delete m.palette[k];
         m.side = m.side.map(wipe); if (m.top) m.top = m.top.map(wipe);
         m.parts.forEach(p => {
-          if (p.paint){ p.paint = p.paint.map(wipe); if (!p.paint.join('').replace(/[.X]/g, '')) delete p.paint; }
+          if (p.paint){
+            const S = new kit.Sampler(m);
+            p.paint = p.paint.map((r, j) => r.split('').map((c, i) => c !== k ? c : (p.kind === 'plane' ? (S.side(p.x + i, p.y + j) || '.') : '.')).join(''));
+            if (!p.paint.join('').replace(/[.X]/g, '')) delete p.paint;
+          }
           if (p.faces) Object.keys(p.faces).forEach(f => { p.faces[f] = p.faces[f].map(wipe); });
           if (p.color === k) p.color = Object.keys(m.palette)[0];
         });
@@ -2403,7 +2437,7 @@ function renderGithub(){
     store(); log('레포에서 reef-data.json 읽는 중…');
     try {
       const f = await GH.get('reef-data.json'); if (!f) return log('레포에 reef-data.json이 없어요.');
-      snapshot(true); D = kit.normalize(JSON.parse(f.text)); repoBase = String(D.updated || ''); changed(true); kit.applyStyle(D.style); drawLogo();
+      snapshot(true); D = kit.normalize(JSON.parse(f.text)); setBase(D); changed(true); kit.applyStyle(D.style); drawLogo();
       log('불러왔어요. (되돌리기로 이전 작업본으로 돌아갈 수 있어요)');
     } catch(e){ log(ghMsg(e)); }
   });
@@ -2455,7 +2489,7 @@ async function pushData(){
       log(msg); toast(msg, 6000); setSaved('local'); return;
     }
     await GH.put('reef-data.json', dataText(), 'all-reefs: update fish');
-    repoBase = String(D.updated || ''); saveNow();
+    setBase(D); saveNow();
     // 새로 만든 reef 페이지가 레포에 없으면 같이 만들어 줌
     let exist = {};
     try { (await GH.list()).forEach(x => { exist[x.name] = true; }); } catch(e){}
@@ -2494,7 +2528,7 @@ function openCode(name, fallback){
       await GH.put(name, $('#codeText').value, 'all-reefs: edit ' + name);
       fileExists[name] = true;
       $('#codeState').textContent = '커밋했어요.';
-      if (name === 'reef-data.json'){ try { snapshot(true); D = kit.normalize(JSON.parse($('#codeText').value)); repoBase = String(D.updated || ''); changed(true); } catch(e){} }
+      if (name === 'reef-data.json'){ try { snapshot(true); D = kit.normalize(JSON.parse($('#codeText').value)); setBase(D); changed(true); } catch(e){} }
     } catch(e){ $('#codeState').textContent = ghMsg(e); }
   };
   $('#codeSave').onclick = () => saved(saveFile(name, $('#codeText').value, 'text/plain'), name);
@@ -2532,17 +2566,23 @@ async function boot(){
   let draft = null, legacy = null;
   try { draft = JSON.parse(localStorage.getItem('allreefs.draft') || 'null'); } catch(e){}
   try { legacy = JSON.parse(localStorage.getItem('allreefs.data') || 'null'); } catch(e){}
-  try { fileData = await kit.loadData(); } catch(e){ fileData = null; }
-  if (fileData && kit.source !== 'file') fileData = null;
+  fileData = null;
+  if (GH.ready() && !IN_CLAUDE){
+    try { const f = await GH.get('reef-data.json'); if (f) fileData = kit.normalize(JSON.parse(f.text)); } catch(e){ log('깃허브에서 못 읽어서 사이트 파일을 씀: ' + ghMsg(e)); }
+  }
+  if (!fileData){
+    try { fileData = await kit.loadData(); } catch(e){ fileData = null; }
+    if (fileData && kit.source !== 'file') fileData = null;
+  }
   // 레포 파일이 늘 기준. 브라우저 작업본은 지금 레포 버전 위에서 고친 것만 이어서 엶
   const useDraft = !!(draft && draft.data && fileData && draft.base && draft.base === fileData.updated && draft.data.updated !== fileData.updated);
   let start;
-  if (fileData){ repoBase = String(fileData.updated || ''); start = useDraft ? draft.data : fileData; }
+  if (fileData){ setBase(fileData); start = useDraft ? draft.data : fileData; }
   else start = (draft && draft.data) || legacy || { species: [], items: [], effects: [], reefs: [] };
   if (fileData){ try { localStorage.removeItem('allreefs.data'); if (!useDraft) localStorage.removeItem('allreefs.draft'); } catch(e){} }
   D = kit.normalize(start);
   kit.applyStyle(D.style);
-  setSaved('ok'); drawLogo(); render();
+  setSaved('ok'); drawLogo(); render(); showPending();
   if (useDraft && !IN_CLAUDE){
     const n = document.createElement('div'); n.className = 'note'; n.style.marginBottom = '12px';
     n.innerHTML = '아직 올리지 않은 작업본을 이어서 열었어요. <button class="btn small" type="button">버리고 레포 버전 열기</button>';
