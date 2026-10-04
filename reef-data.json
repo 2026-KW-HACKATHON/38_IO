@@ -1,6 +1,6 @@
 {
  "v": 1,
- "updated": "2026-10-04T19:23:15.074Z",
+ "updated": "2026-10-04T19:36:04.542Z",
  "style": {
   "font": {
    "family": "\"Galmuri11\", \"DotGothic16\", \"Jua\", sans-serif",
@@ -3554,7 +3554,9 @@
       "scale": 1,
       "variant": 0,
       "effects": [],
-      "says": [],
+      "says": [
+       "새빛 높고 험해도~"
+      ],
       "addons": []
      },
      {
@@ -3571,13 +3573,15 @@
       "scale": 1,
       "variant": 1,
       "effects": [],
-      "says": [],
+      "says": [
+       "비마 넓고 깊어도~"
+      ],
       "addons": []
      },
      {
       "species": "goldfish",
       "path": "loop",
-      "cx": 14,
+      "cx": 14.5,
       "cy": 11,
       "cz": 0,
       "rx": 4,
@@ -3588,7 +3592,9 @@
       "scale": 1,
       "variant": 2,
       "effects": [],
-      "says": [],
+      "says": [
+       "우리 사는 광운대 아주 작고 작은 곳"
+      ],
       "addons": []
      },
      {
@@ -3605,7 +3611,9 @@
       "scale": 1,
       "variant": 0,
       "effects": [],
-      "says": [],
+      "says": [
+       "졸려"
+      ],
       "addons": []
      },
      {
@@ -3622,7 +3630,9 @@
       "scale": 1,
       "variant": 0,
       "effects": [],
-      "says": [],
+      "says": [
+       "우이천!!"
+      ],
       "addons": []
      },
      {
@@ -3639,7 +3649,9 @@
       "scale": 1,
       "variant": 0,
       "effects": [],
-      "says": [],
+      "says": [
+       "야르"
+      ],
       "addons": []
      },
      {
@@ -3656,7 +3668,9 @@
       "scale": 1,
       "variant": 0,
       "effects": [],
-      "says": [],
+      "says": [
+       ":) "
+      ],
       "addons": []
      },
      {
@@ -3673,7 +3687,9 @@
       "scale": 1,
       "variant": 0,
       "effects": [],
-      "says": [],
+      "says": [
+       "nemo"
+      ],
       "addons": []
      },
      {
@@ -3690,7 +3706,9 @@
       "scale": 1,
       "variant": 0,
       "effects": [],
-      "says": [],
+      "says": [
+       "안녕하세요블루탱입니다"
+      ],
       "addons": []
      },
      {
@@ -3707,7 +3725,9 @@
       "scale": 1,
       "variant": 0,
       "effects": [],
-      "says": [],
+      "says": [
+       "엄"
+      ],
       "addons": []
      }
     ],
