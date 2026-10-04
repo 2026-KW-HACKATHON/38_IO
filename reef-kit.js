@@ -283,7 +283,8 @@
       for (j = 0; j < h; j++) {
         g.push([]);
         for (i = 0; i < w; i++) {
-          var ch = p.paint ? paintAt(p, i, j) : S.side(p.x + i, p.y + j);
+          var ch = (p.paint && paintAt(p, i, j)) || S.side(p.x + i, p.y + j);
+          if (ch && !(ch in m.palette) && ch.charAt(0) !== '#') ch = null;
           g[j].push(ch);
           if (ch) queue.push([i, j]);
         }
@@ -330,14 +331,23 @@
       return (SKINS[key] = bake(m, variant));
     }
 
+    // 칸 자리로 정해지는 0~1 값 (그레인용)
+    function cellNoise(a, b, c) {
+      var h = (a * 374761393 + b * 668265263 + c * 2147483647) | 0;
+      h = (h ^ (h >>> 13)) * 1274126177 | 0;
+      return ((h ^ (h >>> 16)) >>> 0) / 4294967295;
+    }
+
     function bake(m, variant) {
       var S = new Sampler(m), pal = m.palette, shade = num(m.shade, 0.06);
       var vpal = (variant && variant.palette) || null;
       var colorCache = {};
+      var grain = clamp(num(m.grain, 0), 0, 0.5);
       // 글자 하나 → 색 (위쪽일수록 살짝 어둡고 아래쪽일수록 살짝 밝게)
       function col(ch, rowFrac) {
         if (!ch) return null;
-        var hex = (vpal && vpal[ch]) || pal[ch] || (ch.charAt(0) === '#' ? ch : '#ff00ff');
+        var hex = (vpal && vpal[ch]) || pal[ch] || (ch.charAt(0) === '#' ? ch : null);
+        if (!hex) return null;
         var lift = (rowFrac == null) ? 0 : (rowFrac - 0.5) * shade;
         var key = hex + '|' + Math.round(lift * 1000);
         return colorCache[key] || (colorCache[key] = tint(hex, variant, lift));
@@ -369,7 +379,7 @@
             var fget = function (g, i, j) {
               if (!Array.isArray(g) || !g.length) return null;
               var r = String(g[clamp(j, 0, g.length - 1)] || ''), ch = r.charAt(clamp(i, 0, r.length - 1));
-              return S.empty(ch) ? null : ch;
+              return S.empty(ch) || !(ch in pal || ch.charAt(0) === '#') ? null : ch;
             };
             [['front', 0, function (j) { return rf(j); }], ['back', 1, function (j) { return rf(j); }],
              ['top', 2, function () { return rf(0) - 0.08; }], ['bottom', 3, function () { return rf(p.h - 1) + 0.08; }]
@@ -400,9 +410,13 @@
       var ctx = cv.getContext('2d'), img = ctx.createImageData(AW, AH), d = img.data;
       var mk = document.createElement('canvas'); mk.width = AW; mk.height = AH;
       var mctx = mk.getContext('2d'), mimg = mctx.createImageData(AW, AH), md = mimg.data;
-      rects.forEach(function (r) {
+      rects.forEach(function (r, ri) {
         for (var j = 0; j < r.h; j++) for (var i = 0; i < r.w; i++) {
           var c = r.f(i, j); if (!c) continue;
+          if (grain) {
+            var gk = 1 + grain * (cellNoise(ri, i, j) * 2 - 1);
+            c = [clamp(Math.round(c[0] * gk), 0, 255), clamp(Math.round(c[1] * gk), 0, 255), clamp(Math.round(c[2] * gk), 0, 255)];
+          }
           var o = ((r.v + j) * AW + r.u + i) * 4;
           d[o] = c[0]; d[o + 1] = c[1]; d[o + 2] = c[2]; d[o + 3] = r.a ? Math.round(255 * clamp(r.a(i, j), 0, 1)) : 255;
           md[o] = md[o + 1] = md[o + 2] = md[o + 3] = 255;

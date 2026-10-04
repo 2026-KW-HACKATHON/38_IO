@@ -647,6 +647,12 @@ function renderModels(){
           <button type="button" data-v="top">윗모습</button>
           <button type="button" data-v="part">부위 도트</button>
         </div>
+        <div class="seg" id="pxFace" aria-label="박스 면">
+          <button type="button" data-v="face-front">앞면</button>
+          <button type="button" data-v="face-back">뒷면</button>
+          <button type="button" data-v="face-top">윗면</button>
+          <button type="button" data-v="face-bottom">밑면</button>
+        </div>
         <div class="seg" id="pxMode" aria-label="모드">
           <button type="button" data-v="paint">칠하기</button>
           <button type="button" data-v="parts">부위 옮기기</button>
@@ -658,6 +664,12 @@ function renderModels(){
           <button type="button" data-v="pick">스포이드</button>
         </div>
         <button class="btn small" id="pxOverlay" type="button" aria-pressed="${ui.px.overlay}">부위 선</button>
+        <button class="btn small" id="pxGrain" type="button" aria-pressed="${!!m.grain}" title="칸마다 밝기를 조금씩 다르게">자동 그레인</button>
+        <input type="range" id="pxGrainAmt" min="0.02" max="0.25" step="0.01" value="${m.grain || 0.08}" style="width:90px;${m.grain ? '' : 'display:none'}" title="그레인 세기">
+      </div>
+      <div class="row" id="faceRow" style="display:none;margin:-2px 0 8px;font-size:12.5px;color:var(--ink-soft)">
+        <span class="grow" id="faceInfo"></span>
+        <button class="btn small" type="button" id="faceReset">이 면을 옆모습대로 되돌리기</button>
       </div>
       <div class="palette" id="palette"></div>
       <div class="pxwrap" id="pxwrap"><canvas id="px"></canvas></div>
@@ -730,8 +742,26 @@ function renderModels(){
       if (!p.paint) edit(() => { p.paint = paintFromSide(m, p); }, true);
     }
     if (v === 'top' && !m.top) edit(() => { m.top = makeTop(m); }, true);
-    ui.px.target = v; drawPx(); drawPalette();
+    ui.px.target = v; syncTarget(); drawPx(); drawPalette();
   });
+  segWire('#pxFace', faceOf(ui.px.target) ? ui.px.target : null, v => {
+    const p = curPart(), f = faceOf(v);
+    if (!p || p.kind !== 'box'){ toast('박스 부위를 먼저 골라 주세요'); return false; }
+    if (!p.faces || !p.faces[f]) edit(() => { p.faces = p.faces || {}; p.faces[f] = makeFace(m, p, f); }, true);
+    ui.px.target = v; syncTarget(); drawPx(); drawPalette();
+  });
+  $('#faceReset').addEventListener('click', () => {
+    const p = curPart(), f = faceOf(ui.px.target);
+    if (!p || !p.faces || !p.faces[f]) return;
+    edit(() => { delete p.faces[f]; if (!Object.keys(p.faces).length) delete p.faces; }, true);
+    ui.px.target = 'side'; syncTarget(); drawPx(); drawPalette();
+  });
+  $('#pxGrain').addEventListener('click', e => {
+    const on = !m.grain, amt = $('#pxGrainAmt');
+    edit(() => { if (on) m.grain = +amt.value; else delete m.grain; }, true);
+    e.target.setAttribute('aria-pressed', on); amt.style.display = on ? '' : 'none';
+  });
+  $('#pxGrainAmt').addEventListener('input', e => { edit(() => { m.grain = +e.target.value; }); });
   segWire('#pxMode', ui.px.mode, v => { ui.px.mode = v; drawPx(); });
   segWire('#pxTool', ui.px.tool, v => { ui.px.tool = v; });
   $('#pxOverlay').addEventListener('click', e => { ui.px.overlay = !ui.px.overlay; e.target.setAttribute('aria-pressed', ui.px.overlay); drawPx(); });
@@ -799,7 +829,13 @@ function updateThumbs(){
 function pxGrid(){
   const m = curModel(), t = ui.px.target;
   let host, key;
-  if (t === 'top'){ host = m; key = 'top'; if (!m.top) m.top = makeTop(m); }
+  if (faceOf(t)){
+    const p = curPart(), f = faceOf(t);
+    // 고른 부위에 이 면 도트가 없으면 옆모습으로 돌아감
+    if (p && p.kind === 'box' && p.faces && p.faces[f]){ fitFace(p, f); host = p.faces; key = f; }
+    else { ui.px.target = 'side'; host = m; key = 'side'; syncTarget(); }
+  }
+  else if (t === 'top'){ host = m; key = 'top'; if (!m.top) m.top = makeTop(m); }
   else if (t === 'part'){ const p = curPart(); if (!p || !p.paint){ ui.px.target = 'side'; host = m; key = 'side'; } else { host = p; key = 'paint'; } }
   else { host = m; key = 'side'; }
   const rows = host[key];
@@ -809,6 +845,46 @@ function pxGrid(){
     set: (c, r, ch) => { const row = host[key][r]; if (!row || c < 0 || c >= row.length) return; host[key][r] = row.slice(0, c) + (ch || '.') + row.slice(c + 1); },
     rows
   };
+}
+// 박스 면: 앞·뒤는 세로=높이, 가로=두께 / 위·밑은 세로=두께, 가로=길이
+const FACE_KEYS = ['face-front', 'face-back', 'face-top', 'face-bottom'];
+const FACE_KO = { front: '앞면 (머리 쪽)', back: '뒷면 (꼬리 쪽)', top: '윗면', bottom: '밑면' };
+const faceOf = t => FACE_KEYS.indexOf(t) >= 0 ? t.slice(5) : null;
+function faceSize(p, f){ return (f === 'front' || f === 'back') ? { W: p.d, H: p.h } : { W: p.w, H: p.d }; }
+// 지금 보이는 색 그대로 면 도트를 만듦 (부위 도트 > 옆모습)
+function makeFace(m, p, f){
+  const S = new kit.Sampler(m), sz = faceSize(p, f);
+  const cell = (i, j) => {
+    const r = p.paint && p.paint[j], c = r ? r.charAt(i) : '.';
+    const ch = (c && c !== '.' && c !== 'X') ? c : (c === 'X' ? p.color : S.side(p.x + i, p.y + j));
+    return ch && (ch in m.palette) ? ch : '.';
+  };
+  const out = [];
+  for (let j = 0; j < sz.H; j++){
+    let row = '';
+    for (let i = 0; i < sz.W; i++){
+      if (f === 'front') row += cell(p.w - 1, j);
+      else if (f === 'back') row += cell(0, j);
+      else if (f === 'top') row += cell(i, 0);
+      else row += cell(i, p.h - 1);
+    }
+    out.push(row);
+  }
+  return out;
+}
+// 부위 크기가 바뀌었으면 면 도트 크기도 맞춤
+function fitFace(p, f){
+  const sz = faceSize(p, f), g = p.faces[f];
+  for (let j = 0; j < sz.H; j++){ const r = String(g[j] || ''); g[j] = (r + '.'.repeat(sz.W)).slice(0, sz.W); }
+  g.length = sz.H;
+}
+function syncTarget(){
+  const t = ui.px.target, isFace = !!faceOf(t);
+  $$('#pxTarget button').forEach(x => x.setAttribute('aria-pressed', x.dataset.v === t));
+  $$('#pxFace button').forEach(x => x.setAttribute('aria-pressed', x.dataset.v === t));
+  const p = curPart(), row = $('#faceRow');
+  if ($('#pxFace')) $('#pxFace').style.opacity = p && p.kind === 'box' ? '' : '.45';
+  if (row){ row.style.display = isFace ? '' : 'none'; if (isFace && p) $('#faceInfo').textContent = (p.id || '') + ' · ' + FACE_KO[faceOf(t)] + ' — 옆모습과 따로 칠함'; }
 }
 function makeTop(m){
   let D0 = 6;
@@ -908,7 +984,11 @@ function drawPalette(){
         const wipe = r => r.split(k).join('.');
         delete m.palette[k];
         m.side = m.side.map(wipe); if (m.top) m.top = m.top.map(wipe);
-        m.parts.forEach(p => { if (p.paint) p.paint = p.paint.map(wipe); if (p.color === k) p.color = Object.keys(m.palette)[0]; });
+        m.parts.forEach(p => {
+          if (p.paint){ p.paint = p.paint.map(wipe); if (!p.paint.join('').replace(/[.X]/g, '')) delete p.paint; }
+          if (p.faces) Object.keys(p.faces).forEach(f => { p.faces[f] = p.faces[f].map(wipe); });
+          if (p.color === k) p.color = Object.keys(m.palette)[0];
+        });
       }, true);
       ui.px.ch = null; drawPalette(); drawPx(); updateThumbs();
     });
@@ -952,12 +1032,14 @@ function drawPx(){
   for (let q = 0; q <= W; q++){ c.moveTo(q * cell + 0.5, 0); c.lineTo(q * cell + 0.5, H * cell); }
   for (let r = 0; r <= H; r++){ c.moveTo(0, r * cell + 0.5); c.lineTo(W * cell, r * cell + 0.5); }
   c.stroke();
-  $('#gridSize').textContent = ui.px.target === 'part' ? `부위 도트 ${W}×${H}` : `${m.side[0].length}×${m.side.length}` + (m.top ? ` · 윗모습 깊이 ${m.top.length}` : '');
+  const isFace = !!faceOf(ui.px.target);
+  $('#gridSize').textContent = ui.px.target === 'part' ? `부위 도트 ${W}×${H}` : isFace ? `${FACE_KO[faceOf(ui.px.target)]} ${W}×${H}` : `${m.side[0].length}×${m.side.length}` + (m.top ? ` · 윗모습 깊이 ${m.top.length}` : '');
+  syncTarget();
   $('#gridBtns').style.display = ui.px.target === 'side' ? '' : 'none';
 
   // 부위 네모 (옆모습/윗모습에서만)
   const legend = $('#legend'); legend.innerHTML = '';
-  if (ui.px.overlay && ui.px.target !== 'part'){
+  if (ui.px.overlay && (ui.px.target === 'side' || ui.px.target === 'top')){
     const used = {};
     m.parts.forEach((p, i) => {
       const r = partRect(m, p); if (!r) return;
@@ -1004,7 +1086,7 @@ function pxCell(e){
 function pxDown(e){
   const m = curModel(), at = pxCell(e);
   try { PX.cv.setPointerCapture(e.pointerId); } catch(er){}
-  if (ui.px.mode === 'parts' && ui.px.target !== 'part'){
+  if (ui.px.mode === 'parts' && (ui.px.target === 'side' || ui.px.target === 'top')){
     const p = curPart(), r = p && partRect(m, p);
     if (p && r && p.kind !== 'free' && ui.px.target === 'side' && Math.abs(at.fx - (r.x + r.w)) < 0.6 && Math.abs(at.fy - (r.y + r.h)) < 0.6){
       snapshot(true); PX.drag = { kind: 'resize', p }; return;
