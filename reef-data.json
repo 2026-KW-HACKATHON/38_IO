@@ -1,6 +1,6 @@
 {
  "v": 1,
- "updated": "2026-10-04T16:07:10.828Z",
+ "updated": "2026-10-04T16:08:13.633Z",
  "style": {
   "font": {
    "family": "\"DotGothic16\", \"Jua\", system-ui, sans-serif",
@@ -3458,7 +3458,8 @@
    "config": {
     "fishTotal": 10,
     "mix": [
-     "discus"
+     "discus",
+     "betta"
     ],
     "shells": [
      22,
