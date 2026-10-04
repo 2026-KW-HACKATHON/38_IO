@@ -4,5 +4,5 @@ window.APP_CONFIG = {
     SUPABASE_URL: 'https://bzjgbobrewpdwnxgjyxm.supabase.co',
     SUPABASE_ANON_KEY: 'sb_publishable_zJGbISAvzvUL6359rtXzBQ_gAzi-Qfq',
     /* 카카오 지도 키 (카카오 개발자 화면의 앱 키 > JavaScript 키). 비어 있으면 그림 지도를 띄움 */
-    KAKAO_MAP_KEY: ''
+    KAKAO_MAP_KEY: 'd46e3aba5d8f3ccfa7aee7c1a0c73f3e'
 };
