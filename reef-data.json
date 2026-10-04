@@ -1,6 +1,6 @@
 {
  "v": 1,
- "updated": "2026-10-04T19:45:48.000Z",
+ "updated": "2026-10-04T20:04:53.000Z",
  "style": {
   "font": {
    "family": "\"Galmuri11\", \"DotGothic16\", \"Jua\", sans-serif",
@@ -3580,7 +3580,8 @@
       "follow": 0,
       "gap": 1.15,
       "side": -0.6,
-      "sway": 0.35
+      "sway": 0.35,
+      "rise": 0.45
      },
      {
       "species": "goldfish",
@@ -3603,7 +3604,8 @@
       "follow": 0,
       "gap": 2,
       "side": 0.6,
-      "sway": 0.35
+      "sway": 0.35,
+      "rise": -0.4
      },
      {
       "species": "deep-anglerfish",

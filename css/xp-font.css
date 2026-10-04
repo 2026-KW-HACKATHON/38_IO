@@ -1,0 +1,5 @@
+/* 윈도우 XP 글꼴: 영문은 Tahoma, 한글은 굴림 (없으면 나눔고딕). 물고기 말풍선(.reef-say)은 원래 글꼴 그대로 */
+@import url("https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@400;700&display=swap");
+body, body *:not(.reef-say):not(.reef-say *){
+  font-family:Tahoma,"굴림",Gulim,"Nanum Gothic","Apple SD Gothic Neo",sans-serif !important;
+}

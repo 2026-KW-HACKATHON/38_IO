@@ -755,6 +755,7 @@
     // 무리짓기: 앞 물고기가 지나온 길을 몸길이 몇 배만큼 뒤에서 따라감
     // lane.follow: 따라갈 앞 물고기 순서, lane.gap: 몸길이 몇 배 뒤, lane.side: 옆으로 비킬 정도 (-1 왼쪽 ~ 1 오른쪽)
     // lane.sway: 앞뒤로 밀고 당기는 정도 (몸길이 배수), 박자가 다르면 서로 앞서거니 뒤서거니 함
+    // lane.rise: 위아래로 비킬 정도 (몸길이 배수, + 위 / - 아래)
     var _bp = new THREE.Vector3(), _bq = new THREE.Vector3(), _ahead = new THREE.Vector3();
     function bodyLen(obj) {
       var u = obj.userData;
@@ -786,7 +787,8 @@
       // 가는 방향의 옆쪽으로 살짝 비켜서 겹치지 않게
       var sx = -d.z / flat, sz = d.x / flat, off = num(lane.side, 0) * L * 0.45;
       obj.position.x += sx * off; obj.position.z += sz * off;
-      obj.position.y += Math.sin(t * 0.9 + num(lane.ph, 0)) * 0.12 * L;
+      // 높이 차이: lane.rise(몸길이 배수)만큼 위아래로 비키고, 천천히 오르내림
+      obj.position.y += (num(lane.rise, 0) + Math.sin(t * 0.5 + num(lane.ph, 0)) * 0.18) * L;
       obj.rotation.y = Math.atan2(-d.z, d.x);
       obj.rotation.z = Math.atan2(d.y, flat) * 0.75;
       var u = obj.userData, yaw = obj.rotation.y;
