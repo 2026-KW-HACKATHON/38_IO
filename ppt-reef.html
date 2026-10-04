@@ -118,6 +118,70 @@
   #msg{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);max-width:34ch;text-align:center;
     font-size:13px;color:var(--ink-soft);z-index:6}
 
+
+  /* ── 나의 어항(XP) 화면: 주소에 ?xp 가 붙으면 그림판 모양 (메뉴 줄 · 색 고르기 · 상태 줄) ── */
+  .xp-only{display:none}
+  body.xp{display:flex;flex-direction:column;background:#ece9d8;color:#000}
+  body.xp .xp-only{display:flex}
+  body.xp #stage{flex:1;height:auto;min-height:0;border-top:1px solid #aca899}
+  body.xp #masthead, body.xp #dock{display:none!important}
+  /* 메뉴 줄 */
+  .xbar{flex:none;height:22px;align-items:stretch;padding:0 2px;background:#ece9d8;font-size:12px;
+    -webkit-user-select:none;user-select:none}
+  .xbar button{appearance:none;border:0;background:transparent;color:#000;padding:0 8px;font-size:12px;cursor:default}
+  .xbar button.on{background:#316ac5;color:#fff}
+  /* 펼친 메뉴 · 옆에 붙는 칸 */
+  .xmenu{position:fixed;z-index:60;min-width:160px;background:#fff;border:1px solid #aca899;padding:2px;
+    box-shadow:2px 2px 2px rgba(0,0,0,.3);font-size:12px;-webkit-user-select:none;user-select:none}
+  .xi{display:flex;align-items:center;gap:6px;height:22px;padding:0 8px 0 2px;white-space:nowrap;cursor:default;color:#000}
+  .xi .xic{width:20px;display:flex;align-items:center;justify-content:center;flex:none}
+  .xi .xic img{width:20px;height:auto;image-rendering:pixelated}
+  .xi .xl{flex:1}
+  .xi .xa{width:0;height:0;border-left:4px solid currentColor;border-top:4px solid transparent;border-bottom:4px solid transparent}
+  .xi.hot{background:#316ac5;color:#fff}
+  .xi.off{color:#aca899}
+  .xsep{height:1px;background:#aca899;margin:3px 1px}
+  .xslide{padding:6px 10px;display:flex;align-items:center;gap:8px;min-width:0}
+  .xslide output{font-size:11px;width:34px;text-align:right}
+  .xcard{width:150px;padding:10px 12px;text-align:center;color:#000}
+  .xcard img{width:96px;height:auto;image-rendering:pixelated;display:block;margin:4px auto 8px}
+  .xcard b{display:block;font-size:14px}
+  .xcard i{display:block;font-style:normal;font-size:11px;color:#555;margin-top:2px}
+  .xcard hr{border:0;border-top:1px solid #aca899;margin:8px 0 6px}
+  .xcard span{font-size:12px}
+  /* XP 슬라이더: 가는 홈 위에 초록 테두리 손잡이 */
+  input.xtrack{-webkit-appearance:none;appearance:none;width:140px;height:24px;background:transparent;margin:0}
+  input.xtrack::-webkit-slider-runnable-track{height:4px;background:#f4f3ee;border:1px solid;border-color:#9d9c99 #fff #fff #9d9c99;border-radius:2px}
+  input.xtrack::-webkit-slider-thumb{-webkit-appearance:none;width:11px;height:21px;margin-top:-10px;border-radius:3px;
+    border:1px solid #3d9f46;background:linear-gradient(180deg,#fff 0%,#f4f4f0 60%,#e2e2da 100%);
+    box-shadow:inset 0 2px 0 #c4f2bd,inset 0 -2px 0 #67cf62}
+  input.xtrack::-moz-range-track{height:4px;background:#f4f3ee;border:1px solid;border-color:#9d9c99 #fff #fff #9d9c99;border-radius:2px}
+  input.xtrack::-moz-range-thumb{width:9px;height:19px;border-radius:3px;border:1px solid #3d9f46;
+    background:linear-gradient(180deg,#fff 0%,#f4f4f0 60%,#e2e2da 100%);box-shadow:inset 0 2px 0 #c4f2bd,inset 0 -2px 0 #67cf62}
+  /* 아래 색 고르기 (그림판 팔레트) */
+  .xpal{flex:none;align-items:center;gap:6px;padding:4px 4px 3px;border-top:1px solid #fff}
+  .xcur{position:relative;width:30px;height:30px;flex:none;background:#fff;
+    box-shadow:inset 1px 1px #808080,inset -1px -1px #fff,inset 2px 2px #404040,inset -2px -2px #d4d0c8}
+  .xcur i{position:absolute;left:7px;top:7px;width:16px;height:16px;border:1px solid #000}
+  .xswatch{display:grid;grid-template-columns:repeat(13,16px);grid-auto-rows:16px;gap:0;min-width:0;overflow:hidden}
+  .xswatch button{appearance:none;border:0;padding:0;width:16px;height:16px;cursor:pointer;
+    box-shadow:inset 1px 1px #808080,inset -1px -1px #fff,inset 2px 2px #404040,inset -2px -2px #d4d0c8}
+  .xswatch button.on{outline:1px dotted #000;outline-offset:-4px}
+  /* 아래 상태 줄 */
+  .xstat{flex:none;height:20px;align-items:stretch;font-size:11px;border-top:1px solid #d6d2c2}
+  .xstat span{display:flex;align-items:center;padding:0 6px;border-right:1px solid #aca899;box-shadow:1px 0 #fff;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .xstat span:first-child{flex:1;min-width:0}
+  .xstat span:last-child{border-right:0;box-shadow:none;width:90px;flex:none}
+  /* 혼자 보기 막대도 XP 모양 */
+  body.xp .panel{background:#ece9d8;border:1px solid #aca899;border-radius:0;backdrop-filter:none;-webkit-backdrop-filter:none;
+    box-shadow:2px 2px 2px rgba(0,0,0,.3)}
+  body.xp #soloBar{top:8px}
+  body.xp #soloName{color:#000}
+  body.xp .iconbtn, body.xp .toggle{border:1px solid #003c74;border-radius:3px;color:#000;box-shadow:none;backdrop-filter:none;
+    background:linear-gradient(180deg,#fff 0%,#ecebe5 86%,#d8d0c4 100%);letter-spacing:0;font-size:11px}
+  body.xp .toggle[aria-pressed="true"]{background:linear-gradient(180deg,#cdcac3 0%,#e3e3db 8%,#e5e5de 94%,#f2f2f1 100%);border-color:#003c74}
+  body.xp .itemchip i{color:#555}
   @media (max-width:640px){
     #dock{gap:9px}
     #controls,#specimens{min-width:0;width:100%}
@@ -128,6 +192,7 @@
 <link rel="stylesheet" href="css/xp-font.css">
 </head>
 <body data-reef="pptreef">
+<div class="xp-only xbar" id="xpBar" role="menubar"></div>
 <div id="stage" class="lit">
   <div class="hud" id="masthead">
     <div class="brand">
@@ -159,6 +224,8 @@
   </div>
   <p id="msg" hidden></p>
 </div>
+<div class="xp-only xpal" id="xpPal"><span class="xcur"><i id="xpCur"></i></span><div class="xswatch" id="xpSw"></div></div>
+<div class="xp-only xstat"><span id="xpHelp">물고기를 누르면 말을 해요 · 아래 색을 누르면 배경색이 바뀌어요</span><span id="xpCount"></span></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="reef-kit.js"></script>
@@ -169,6 +236,9 @@
   "use strict";
   // 이 페이지가 reef-data.json 안에서 어떤 reef인지 (body의 data-reef)
   var REEF_ID = document.body.getAttribute('data-reef');
+  // 나의 어항 창에서 열렸는지 (주소 끝 ?xp)
+  var XP = /[?&]xp\b/.test(location.search);
+  if (XP) document.body.classList.add('xp');
   var kit = ReefKit(THREE);
   var stage = document.getElementById('stage');
   var msg = document.getElementById('msg');
@@ -231,6 +301,7 @@
     if (!soloOn) cam.radius = HOME.radius;
     drawLegend();
     drawSliders();
+    if (XP) xpBuild();
     if (!talk) talk = kit.Talk(stage, camera, d.style); else { talk.setStyle(d.style); talk.clear(); }
     applySolo(); applyVolt(); applyCamera(); applyItems();
     msg.hidden = true;
@@ -545,6 +616,160 @@
   }
   window.addEventListener('resize', resize);
   resize(); applyCamera();
+
+
+  /* ── 나의 어항(XP) 화면: 메뉴 줄 · 색 고르기 · 상태 줄 ── */
+  var XP_COLORS = [
+    ['Blue','#0000FF'],['Bright Blue','#0096FF'],['Electric Blue','#7DF9FF'],['Cyan','#00FFFF'],['Sky Blue','#87CEEB'],
+    ['Light Blue','#ADD8E6'],['Baby Blue','#89CFF0'],['Steel Blue','#4682B4'],['Royal Blue','#4169E1'],['Dodger Blue','#1E90FF'],
+    ['Deep Sky Blue','#00BFFF'],['Azure','#F0FFFF'],['Midnight Blue','#191970'],['Navy Blue','#000080'],['Ice Blue','#99CCFF'],
+    ['Periwinkle','#CCCCFF'],['Powder Blue','#B0E0E6'],['Cornflower Blue','#6495ED'],['Cobalt Blue','#0047AB'],['Denim Blue','#1560BD'],
+    ['Light Steel Blue','#B0C4DE'],['Teal','#008080'],['Turquoise','#40E0D0'],['Capri','#00BFFF'],['Glaucous','#6082B6']
+  ];
+  var xpSpecies = [];
+  var xpHelp = document.getElementById('xpHelp'), xpHelpText = xpHelp.textContent;
+  function xpSetup(){
+    stage.classList.remove('lit');   // 사진 배경 대신 단색
+    setList(false);
+    // 색 고르기: 누르면 배경색이 바뀌고 다음에 열어도 기억함
+    var sw = document.getElementById('xpSw'), cur = document.getElementById('xpCur'), saved = null;
+    try { saved = localStorage.getItem('reef-xp-bg'); } catch (e) {}
+    function setBg(hex){
+      stage.style.background = hex; cur.style.background = hex;
+      sw.querySelectorAll('button').forEach(function(b){ b.classList.toggle('on', b.dataset.hex === hex); });
+      try { localStorage.setItem('reef-xp-bg', hex); } catch (e) {}
+    }
+    XP_COLORS.forEach(function(c){
+      var b = document.createElement('button'); b.type = 'button'; b.title = c[0]; b.dataset.hex = c[1];
+      b.style.background = c[1];
+      b.addEventListener('click', function(){ setBg(c[1]); });
+      b.addEventListener('pointerenter', function(){ xpHelp.textContent = c[0] + ' ' + c[1]; });
+      b.addEventListener('pointerleave', function(){ xpHelp.textContent = xpHelpText; });
+      sw.appendChild(b);
+    });
+    setBg(saved || '#00BFFF');
+
+    // 메뉴 줄
+    var bar = document.getElementById('xpBar');
+    MENUS.forEach(function(mn, i){
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = mn.label; b.setAttribute('role', 'menuitem');
+      // 방금 마우스를 올려서 열린 메뉴는 누르자마자 닫히지 않게
+      b.addEventListener('click', function(){ if (openAt === i && performance.now() - openedAt > 300) closeMenus(); else if (openAt !== i) openMenu(i, b); });
+      b.addEventListener('pointerenter', function(){ if (openAt !== null && openAt !== i) openMenu(i, b); });
+      bar.appendChild(b);
+    });
+    // 메뉴 밖을 누르면 닫음
+    document.addEventListener('pointerdown', function(e){
+      if (openAt === null) return;
+      if (e.target.closest && e.target.closest('.xbar,.xmenu')) return;
+      closeMenus();
+    });
+  }
+  // 메뉴 내용 (물고기 목록은 데이터가 바뀔 때마다 새로 채움)
+  var MENUS = [
+    { label: '보기', items: function(){ return [
+      { label: '자동 회전', check: spinOn, act: function(){ tSpin.click(); } },
+      { label: '혼자 보기', check: soloOn, act: function(){ tSolo.click(); } },
+      { sep: true },
+      { label: '시점 처음으로', act: function(){ document.getElementById('reset').click(); } }
+    ]; } },
+    { label: '물고기', items: function(){ return xpSpecies.map(function(e){
+      return { label: e.m.name, icon: e.icon, card: e, act: function(){ pickSpecies(e.m.id); } };
+    }); } },
+    { label: '설정', items: function(){
+      var list = [{ label: '헤엄 속도', slider: 'swim' }, { label: '지느러미', slider: 'flap' }];
+      if (!tVolt.hidden) list.push({ label: '전기', check: voltOn, act: function(){ tVolt.click(); } });
+      return list;
+    } },
+    { label: '도움말', items: function(){ return [
+      { label: '끌어서 돌리기 · 휠로 확대', off: true },
+      { label: '물고기를 누르면 말을 해요', off: true }
+    ]; } }
+  ];
+  var openAt = null, openedAt = 0;
+  function closeMenus(){
+    document.querySelectorAll('.xmenu').forEach(function(m){ m.remove(); });
+    document.querySelectorAll('#xpBar button').forEach(function(b){ b.classList.remove('on'); });
+    openAt = null;
+  }
+  // 화면 밖으로 안 나가게 놓기 (오른쪽이 모자라면 왼쪽에)
+  function putMenu(m, x, y, leftAlt){
+    document.body.appendChild(m);
+    var w = m.offsetWidth, h = m.offsetHeight;
+    if (x + w > window.innerWidth - 2) x = leftAlt != null ? leftAlt - w : window.innerWidth - w - 2;
+    m.style.left = Math.max(2, x) + 'px';
+    m.style.top = Math.max(2, Math.min(window.innerHeight - h - 2, y)) + 'px';
+  }
+  function openMenu(i, btn){
+    closeMenus(); openAt = i; openedAt = performance.now(); btn.classList.add('on');
+    var m = document.createElement('div'); m.className = 'xmenu'; m.setAttribute('role', 'menu');
+    MENUS[i].items().forEach(function(it){
+      if (it.sep){ var s = document.createElement('div'); s.className = 'xsep'; m.appendChild(s); return; }
+      var r = document.createElement('div'); r.className = 'xi' + (it.off ? ' off' : '');
+      var ic = document.createElement('span'); ic.className = 'xic';
+      if (it.icon){ var im = document.createElement('img'); im.src = it.icon; im.alt = ''; ic.appendChild(im); }
+      else if (it.check) ic.textContent = '✓';
+      var lb = document.createElement('span'); lb.className = 'xl'; lb.textContent = it.label;
+      r.appendChild(ic); r.appendChild(lb);
+      if (it.slider || it.card){ var ar = document.createElement('span'); ar.className = 'xa'; r.appendChild(ar); }
+      r.addEventListener('pointerenter', function(){
+        m.querySelectorAll('.xi').forEach(function(o){ o.classList.toggle('hot', o === r && !it.off); });
+        openSide(m, r, it);
+      });
+      r.addEventListener('click', function(){
+        if (it.off) return;
+        if (it.slider){ openSide(m, r, it); return; }
+        if (it.act){ it.act(); closeMenus(); }
+      });
+      m.appendChild(r);
+    });
+    var rb = btn.getBoundingClientRect();
+    putMenu(m, rb.left, rb.bottom);
+  }
+  // 옆에 붙는 칸: 슬라이더 또는 물고기 카드
+  function openSide(menu, row, it){
+    document.querySelectorAll('.xmenu.side').forEach(function(s){ s.remove(); });
+    if (!it.slider && !it.card) return;
+    var s = document.createElement('div'); s.className = 'xmenu side';
+    if (it.slider){
+      var k = it.slider, box = document.createElement('div'); box.className = 'xslide';
+      var inp = document.createElement('input'); inp.type = 'range'; inp.className = 'xtrack'; inp.min = 0; inp.max = 200;
+      inp.value = Math.round(mul[k] * 100); inp.setAttribute('aria-label', it.label);
+      var out = document.createElement('output'); out.textContent = mul[k].toFixed(2) + '×';
+      inp.addEventListener('input', function(){
+        mul[k] = inp.value / 100; out.textContent = mul[k].toFixed(2) + '×';
+        var o = document.getElementById('s-' + k); if (o){ o.value = inp.value; o.dispatchEvent(new Event('input')); }
+      });
+      box.appendChild(inp); box.appendChild(out); s.appendChild(box);
+    } else {
+      var e = it.card, c = document.createElement('div'); c.className = 'xcard';
+      var big = document.createElement('img'); big.src = e.big; big.alt = '';
+      var nm = document.createElement('b'); nm.textContent = e.m.name;
+      var sci = document.createElement('i'); sci.textContent = e.m.sci || '';
+      var hr = document.createElement('hr');
+      var n = document.createElement('span'); n.textContent = (e.m.sizeCm ? '약 ' + e.m.sizeCm + 'cm · ' : '') + e.n + '마리';
+      c.appendChild(big); c.appendChild(nm); c.appendChild(sci); c.appendChild(hr); c.appendChild(n);
+      s.appendChild(c);
+    }
+    var mr = menu.getBoundingClientRect(), rr = row.getBoundingClientRect();
+    putMenu(s, mr.right - 2, rr.top - 3, mr.left + 2);
+  }
+  // 데이터가 들어올 때마다: 물고기 목록과 마릿수
+  function xpBuild(){
+    var seen = {};
+    xpSpecies = [];
+    fishes.forEach(function(f){
+      var m = f.userData.model;
+      if (!seen[m.id]){
+        seen[m.id] = { m: m, n: 0, icon: kit.thumb(m, 1).toDataURL(), big: kit.thumb(m, 4).toDataURL() };
+        xpSpecies.push(seen[m.id]);
+      }
+      seen[m.id].n++;
+    });
+    document.getElementById('xpCount').textContent = '물고기 ' + fishes.length + '마리';
+    closeMenus();
+  }
+  if (XP) xpSetup();
 
   /* ── 시작: 데이터 읽기 → 만들기 → 바뀌면 다시 만들기 ── */
   var gotLive = false;

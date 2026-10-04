@@ -36,6 +36,7 @@ button{font:inherit;color:inherit;cursor:pointer}
   background:linear-gradient(180deg,#0997ff 0%,#0053ee 8%,#0050ee 40%,#0066ff 88%,#0066ff 93%,#005bff 95%,#003dd7 96%,#003dd7 100%);
   border-top:1px solid #0831d9;border-left:1px solid #0831d9;border-right:1px solid #001ea0;border-radius:8px 7px 0 0;
   cursor:move;touch-action:none}
+.win .tic{flex:none;width:16px;height:16px;margin-left:2px}   /* 제목 앞 작은 아이콘 */
 .win .ttl{flex:1;padding-left:3px;font-family:var(--cap);font-size:13px;font-weight:700;color:#fff;text-shadow:1px 1px #0f1089;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 /* 제목줄 단추: 최소화 · 최대화 · 닫기 (누르거나 올리면 그림이 바뀜) */
@@ -59,6 +60,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 .win:not(.front) .bar{background:linear-gradient(180deg,#a6bdf1 0%,#7a96df 8%,#7a96df 40%,#9db9eb 88%,#9db9eb 93%,#8faaea 95%,#7a96df 96%,#7a96df 100%);
   border-color:#7d9be3 #6582d0 #6582d0 #7d9be3}
 .win:not(.front) .ttl{color:#d8e4f8;text-shadow:none}
+.win:not(.front) .btn{opacity:.6}
 .win.shut{display:none}   /* 닫힌 창 */
 body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글은 숨김 */
 .win.gift.maxed .body{justify-content:flex-start;gap:10px}
@@ -74,6 +76,7 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
 .win.front .shield{display:none}
 
 .win.fish .body{width:min(340px,calc(100vw - 40px));height:250px}
+.win.w-fish .body{width:min(520px,calc(100vw - 40px));height:min(430px,calc(100vh - 120px))}   /* 나의 어항: 그림판처럼 크게 */
 .win.friends .body{width:min(300px,calc(100vw - 40px));height:170px;padding:10px 12px;box-sizing:border-box;line-height:1.7;color:#000}
 .win.gift .body{width:min(300px,calc(100vw - 40px));height:104px;background:var(--surface);box-sizing:border-box;padding:10px 12px;
   display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:6px}
@@ -167,7 +170,7 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
 
   /* ── 만들 창 목록 (위에서부터 순서대로 쌓임, 마지막이 맨 앞) ── */
   var WINDOWS = [
-    { id: 'fish',    title: '나의 어항',   kind: 'reef',    page: 'ppt-reef.html', icon: "assets/space/xp/icon-fish.png",   at: [0.03, 0.37] },
+    { id: 'fish',    title: '나의 어항',   kind: 'reef',    page: 'ppt-reef.html?xp', icon: "assets/space/xp/icon-fish.png",   at: [0.03, 0.37] },
     { id: 'map',     title: '월계 지도', kind: 'map',     icon: "assets/space/xp/icon-map.png",    at: [0.29, 0.06] },
     { id: 'friends', title: '친구 관리',   kind: 'friends', icon: "assets/space/xp/icon-friends.png", at: [0.72, 0.10] },
     { id: 'stock',   title: '재고 관리',   kind: 'picture', img: "assets/space/stock.webp", cover: true, icon: "assets/space/xp/icon-stock.png", at: [0.07, 0.62] },
@@ -193,10 +196,12 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
   /* ── 창 하나 만들기 ── */
   function makeWindow(def) {
     var w = document.createElement('div');
-    w.className = 'win ' + (def.kind === 'reef' ? 'fish' : def.kind) + (def.cover ? ' cover' : '');
+    w.className = 'win ' + (def.kind === 'reef' ? 'fish' : def.kind) + (def.cover ? ' cover' : '') + ' w-' + def.id;
     var bar = document.createElement('div'); bar.className = 'bar';
+    // 제목 앞 작은 아이콘
+    var tic = document.createElement('img'); tic.className = 'tic'; tic.src = def.icon; tic.alt = ''; tic.draggable = false;
     var ttl = document.createElement('span'); ttl.className = 'ttl'; ttl.textContent = def.title;
-    bar.appendChild(ttl);
+    bar.appendChild(tic); bar.appendChild(ttl);
     var btn = {};
     [['min', '최소화'], ['max', '최대화'], ['cls', '닫기']].forEach(function (g) {
       var b = document.createElement('span'); b.className = 'btn ' + g[0]; b.title = g[1]; bar.appendChild(b); btn[g[0]] = b;
