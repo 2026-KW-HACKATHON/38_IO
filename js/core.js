@@ -58,6 +58,16 @@
 
   function isAdmin() { return !!(state.profile && state.profile.is_admin); }
 
+  // 권한 목록: 'admin'(관리자), 'owner:가게'(점주). 화면에서 다른 작업을 허락할 때 can('owner:cord')처럼 씀
+  function perms() {
+    var list = isAdmin() ? ['admin'] : [];
+    ((state.profile && state.profile.roles) || []).forEach(function (r) {
+      if (r.kind === 'owner') list.push('owner:' + (r.spot || r.code));
+    });
+    return list;
+  }
+  function can(p) { return perms().indexOf(p) >= 0; }
+
   function start() {
     if (!sb) { state.loaded = true; emit(); return; }
     sb.auth.getSession().then(function (r) { loadProfile(r.data.session && r.data.session.user); });
@@ -79,7 +89,7 @@
   window.Core = {
     sb: sb, ready: !!sb, state: state,
     onChange: onChange, toast: toast, log: log,
-    login: login, logout: logout, isAdmin: isAdmin, start: start,
+    login: login, logout: logout, isAdmin: isAdmin, perms: perms, can: can, start: start,
     reload: function () { return loadProfile(state.user); }   // 프로필을 고친 뒤 다시 읽기
   };
 })();

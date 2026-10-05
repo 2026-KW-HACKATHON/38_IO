@@ -175,3 +175,42 @@ revoke all on function public.delete_my_account() from public, anon;
 grant execute on function public.redeem_gift_code(text) to authenticated;
 grant execute on function public.remove_role(text) to authenticated;
 grant execute on function public.delete_my_account() to authenticated;
+
+-- ───────── 권한 (아래만 따로 붙여넣고 Run 해도 됨, 8~12번을 먼저 실행해야 함) ─────────
+
+-- 13) 점주 권한: 선물 코드 종류에 owner(점주) 추가, 어느 가게인지(spot) 적는 칸
+alter table public.gift_codes add column if not exists spot text;
+alter table public.gift_codes drop constraint if exists gift_codes_kind_check;
+alter table public.gift_codes add constraint gift_codes_kind_check
+  check (kind in ('resident', 'student', 'activity', 'owner'));
+
+insert into public.gift_codes (code, kind, label, spot) values
+  ('***', 'owner', 'CORD Jr. 점주', 'cord'),
+  ('***', 'owner', '디저트카페 후아나 점주', 'juana')
+on conflict (code) do nothing;
+
+-- 선물 코드 쓰기 (다시 만듦): 점주 권한은 하나만, 바꾸려면 지금 것을 지운 뒤 새 코드
+create or replace function public.redeem_gift_code(input text) returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare g public.gift_codes; item jsonb; cur jsonb;
+begin
+  if auth.uid() is null then raise exception '로그인이 필요해요'; end if;
+  select * into g from public.gift_codes where code = lower(trim(input)) and active;
+  if not found then raise exception '없는 코드예요'; end if;
+  item := jsonb_build_object('code', g.code, 'kind', g.kind, 'label', g.label, 'dept', g.dept, 'spot', g.spot, 'at', now());
+  select roles into cur from public.profiles where id = auth.uid();
+  if exists (select 1 from jsonb_array_elements(cur) r where r->>'code' = g.code) then
+    return item || '{"already": true}'::jsonb;
+  end if;
+  if g.kind = 'owner' and exists (select 1 from jsonb_array_elements(cur) r where r->>'kind' = 'owner') then
+    raise exception '점주 권한은 하나만 등록할 수 있어요. 지금 권한을 삭제한 뒤 다시 넣어 주세요.';
+  end if;
+  if g.kind in ('resident', 'student') then
+    select coalesce(jsonb_agg(r), '[]'::jsonb) into cur
+      from jsonb_array_elements(cur) r where r->>'kind' not in ('resident', 'student');
+  end if;
+  update public.profiles set roles = cur || jsonb_build_array(item) where id = auth.uid();
+  return item;
+end $$;
+revoke all on function public.redeem_gift_code(text) from public, anon;
+grant execute on function public.redeem_gift_code(text) to authenticated;
