@@ -116,8 +116,8 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
 .mapimg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
 .me{position:relative;width:0;height:0}   /* 별과 말풍선을 내 위치 한 점에 붙이는 틀 */
 .me .pbubble{left:-17px;bottom:24px}
-/* 장소 하트: 위아래로 살짝 뛰는 XP 하트 */
-.heart{position:absolute;width:28px;height:28px;transform:translate(-50%,-50%);cursor:pointer;z-index:1;
+/* 장소 아이콘: 두근거리듯 살짝 커졌다 작아짐 */
+.heart{position:absolute;width:26px;height:32px;transform:translate(-50%,-50%);cursor:pointer;z-index:1;
   filter:drop-shadow(1px 2px 1px rgba(0,0,0,.35));animation:beat 1.6s ease-in-out infinite}
 @keyframes beat{0%,100%{transform:translate(-50%,-50%) scale(1)}12%{transform:translate(-50%,-50%) scale(1.15)}24%{transform:translate(-50%,-50%) scale(1)}}
 .mebtn{position:absolute;left:6px;top:6px;z-index:1;min-width:0}   /* 내 위치로 가는 단추 */
@@ -330,7 +330,7 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
     document.head.appendChild(sc);
   }
 
-  /* ── 장소 하트: 좌표가 있으면 그대로, 없으면 주소로 찾아서 놓고, 모두 보이게 화면을 맞춤 ── */
+  /* ── 장소 아이콘: 범위가 있으면 한가운데, 없으면 주소로 찾아서 놓고, 모두 보이게 화면을 맞춤 ── */
   function showSpots(map) {
     var list = window.SPOTS || [], geo = new kakao.maps.services.Geocoder();
     var bounds = new kakao.maps.LatLngBounds(), found = 0, done = 0;
@@ -338,7 +338,7 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
       spot.lat = lat; spot.lng = lng;   // 찾은 좌표는 QR 위치 확인에도 씀
       var pos = new kakao.maps.LatLng(lat, lng);
       var wrap = document.createElement('div'); wrap.className = 'me';
-      var h = document.createElement('img'); h.className = 'heart'; h.src = "assets/space/xp/heart.png"; h.alt = spot.name;
+      var h = document.createElement('img'); h.className = 'heart'; h.src = spot.icon || "assets/space/xp/heart.png"; h.alt = spot.name;
       h.draggable = false; wrap.appendChild(h);
       var timer = null;
       // 하트를 누르면 장소 이름 말풍선
