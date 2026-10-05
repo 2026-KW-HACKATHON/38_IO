@@ -94,22 +94,16 @@ fieldset.grp{border:1px solid #d0d0bf;border-radius:4px;padding:4px 10px 10px;ma
 /* 아바타 */
 .avbox{display:grid;grid-template-columns:112px 1fr;gap:12px;align-items:start}
 .avprev{height:110px;background:#fff;border:1px solid #7f9db9;display:flex;align-items:center;justify-content:center;overflow:hidden}
-.avprev canvas{max-width:100px;max-height:96px;image-rendering:pixelated;animation:bob 2.4s steps(4) infinite}
+.avprev canvas.av3d{width:110px;height:108px;display:block}
 .avcap{text-align:center;margin-top:4px;font-size:11px}
 .avform{display:flex;flex-direction:column;gap:3px;min-width:0}
 .flab{color:#000;margin-top:5px}
 .nrow{display:flex;gap:6px}.nrow .xbtn{min-width:52px;padding:0 8px}
 .xlist{height:104px;overflow-y:auto;background:#fff;border:1px solid #7f9db9}
 .xlist .opt{display:flex;align-items:center;gap:6px;padding:1px 4px;cursor:default;white-space:nowrap}
-.xlist .opt canvas{height:12px;width:auto;image-rendering:pixelated;flex:none}
+.xlist .opt .spr{width:28px;height:14px;flex:none;image-rendering:pixelated}   /* 모든 물고기 그림을 같은 칸 크기로 */
 .xlist .opt.on{background:#316ac5;color:#fff}
 .xsel{height:21px;border:1px solid #7f9db9;font:inherit;font-size:12px;background:#fff;border-radius:0;width:100%}
-.items{display:flex;flex-direction:column;gap:3px}
-.xchk{display:flex;align-items:center;gap:6px;cursor:pointer}
-.xchk input{appearance:none;-webkit-appearance:none;margin:0;width:13px;height:13px;flex:none;border:1px solid #1d5281;
-  background:linear-gradient(135deg,#dcdcd7 0%,#fff 100%)}
-.xchk input:checked{background:url("assets/space/xp/checkmark.svg") center/11px no-repeat,linear-gradient(135deg,#dcdcd7 0%,#fff 100%)}
-.xchk input:focus-visible{outline:1px dotted #000;outline-offset:1px}
 @media (max-width:420px){ .avbox{grid-template-columns:1fr} }
 /* QR 위치 확인 알림 창 */
 .win.msg .body{width:min(300px,calc(100vw - 40px));background:var(--surface);padding:14px 14px 12px;box-sizing:border-box}
@@ -616,11 +610,18 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
       var right = el('div', 'avform');
       box.appendChild(el('div', 'avleft')); box.firstChild.appendChild(prev); box.firstChild.appendChild(cap);
       box.appendChild(right);
-      function drawPrev() {
-        var o = pick(); prev.innerHTML = '';
-        prev.appendChild(sprite(o, 4));
-        cap.textContent = o.name;
+      // 어종 목록용: 모든 물고기를 같은 크기 칸(28×14)에 꽉 차게 키워 그림 (도트는 그대로)
+      function fitSprite(src) {
+        var cv = el('canvas', 'spr'); cv.width = 56; cv.height = 28;
+        var c = cv.getContext('2d'), k = Math.min(56 / src.width, 28 / src.height);
+        var w = src.width * k, h = src.height * k;
+        c.imageSmoothingEnabled = false;
+        c.drawImage(src, (56 - w) / 2, (28 - h) / 2, w, h);
+        return cv;
       }
+      // 미리보기: 작은 3D 화면에서 제자리를 돌며 헤엄침 (이펙트 · 아이템도 같이 보임)
+      var view = makePreview(prev, kit, data);
+      function drawPrev() { var o = pick(); view.show(o, av); cap.textContent = o.name; }
 
       // 닉네임
       var nick = el('label', 'flab', '닉네임'); right.appendChild(nick);
@@ -641,7 +642,7 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
       var list = el('div', 'xlist'); list.setAttribute('role', 'listbox');
       opts.forEach(function (o) {
         var row = el('div', 'opt'); row.setAttribute('role', 'option');
-        row.appendChild(sprite(o, 1));
+        row.appendChild(fitSprite(sprite(o, 1)));
         row.appendChild(el('span', '', o.name));
         row.addEventListener('click', function () {
           av.species = o.m.id; av.variant = o.vi;
@@ -659,24 +660,19 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
       [{ id: '', name: '없음' }].concat(data.effects || []).forEach(function (e) {
         var o = el('option', '', e.name || e.id); o.value = e.id; if (e.id === av.effect) o.selected = true; sel.appendChild(o);
       });
-      sel.addEventListener('change', function () { av.effect = sel.value; save(); });
+      sel.addEventListener('change', function () { av.effect = sel.value; drawPrev(); save(); });
       right.appendChild(sel);
 
-      // 아이템 (여러 개 고를 수 있음)
+      // 아이템 (이펙트처럼 하나 고르기)
       right.appendChild(el('label', 'flab', '아이템'));
-      var items = el('div', 'items');
-      (window.ReefItems ? ReefItems.list() : []).forEach(function (it) {
-        var lab = el('label', 'xchk');
-        var cb = el('input'); cb.type = 'checkbox'; cb.checked = av.items.indexOf(it.id) >= 0;
-        cb.addEventListener('change', function () {
-          av.items = av.items.filter(function (x) { return x !== it.id; });
-          if (cb.checked) av.items.push(it.id);
-          save();
-        });
-        lab.appendChild(cb); lab.appendChild(el('span', '', it.label + (it.sub ? ' · ' + it.sub : '')));
-        items.appendChild(lab);
+      var isel = el('select', 'xsel');
+      [{ id: '', label: '없음', sub: '' }].concat(window.ReefItems ? ReefItems.list() : []).forEach(function (it) {
+        var o = el('option', '', it.label + (it.sub ? ' · ' + it.sub : '')); o.value = it.id;
+        if (it.id && av.items.indexOf(it.id) >= 0) o.selected = true;
+        isel.appendChild(o);
       });
-      right.appendChild(items);
+      isel.addEventListener('change', function () { av.items = isel.value ? [isel.value] : []; drawPrev(); save(); });
+      right.appendChild(isel);
       var stat = el('p', 'note avstat', ''); right.appendChild(stat);
 
       // 바꾸면 잠시 뒤 서버에 저장
@@ -695,6 +691,42 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
     }, function () {
       panel.innerHTML = ''; panel.appendChild(el('p', 'empty', '물고기 그림을 불러오지 못했어요.'));
     });
+  }
+
+  // 아바타 미리보기용 작은 3D 화면 (칸이 사라지면 저절로 멈추고 정리함)
+  function makePreview(box, kit, data) {
+    var W = 110, H = 108;
+    var r = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    r.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2)); r.outputEncoding = THREE.sRGBEncoding;
+    r.setSize(W, H, false); r.domElement.className = 'av3d'; box.appendChild(r.domElement);
+    var scene = new THREE.Scene(), cam = new THREE.PerspectiveCamera(35, W / H, 0.1, 400);
+    kit.lights(scene);
+    var fish = null, lane = null, ctx = { scene: scene, data: data, srgb: true }, t0 = performance.now(), alive = true;
+    function show(o, av) {
+      if (fish) { if (window.ReefItems) ReefItems.clear(); scene.remove(fish); kit.dispose(fish); }
+      var v = o.m.variants && o.m.variants[o.vi];
+      var fx = (av.effect ? [av.effect] : []).concat(o.m.effects || [])
+        .map(function (id) { return kit.effect(data, id); }).filter(Boolean);
+      fish = kit.build(o.m, { variant: v, effects: fx, phase: 0, scale: 1 });
+      scene.add(fish);
+      // 물고기 크기에 맞춰 작은 고리를 돌게 하고, 옆에서 보이게 카메라를 놓음
+      var sz = new THREE.Box3().setFromObject(fish).getSize(new THREE.Vector3()), L = Math.max(sz.x, sz.y, sz.z, 0.5);
+      lane = { path: 'loop', cx: 0, cy: 0, cz: 0, rx: L * 0.3, ry: L * 0.06, rz: L * 0.2, sp: 0.6, ph: 0 };
+      fish.userData.lane = lane;
+      cam.position.set(0, L * 0.3, L * 2.3); cam.lookAt(0, 0, 0);
+      (av.items || []).forEach(function (id) { if (window.ReefItems) ReefItems.apply(fish, id, ctx); });
+    }
+    function frame() {
+      if (!alive) return;
+      if (!box.isConnected) { alive = false; if (window.ReefItems) ReefItems.clear(); r.dispose(); return; }
+      requestAnimationFrame(frame);
+      var t = (performance.now() - t0) / 1000;
+      if (fish) { kit.tick(t, {}); kit.steer(fish, lane, t); kit.animate(fish, t, {}); }
+      if (window.ReefItems) ReefItems.tick(t);
+      r.render(scene, cam);
+    }
+    requestAnimationFrame(frame);   // 칸이 화면에 붙은 뒤부터 그림
+    return { show: show };
   }
 
   // 소속 칸: 신분(주민 / 학생)과 지역 활동, 모두 지울 수 있음
