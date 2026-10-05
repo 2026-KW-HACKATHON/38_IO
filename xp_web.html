@@ -62,6 +62,55 @@ button{font:inherit;color:inherit;cursor:pointer}
 .win:not(.front) .ttl{color:#d8e4f8;text-shadow:none}
 .win:not(.front) .btn{opacity:.6}
 .win.shut{display:none}   /* 닫힌 창 */
+
+/* 나의 계정: XP 속성 창 (위 탭 + 흰 판 + 아래 확인 단추) */
+.win.w-account .body{width:min(400px,calc(100vw - 40px));height:min(460px,calc(100vh - 110px));background:var(--surface);
+  display:flex;flex-direction:column;padding:8px;box-sizing:border-box}
+.ptabs{display:flex;align-items:flex-end;padding-left:3px;position:relative;z-index:1;flex:none}
+.ptab{appearance:none;font:inherit;font-size:12px;color:#000;margin:0 1px -1px 0;padding:2px 12px 3px;cursor:pointer;
+  border:1px solid #91a7b4;border-bottom:0;border-radius:3px 3px 0 0;background:linear-gradient(180deg,#fff 0%,#fafaf9 26%,#f0f0ea 95%,#ecebe5 100%)}
+.ptab:hover{border-top-color:#e68b2c;box-shadow:inset 0 2px #ffc73c}
+.ptab[aria-selected="true"]{background:#fcfcfe;border-color:#919b9c;border-top-color:#e68b2c;box-shadow:inset 0 2px #ffc73c;
+  padding-bottom:5px;margin-bottom:-1px;position:relative;z-index:2}
+.ppanel{flex:1;min-height:0;overflow:auto;background:#fcfcfe;border:1px solid #919b9c;box-shadow:1px 2px 2px rgba(208,206,191,.75);
+  padding:10px;box-sizing:border-box;display:flex;flex-direction:column;gap:10px}
+.pfoot{flex:none;display:flex;justify-content:flex-end;gap:6px;padding-top:8px}
+fieldset.grp{border:1px solid #d0d0bf;border-radius:4px;padding:4px 10px 10px;margin:0;min-width:0}
+.grp legend{color:#0046d5;padding:0 3px}
+.grp.danger{margin-top:auto}
+.empty{color:#6f6f6f;margin:4px 0}
+.note{color:#555;font-size:11px;margin:4px 0 0;line-height:1.5}
+.prow{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.prow .xbtn,.role .xbtn{min-width:64px}
+.kakao-who{display:flex;gap:12px;align-items:flex-start}
+.kpic{width:48px;height:48px;object-fit:cover;border:1px solid #7f9db9;background:#fff;flex:none}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;margin:0}
+.kv dt{color:#555}.kv dd{margin:0;word-break:break-all}
+.role{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 0}
+.role + .role{border-top:1px solid #ecebe5}
+.rtxt{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.badge{font-weight:700;color:#fff;background:#316ac5;padding:1px 6px;border-radius:2px;font-size:11px}
+.rsub{flex-basis:100%;color:#444;padding-left:2px}
+/* 아바타 */
+.avbox{display:grid;grid-template-columns:112px 1fr;gap:12px;align-items:start}
+.avprev{height:110px;background:#fff;border:1px solid #7f9db9;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.avprev canvas{max-width:100px;max-height:96px;image-rendering:pixelated;animation:bob 2.4s steps(4) infinite}
+.avcap{text-align:center;margin-top:4px;font-size:11px}
+.avform{display:flex;flex-direction:column;gap:3px;min-width:0}
+.flab{color:#000;margin-top:5px}
+.nrow{display:flex;gap:6px}.nrow .xbtn{min-width:52px;padding:0 8px}
+.xlist{height:104px;overflow-y:auto;background:#fff;border:1px solid #7f9db9}
+.xlist .opt{display:flex;align-items:center;gap:6px;padding:1px 4px;cursor:default;white-space:nowrap}
+.xlist .opt canvas{height:12px;width:auto;image-rendering:pixelated;flex:none}
+.xlist .opt.on{background:#316ac5;color:#fff}
+.xsel{height:21px;border:1px solid #7f9db9;font:inherit;font-size:12px;background:#fff;border-radius:0;width:100%}
+.items{display:flex;flex-direction:column;gap:3px}
+.xchk{display:flex;align-items:center;gap:6px;cursor:pointer}
+.xchk input{appearance:none;-webkit-appearance:none;margin:0;width:13px;height:13px;flex:none;border:1px solid #1d5281;
+  background:linear-gradient(135deg,#dcdcd7 0%,#fff 100%)}
+.xchk input:checked{background:url("assets/space/xp/checkmark.svg") center/11px no-repeat,linear-gradient(135deg,#dcdcd7 0%,#fff 100%)}
+.xchk input:focus-visible{outline:1px dotted #000;outline-offset:1px}
+@media (max-width:420px){ .avbox{grid-template-columns:1fr} }
 /* QR 위치 확인 알림 창 */
 .win.msg .body{width:min(300px,calc(100vw - 40px));background:var(--surface);padding:14px 14px 12px;box-sizing:border-box}
 .win.msg .mtx{margin:0 0 12px;line-height:1.6;white-space:pre-line}
@@ -180,6 +229,7 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
 
   /* ── 만들 창 목록 (위에서부터 순서대로 쌓임, 마지막이 맨 앞) ── */
   var WINDOWS = [
+    { id: 'account', title: '나의 계정',   kind: 'account', icon: "assets/space/xp/icon-account.png", at: [0.30, 0.08] },
     { id: 'fish',    title: '나의 어항',   kind: 'reef',    page: 'ppt-reef.html?xp', icon: "assets/space/xp/icon-fish.png",   at: [0.03, 0.37] },
     { id: 'map',     title: '월계 지도', kind: 'map',     icon: "assets/space/xp/icon-map.png",    at: [0.29, 0.06] },
     { id: 'friends', title: '친구 관리',   kind: 'friends', icon: "assets/space/xp/icon-friends.png", at: [0.72, 0.10] },
@@ -244,10 +294,15 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
       var pic = document.createElement('img'); pic.className = 'pic' + (def.cover ? ' cover' : ''); pic.src = def.img; pic.alt = def.title; pic.draggable = false;
       body.appendChild(pic);
     } else if (def.kind === 'gift') {
-      // 코드 입력 창 (아직 기능은 없음)
+      // 코드 입력 창: 맞는 코드면 소속(신분 · 활동)이 바뀜
       body.innerHTML = '<label class="glabel" for="gift-code">코드 입력</label>' +
-        '<input id="gift-code" class="gin" type="text" maxlength="24" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="선물 코드를 입력하세요">' +
+        '<input id="gift-code" class="gin" type="text" maxlength="24" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="선물 코드를 입력하세요">' +
         '<button class="xbtn" type="button">확인</button>';
+      var gin = body.querySelector('.gin');
+      body.querySelector('.xbtn').addEventListener('click', function () { redeem(gin); });
+      gin.addEventListener('keydown', function (e) { if (e.key === 'Enter') redeem(gin); });
+    } else if (def.kind === 'account') {
+      buildAccount(entry);
     } else if (def.kind === 'friends') {
       body.innerHTML = '친구 목록이 비어 있어요.<br>친구 관리 기능은 준비 중이에요.';
     } else if (def.kind === 'map') {
@@ -411,6 +466,276 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
     }, { enableHighAccuracy: true, maximumAge: 10000, timeout: 20000 });
   }
 
+
+  /* ── 선물 코드 쓰기: 서버에서 코드를 확인하고 소속을 바꿈 ── */
+  function redeem(input) {
+    var code = input.value.trim();
+    if (!code) return;
+    var st = window.Core ? Core.state : {};
+    if (!window.Core || !Core.ready || !st.user) { msgBox('선물 코드', 'icon-gift.png').say('로그인한 뒤에 쓸 수 있어요.', [['확인', function () { this.closest('.win').remove(); }]]); return; }
+    Core.sb.rpc('redeem_gift_code', { input: code }).then(function (r) {
+      var box = msgBox('선물 코드', 'icon-gift.png');
+      var ok = [['확인', function () { box.el.remove(); }]];
+      if (r.error) { box.say(errText(r.error), ok); return; }
+      var g = r.data || {};
+      var name = g.label + (g.dept ? ' ' + g.dept : '');
+      box.say(g.already ? '이미 등록된 코드예요. (' + name + ')'
+        : g.kind === 'activity' ? '‘' + name + '’ 활동이 추가됐어요.'
+        : '‘' + name + '’ ' + (g.kind === 'student' ? '학생' : '주민') + '으로 인증됐어요.', ok);
+      input.value = '';
+      Core.reload();
+    });
+  }
+  // 서버 오류를 읽기 쉬운 말로
+  function errText(e) {
+    var m = (e && e.message) || '';
+    if (/function|column|schema cache|does not exist/i.test(m)) return '서버 설정이 아직 안 됐어요. (관리자: supabase/schema.sql 8~12번 실행)';
+    return m || '잠시 뒤 다시 해 주세요.';
+  }
+
+  /* ── 3D 도구 불러오기 (나의 계정의 물고기 그림에만 필요해서 처음 열 때 한 번) ── */
+  var kitReady = null;
+  function loadScript(src) {
+    return new Promise(function (ok, no) {
+      var sc = document.createElement('script'); sc.src = src; sc.onload = ok; sc.onerror = no; document.head.appendChild(sc);
+    });
+  }
+  function ensureKit() {
+    if (!kitReady) {
+      kitReady = (window.THREE ? Promise.resolve() : loadScript('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js'))
+        .then(function () { return window.ReefKit ? null : loadScript('reef-kit.js'); })
+        .then(function () { return window.ReefItems ? null : loadScript('reef-items.js'); })
+        .then(function () { var kit = ReefKit(THREE); return kit.loadData().then(function (d) { return { kit: kit, data: d }; }); });
+      kitReady.catch(function () { kitReady = null; });
+    }
+    return kitReady;
+  }
+
+  /* ── 나의 계정: 카카오 · 아바타 · 소속 세 칸 ── */
+  function buildAccount(entry) {
+    var body = entry.body;
+    body.innerHTML = '<div class="ptabs" role="tablist"></div><div class="ppanel" role="tabpanel"></div>' +
+      '<div class="pfoot"><button type="button" class="xbtn">확인</button></div>';
+    var tabs = body.querySelector('.ptabs'), panel = body.querySelector('.ppanel'), cur = 'kakao';
+    [['kakao', '카카오'], ['avatar', '아바타'], ['roles', '소속']].forEach(function (t) {
+      var b = document.createElement('button'); b.type = 'button'; b.className = 'ptab'; b.textContent = t[1];
+      b.setAttribute('role', 'tab'); b.dataset.tab = t[0];
+      b.addEventListener('click', function () { cur = t[0]; draw(); });
+      tabs.appendChild(b);
+    });
+    body.querySelector('.pfoot .xbtn').addEventListener('click', function () { closeWin(entry); });
+    function draw() {
+      tabs.querySelectorAll('.ptab').forEach(function (b) { b.setAttribute('aria-selected', b.dataset.tab === cur ? 'true' : 'false'); });
+      panel.innerHTML = '';
+      var st = window.Core ? Core.state : {};
+      if (!window.Core || !Core.ready) { panel.appendChild(el('p', 'empty', '서버 설정 전이라 계정을 쓸 수 없어요.')); return; }
+      if (!st.user && cur !== 'kakao') {
+        panel.appendChild(el('p', 'empty', '카카오로 로그인하면 쓸 수 있어요.'));
+        panel.appendChild(button('카카오로 로그인', function () { Core.login(); }));
+        return;
+      }
+      ({ kakao: drawKakao, avatar: drawAvatar, roles: drawRoles })[cur](panel, st);
+    }
+    if (window.Core) Core.onChange(function () { if (isOpen(entry) && cur !== 'avatar') draw(); });
+    draw();
+  }
+  function el(tag, cls, text) {
+    var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e;
+  }
+  function button(text, fn) {
+    var b = el('button', 'xbtn', text); b.type = 'button'; b.addEventListener('click', fn); return b;
+  }
+  function group(title) {
+    var f = el('fieldset', 'grp'); f.appendChild(el('legend', '', title)); return f;
+  }
+
+  // 카카오 칸: 아이디, 로그아웃, 계정 변경, 맨 아래 계정 삭제
+  function drawKakao(panel, st) {
+    var g = group('카카오 계정');
+    if (!st.user) {
+      g.appendChild(el('p', 'empty', '로그인하지 않았어요.'));
+      var r0 = el('div', 'prow'); r0.appendChild(button('카카오로 로그인', function () { Core.login(); })); g.appendChild(r0);
+      panel.appendChild(g); return;
+    }
+    var p = st.profile || {};
+    var top = el('div', 'kakao-who');
+    var pic = el('img', 'kpic'); pic.alt = ''; pic.src = p.avatar_url || 'assets/space/xp/icon-account.png';
+    var kv = el('dl', 'kv');
+    [['닉네임', p.nickname || '카카오 사용자'], ['카카오 아이디', p.provider_id || '-'],
+     ['가입한 날', p.created_at ? new Date(p.created_at).toLocaleDateString('ko-KR') : '-']].forEach(function (x) {
+      kv.appendChild(el('dt', '', x[0])); kv.appendChild(el('dd', '', x[1]));
+    });
+    top.appendChild(pic); top.appendChild(kv); g.appendChild(top);
+    var row = el('div', 'prow');
+    row.appendChild(button('로그아웃', function () { Core.logout(); }));
+    row.appendChild(button('계정 변경', function () { Core.login(true); }));   // 카카오 로그인 화면을 다시 띄움
+    g.appendChild(row);
+    panel.appendChild(g);
+
+    var d = group('계정 삭제'); d.classList.add('danger');
+    d.appendChild(el('p', 'note', '계정과 활동 기록, 아바타, 소속이 모두 지워지고 되돌릴 수 없어요.'));
+    var armed = false, t = null;
+    var del = button('계정 삭제…', function () {
+      if (!armed) { armed = true; del.textContent = '정말 삭제할까요? 한 번 더 누르기'; t = setTimeout(function () { armed = false; del.textContent = '계정 삭제…'; }, 4000); return; }
+      clearTimeout(t); del.disabled = true;
+      Core.sb.rpc('delete_my_account').then(function (r) {
+        if (r.error) { del.disabled = false; armed = false; del.textContent = '계정 삭제…'; Core.toast(errText(r.error)); return; }
+        Core.sb.auth.signOut(); Core.toast('계정을 삭제했어요.');
+      });
+    });
+    var r2 = el('div', 'prow'); r2.appendChild(del); d.appendChild(r2);
+    panel.appendChild(d);
+  }
+
+  // 아바타 칸: 왼쪽에 물고기 그림, 오른쪽에 닉네임 · 어종 · 이펙트 · 아이템
+  function drawAvatar(panel, st) {
+    panel.appendChild(el('p', 'empty', '물고기를 불러오는 중…'));
+    ensureKit().then(function (k) {
+      if (!panel.isConnected) return;
+      panel.innerHTML = '';
+      var kit = k.kit, data = k.data, p = st.profile || {};
+      // 고를 수 있는 물고기: 이름 붙은 색 변형은 따로 (기본은 주황 금붕어)
+      var opts = [];
+      data.species.forEach(function (m) {
+        var named = (m.variants || []).filter(function (v) { return v && v.name; });
+        if (named.length > 1) named.forEach(function (v) { opts.push({ m: m, vi: m.variants.indexOf(v), name: m.name + ' · ' + v.name }); });
+        else opts.push({ m: m, vi: 0, name: m.name });
+      });
+      var gold = opts.filter(function (o) { return o.m.id === 'goldfish' && /주황/.test(o.name); })[0] || opts[0];
+      var av = Object.assign({ species: gold.m.id, variant: gold.vi, effect: '', items: [] }, p.avatar || {});
+      function pick() { return opts.filter(function (o) { return o.m.id === av.species && o.vi === av.variant; })[0] || gold; }
+      // 색 변형은 자기 색표를 덮어써서 그림
+      function sprite(o, px) {
+        var v = o.m.variants && o.m.variants[o.vi], m = o.m;
+        if (v && v.palette) m = Object.assign({}, m, { palette: Object.assign({}, m.palette, v.palette) });
+        return kit.thumb(m, px, v);
+      }
+
+      var box = el('div', 'avbox');
+      var prev = el('div', 'avprev'), cap = el('div', 'avcap');
+      var right = el('div', 'avform');
+      box.appendChild(el('div', 'avleft')); box.firstChild.appendChild(prev); box.firstChild.appendChild(cap);
+      box.appendChild(right);
+      function drawPrev() {
+        var o = pick(); prev.innerHTML = '';
+        prev.appendChild(sprite(o, 4));
+        cap.textContent = o.name;
+      }
+
+      // 닉네임
+      var nick = el('label', 'flab', '닉네임'); right.appendChild(nick);
+      var nrow = el('div', 'nrow');
+      var nin = el('input', 'gin'); nin.type = 'text'; nin.maxLength = 20; nin.value = p.nickname || '';
+      nrow.appendChild(nin);
+      nrow.appendChild(button('변경', function () {
+        var v = nin.value.trim(); if (!v) return;
+        Core.sb.from('profiles').update({ nickname: v }).eq('id', st.user.id).then(function (r) {
+          if (r.error) { Core.toast(errText(r.error)); return; }
+          Core.toast('닉네임을 바꿨어요.'); Core.reload();
+        });
+      }));
+      right.appendChild(nrow);
+
+      // 어종: 작은 도트 그림 + 이름 목록
+      right.appendChild(el('label', 'flab', '어종'));
+      var list = el('div', 'xlist'); list.setAttribute('role', 'listbox');
+      opts.forEach(function (o) {
+        var row = el('div', 'opt'); row.setAttribute('role', 'option');
+        row.appendChild(sprite(o, 1));
+        row.appendChild(el('span', '', o.name));
+        row.addEventListener('click', function () {
+          av.species = o.m.id; av.variant = o.vi;
+          list.querySelectorAll('.opt').forEach(function (r) { r.classList.toggle('on', r === row); });
+          drawPrev(); save();
+        });
+        if (o === pick()) row.classList.add('on');
+        list.appendChild(row);
+      });
+      right.appendChild(list);
+
+      // 이펙트
+      right.appendChild(el('label', 'flab', '이펙트'));
+      var sel = el('select', 'xsel');
+      [{ id: '', name: '없음' }].concat(data.effects || []).forEach(function (e) {
+        var o = el('option', '', e.name || e.id); o.value = e.id; if (e.id === av.effect) o.selected = true; sel.appendChild(o);
+      });
+      sel.addEventListener('change', function () { av.effect = sel.value; save(); });
+      right.appendChild(sel);
+
+      // 아이템 (여러 개 고를 수 있음)
+      right.appendChild(el('label', 'flab', '아이템'));
+      var items = el('div', 'items');
+      (window.ReefItems ? ReefItems.list() : []).forEach(function (it) {
+        var lab = el('label', 'xchk');
+        var cb = el('input'); cb.type = 'checkbox'; cb.checked = av.items.indexOf(it.id) >= 0;
+        cb.addEventListener('change', function () {
+          av.items = av.items.filter(function (x) { return x !== it.id; });
+          if (cb.checked) av.items.push(it.id);
+          save();
+        });
+        lab.appendChild(cb); lab.appendChild(el('span', '', it.label + (it.sub ? ' · ' + it.sub : '')));
+        items.appendChild(lab);
+      });
+      right.appendChild(items);
+      var stat = el('p', 'note avstat', ''); right.appendChild(stat);
+
+      // 바꾸면 잠시 뒤 서버에 저장
+      var timer = null;
+      function save() {
+        clearTimeout(timer); stat.textContent = '저장 중…';
+        timer = setTimeout(function () {
+          Core.sb.from('profiles').update({ avatar: av }).eq('id', st.user.id).then(function (r) {
+            stat.textContent = r.error ? errText(r.error) : '저장됐어요.';
+            if (!r.error && st.profile) st.profile.avatar = JSON.parse(JSON.stringify(av));
+          });
+        }, 500);
+      }
+      drawPrev();
+      panel.appendChild(box);
+    }, function () {
+      panel.innerHTML = ''; panel.appendChild(el('p', 'empty', '물고기 그림을 불러오지 못했어요.'));
+    });
+  }
+
+  // 소속 칸: 신분(주민 / 학생)과 지역 활동, 모두 지울 수 있음
+  var KIND = { resident: '주민', student: '학생' };
+  function drawRoles(panel, st) {
+    var roles = (st.profile && st.profile.roles) || [];
+    function del(code, b) {
+      b.disabled = true;
+      Core.sb.rpc('remove_role', { target: code }).then(function (r) {
+        if (r.error) { b.disabled = false; Core.toast(errText(r.error)); return; }
+        Core.reload();
+      });
+    }
+    var g = group('신분');
+    var id = roles.filter(function (r) { return KIND[r.kind]; })[0];
+    if (!id) g.appendChild(el('p', 'empty', '신분 인증이 필요합니다'));
+    else {
+      var row = el('div', 'role');
+      var txt = el('div', 'rtxt');
+      txt.appendChild(el('b', 'badge', KIND[id.kind]));
+      txt.appendChild(el('span', '', id.label));
+      if (id.kind === 'student' && id.dept) txt.appendChild(el('div', 'rsub', id.dept));
+      row.appendChild(txt);
+      var b1 = button('삭제', function () { del(id.code, b1); }); row.appendChild(b1);
+      g.appendChild(row);
+    }
+    panel.appendChild(g);
+
+    var a = group('활동');
+    var acts = roles.filter(function (r) { return r.kind === 'activity'; });
+    if (!acts.length) a.appendChild(el('p', 'empty', '지역 활동이 없습니다'));
+    acts.forEach(function (r) {
+      var row = el('div', 'role');
+      var txt = el('div', 'rtxt'); txt.appendChild(el('span', '', r.label)); row.appendChild(txt);
+      var b2 = button('삭제', function () { del(r.code, b2); }); row.appendChild(b2);
+      a.appendChild(row);
+    });
+    panel.appendChild(a);
+    panel.appendChild(el('p', 'note', '선물 코드 창에 받은 코드를 넣으면 신분과 활동이 자동으로 추가돼요.'));
+  }
+
   /* ── 맨 앞으로 ── */
   function bringFront(entry) {
     entry.el.style.zIndex = ++zTop;
@@ -480,10 +805,6 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
     setTimeout(function () { entry.el.classList.remove('slide'); }, 320);
   }
   function makeDock() {
-    // 나의 계정: 아이콘만 먼저 있음 (창은 나중에 만들 예정)
-    var acc = document.createElement('button'); acc.type = 'button'; acc.className = 'dk'; acc.title = '나의 계정 (준비 중)';
-    acc.innerHTML = '<span class="ic"><img src="' + "assets/space/xp/icon-account.png" + '" alt="" draggable="false"></span><span class="nm">나의 계정</span>';
-    dock.appendChild(acc);
     WINDOWS.forEach(function (def, i) {
       var b = document.createElement('button'); b.type = 'button'; b.className = 'dk'; b.title = def.title;
       var ic = document.createElement('span'); ic.className = 'ic';
@@ -529,9 +850,9 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
   if (spotId) checkSpot(spot);
 
   // XP 알림 창 하나 띄우기 (가운데, 맨 앞)
-  function msgBox(title) {
+  function msgBox(title, icon) {
     var w = document.createElement('div'); w.className = 'win msg front';
-    w.innerHTML = '<div class="bar"><img class="tic" src="assets/space/xp/heart.png" alt=""><span class="ttl"></span>' +
+    w.innerHTML = '<div class="bar"><img class="tic" src="assets/space/xp/' + (icon || 'heart.png') + '" alt=""><span class="ttl"></span>' +
       '<span class="btn cls" title="닫기"></span></div><div class="body"><p class="mtx"></p><div class="mbt"></div></div>';
     w.querySelector('.ttl').textContent = title;
     w.querySelector('.cls').addEventListener('click', function () { w.remove(); });

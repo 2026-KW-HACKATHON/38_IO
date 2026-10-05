@@ -41,12 +41,12 @@
       .then(function () {}, function () {});
   }
 
-  function login() {
+  // other가 참이면 카카오 로그인 화면을 다시 띄워 다른 계정으로 들어갈 수 있게 함
+  function login(other) {
     if (!sb) { toast('서버 설정 전이라 로그인을 쓸 수 없어요'); return; }
-    sb.auth.signInWithOAuth({
-      provider: 'kakao',
-      options: { redirectTo: location.origin + location.pathname, scopes: 'profile_nickname profile_image' }
-    });
+    var opt = { redirectTo: location.origin + location.pathname, scopes: 'profile_nickname profile_image' };
+    if (other === true) opt.queryParams = { prompt: 'login' };
+    sb.auth.signInWithOAuth({ provider: 'kakao', options: opt });
   }
 
   function logout() {
@@ -79,6 +79,7 @@
   window.Core = {
     sb: sb, ready: !!sb, state: state,
     onChange: onChange, toast: toast, log: log,
-    login: login, logout: logout, isAdmin: isAdmin, start: start
+    login: login, logout: logout, isAdmin: isAdmin, start: start,
+    reload: function () { return loadProfile(state.user); }   // 프로필을 고친 뒤 다시 읽기
   };
 })();

@@ -101,3 +101,77 @@ revoke all on function public.admin_user_summary() from public, anon;
 revoke all on function public.admin_delete_user(uuid) from public, anon;
 grant execute on function public.admin_user_summary() to authenticated;
 grant execute on function public.admin_delete_user(uuid) to authenticated;
+
+-- ───────── 나의 계정 (아래만 따로 붙여넣고 Run 해도 됨) ─────────
+
+-- 8) 아바타(물고기 모습)와 소속(신분 · 활동) 칸
+alter table public.profiles add column if not exists avatar jsonb not null default '{}'::jsonb;
+alter table public.profiles add column if not exists roles jsonb not null default '[]'::jsonb;
+
+-- 본인은 닉네임과 아바타만 고칠 수 있음 (소속은 선물 코드로만 바뀜)
+grant update (nickname, avatar) on public.profiles to authenticated;
+drop policy if exists "profiles_update_self" on public.profiles;
+create policy "profiles_update_self" on public.profiles for update
+  using (id = auth.uid()) with check (id = auth.uid());
+
+-- 9) 선물 코드 표 (일반 사용자는 볼 수 없음, 아래 함수로만 씀)
+--    kind: resident(주민) / student(학생) / activity(지역 활동)
+create table if not exists public.gift_codes (
+  code text primary key check (code = lower(code)),
+  kind text not null check (kind in ('resident', 'student', 'activity')),
+  label text not null,
+  dept text,
+  active boolean not null default true,
+  created_at timestamptz not null default now()
+);
+alter table public.gift_codes enable row level security;
+
+insert into public.gift_codes (code, kind, label, dept) values
+  ('***', 'student', '광운대학교', '전기공학과'),
+  ('***', 'activity', '우이천 런닝크루', null)
+on conflict (code) do nothing;
+
+-- 10) 선물 코드 쓰기: 맞는 코드면 소속에 추가 (신분은 하나만, 새 신분이 예전 신분을 바꿈)
+create or replace function public.redeem_gift_code(input text) returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare g public.gift_codes; item jsonb; cur jsonb;
+begin
+  if auth.uid() is null then raise exception '로그인이 필요해요'; end if;
+  select * into g from public.gift_codes where code = lower(trim(input)) and active;
+  if not found then raise exception '없는 코드예요'; end if;
+  item := jsonb_build_object('code', g.code, 'kind', g.kind, 'label', g.label, 'dept', g.dept, 'at', now());
+  select roles into cur from public.profiles where id = auth.uid();
+  if exists (select 1 from jsonb_array_elements(cur) r where r->>'code' = g.code) then
+    return item || '{"already": true}'::jsonb;
+  end if;
+  if g.kind in ('resident', 'student') then
+    select coalesce(jsonb_agg(r), '[]'::jsonb) into cur
+      from jsonb_array_elements(cur) r where r->>'kind' not in ('resident', 'student');
+  end if;
+  update public.profiles set roles = cur || jsonb_build_array(item) where id = auth.uid();
+  return item;
+end $$;
+
+-- 11) 소속 하나 지우기
+create or replace function public.remove_role(target text) returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  update public.profiles
+     set roles = (select coalesce(jsonb_agg(r), '[]'::jsonb) from jsonb_array_elements(roles) r where r->>'code' <> target)
+   where id = auth.uid();
+end $$;
+
+-- 12) 내 계정 지우기 (기록도 함께 지워짐)
+create or replace function public.delete_my_account() returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  if auth.uid() is null then raise exception '로그인이 필요해요'; end if;
+  delete from auth.users where id = auth.uid();
+end $$;
+
+revoke all on function public.redeem_gift_code(text) from public, anon;
+revoke all on function public.remove_role(text) from public, anon;
+revoke all on function public.delete_my_account() from public, anon;
+grant execute on function public.redeem_gift_code(text) to authenticated;
+grant execute on function public.remove_role(text) to authenticated;
+grant execute on function public.delete_my_account() to authenticated;
