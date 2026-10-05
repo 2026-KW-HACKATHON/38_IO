@@ -62,6 +62,11 @@ button{font:inherit;color:inherit;cursor:pointer}
 .win:not(.front) .ttl{color:#d8e4f8;text-shadow:none}
 .win:not(.front) .btn{opacity:.6}
 .win.shut{display:none}   /* 닫힌 창 */
+/* QR 위치 확인 알림 창 */
+.win.msg .body{width:min(300px,calc(100vw - 40px));background:var(--surface);padding:14px 14px 12px;box-sizing:border-box}
+.win.msg .mtx{margin:0 0 12px;line-height:1.6;white-space:pre-line}
+.win.msg .mbt{display:flex;justify-content:center;gap:8px}
+.win.msg.ok .mtx{font-weight:700}
 body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글은 숨김 */
 .win.gift.maxed .body{justify-content:flex-start;gap:10px}
 /* 최대화한 창: 화면을 꽉 채움 (모바일은 아래 작업 표시줄만큼 비움) */
@@ -349,6 +354,13 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
     }
     function step() { if (++done === list.length && found > 1) map.setBounds(bounds, 40, 40, 40, 40); }
     list.forEach(function (spot) {
+      if (spot.box) {
+        var b = spot.box;
+        // 장소 범위를 옅은 네모로 같이 그림
+        new kakao.maps.Rectangle({ map: map, bounds: new kakao.maps.LatLngBounds(new kakao.maps.LatLng(b.s, b.w), new kakao.maps.LatLng(b.n, b.e)),
+          strokeWeight: 1, strokeColor: '#e0461c', strokeOpacity: 0.8, fillColor: '#ff7a59', fillOpacity: 0.15 });
+        put(spot, (b.n + b.s) / 2, (b.w + b.e) / 2); step(); return;
+      }
       if (spot.lat && spot.lng) { put(spot, spot.lat, spot.lng); step(); return; }
       geo.addressSearch(spot.addr, function (res, st) {
         if (st === kakao.maps.services.Status.OK) put(spot, +res[0].y, +res[0].x);
@@ -509,6 +521,65 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
   if (window.Core) {
     Core.onChange(function (s) { if (s.user && !logged) { logged = true; Core.log('my_space'); } });
     Core.start();
+  }
+
+  /* ── QR로 들어온 경우 (주소 끝 ?spot=장소): 지금 위치가 그 장소 범위 안인지 확인 ── */
+  var spotId = new URLSearchParams(location.search).get('spot');
+  var spot = spotId && (window.SPOTS || []).filter(function (o) { return o.id === spotId; })[0];
+  if (spotId) checkSpot(spot);
+
+  // XP 알림 창 하나 띄우기 (가운데, 맨 앞)
+  function msgBox(title) {
+    var w = document.createElement('div'); w.className = 'win msg front';
+    w.innerHTML = '<div class="bar"><img class="tic" src="assets/space/xp/heart.png" alt=""><span class="ttl"></span>' +
+      '<span class="btn cls" title="닫기"></span></div><div class="body"><p class="mtx"></p><div class="mbt"></div></div>';
+    w.querySelector('.ttl').textContent = title;
+    w.querySelector('.cls').addEventListener('click', function () { w.remove(); });
+    w.style.zIndex = 5000;
+    desk.appendChild(w);
+    function center() {
+      w.style.left = Math.max(0, (window.innerWidth - w.offsetWidth) / 2) + 'px';
+      w.style.top = Math.max(0, (window.innerHeight - bottomGap() - w.offsetHeight) / 2) + 'px';
+    }
+    center();
+    return {
+      el: w,
+      say: function (text, buttons) {
+        w.querySelector('.mtx').textContent = text;
+        var bt = w.querySelector('.mbt'); bt.innerHTML = '';
+        (buttons || []).forEach(function (b) {
+          var e = document.createElement('button'); e.type = 'button'; e.className = 'xbtn'; e.textContent = b[0];
+          e.addEventListener('click', b[1]); bt.appendChild(e);
+        });
+        center();
+      }
+    };
+  }
+  function checkSpot(spot) {
+    var box = msgBox(spot ? spot.name : '위치 확인');
+    function close() { box.el.remove(); }
+    if (!spot) { box.say('알 수 없는 QR이에요.', [['확인', close]]); return; }
+    if (!navigator.geolocation) { box.say('이 기기에서는 위치를 알 수 없어요.', [['확인', close]]); return; }
+    function run() {
+      box.say('지금 위치를 확인하고 있어요…');
+      navigator.geolocation.getCurrentPosition(function (p) {
+        var lat = p.coords.latitude, lng = p.coords.longitude, acc = Math.round(p.coords.accuracy || 0);
+        if (inSpot(spot, lat, lng)) {
+          box.el.classList.add('ok');
+          box.say(spot.name + '에 도착했어요!', [['확인', close]]);
+          if (window.Core) Core.log('spot_ok', { spot: spot.id, acc: acc });
+          return;
+        }
+        var far = Math.round(spotDistance(spot, lat, lng));
+        var note = acc > 30 ? '\n(지금 위치 오차가 ±' + acc + 'm라 정확하지 않을 수 있어요. 창가나 밖에서 다시 해 보세요)' : '';
+        box.say('아직 ' + spot.name + '에 도착하지 않았어요. 약 ' + far + 'm 떨어져 있어요.' + note, [['다시 확인', run], ['닫기', close]]);
+        if (window.Core) Core.log('spot_far', { spot: spot.id, far: far, acc: acc });
+      }, function (err) {
+        box.say(err.code === 1 ? '위치 권한이 꺼져 있어요. 브라우저 설정에서 위치를 허용한 뒤 다시 해 주세요.' : '위치를 찾지 못했어요.',
+          [['다시 확인', run], ['닫기', close]]);
+      }, { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 });
+    }
+    run();
   }
 })();
 
