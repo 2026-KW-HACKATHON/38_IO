@@ -624,7 +624,7 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
     var kv = el('dl', 'kv');
     function line(k, v) { kv.appendChild(el('dt', '', k)); var d = el('dd', '', v); kv.appendChild(d); return d; }
     line('닉네임', p.nickname || '카카오 사용자');
-    line('카카오 아이디', me.email);   // 이메일 제공에 동의한 사람만, 아니면 빈칸
+    line('카카오 이메일', me.email);   // 이메일 제공에 동의한 사람만, 아니면 빈칸
     // 고유 번호: 카카오가 정한 숫자, 눌러서 복사
     var idd = line('고유 번호', me.id || '-');
     if (me.id) {
@@ -680,11 +680,10 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
       ta.remove(); return ok;
     }
   }
-  // 관리자 문의 머리말: 고유 번호 + (있으면) 카카오 아이디, 권한, 신분, 활동
+  // 관리자 문의 머리말: 고유 번호 + (있으면) 권한, 신분, 활동
   var CHANNEL = 'https://pf.kakao.com/_RaxcaX';
   function askHeader(st) {
     var me = kakaoInfo(st), roles = (st.profile && st.profile.roles) || [], out = ['[관리자 문의]', '고유 번호: ' + (me.id || '-')];
-    if (me.email) out.push('카카오 아이디: ' + me.email);
     var perms = [];
     if (Core.isAdmin()) perms.push('관리자');
     roles.forEach(function (r) { if (r.kind === 'owner' || r.kind === 'tester') perms.push(r.label); });
