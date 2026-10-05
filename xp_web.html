@@ -109,6 +109,8 @@ fieldset.grp{border:1px solid #d0d0bf;border-radius:4px;padding:4px 10px 10px;ma
 @media (max-width:420px){ .avbox{grid-template-columns:1fr} }
 
 /* 라이선스 창: 열 제목 줄 + XP 스크롤 막대가 붙은 목록 + 아래 상태 줄 */
+body.locked #lic{display:none}   /* 권한이 없으면 라이선스 창도 숨김 */
+body.locked .dk:not(.free) .ic{opacity:.45;filter:grayscale(.6)}   /* 막힌 창 아이콘은 흐리게 */
 #lic{position:fixed;right:10px;bottom:10px;z-index:8000;width:300px;pointer-events:auto;display:flex;flex-direction:column}
 #lic .bar{cursor:default}
 #lic .btn.max,#lic .btn.rst,#lic .btn.min{cursor:pointer}
@@ -378,7 +380,11 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
     document.body.classList.toggle('has-open', saved.open.length > 0);
     save();
   }
+  // 권한(관리자 · 점주 · 베타테스터)이 하나도 없으면 선물 코드 창만 열 수 있음
+  var FREE = ['gift'];
+  function allowed() { return !!(window.Core && Core.state.loaded && Core.perms().length); }
   function openWin(entry) {
+    if (FREE.indexOf(entry.def.id) < 0 && !allowed()) { lockedMsg(); return; }
     if (isOpen(entry)) { bringCenter(entry); return; }
     entry.el.classList.remove('shut');
     if (!entry.built) buildBody(entry);
@@ -389,7 +395,8 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
     refitMaps();
     saveOpen();
   }
-  function closeWin(entry) {
+  // keep이 참이면 '열어 둔 창' 기록은 그대로 둠 (권한이 잠깐 없을 때 닫는 경우)
+  function closeWin(entry, keep) {
     if (entry.el.classList.contains('maxed')) toggleMax(entry);
     entry.el.classList.add('shut');
     entry.el.classList.remove('front');
@@ -397,7 +404,15 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
     // 남은 창 중 가장 위에 있는 창을 맨 앞으로
     var rest = wins.filter(isOpen).sort(function (a, b) { return (+b.el.style.zIndex || 0) - (+a.el.style.zIndex || 0); });
     if (rest[0]) bringFront(rest[0]);
-    saveOpen();
+    if (keep !== true) saveOpen();
+  }
+  function lockedMsg() {
+    var box = msgBox('권한 필요', 'icon-info.png');
+    var st = window.Core ? Core.state : {};
+    var btns = [['선물 코드 열기', function () { box.el.remove(); openWin(wins.filter(function (o) { return o.def.id === 'gift'; })[0]); }],
+                ['확인', function () { box.el.remove(); }]];
+    if (window.Core && Core.ready && !st.user) btns.unshift(['카카오 로그인', function () { Core.login(); }]);
+    box.say('이 창은 권한이 있는 사람만 열 수 있어요.\n받은 선물 코드를 넣어 권한을 등록한 뒤 다시 시도해 주세요.', btns);
   }
   function toggleMax(entry) {
     var on = !entry.el.classList.contains('maxed');
@@ -532,7 +547,11 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
     var code = input.value.trim();
     if (!code) return;
     var st = window.Core ? Core.state : {};
-    if (!window.Core || !Core.ready || !st.user) { msgBox('선물 코드', 'icon-gift.png').say('로그인한 뒤에 쓸 수 있어요.', [['확인', function () { this.closest('.win').remove(); }]]); return; }
+    if (!window.Core || !Core.ready || !st.user) {
+      var lb = msgBox('선물 코드', 'icon-gift.png'), bs = [['확인', function () { lb.el.remove(); }]];
+      if (window.Core && Core.ready) bs.unshift(['카카오 로그인', function () { Core.login(); }]);
+      lb.say('로그인한 뒤에 쓸 수 있어요.', bs); return;
+    }
     Core.sb.rpc('redeem_gift_code', { input: code }).then(function (r) {
       var box = msgBox('선물 코드', 'icon-gift.png');
       var ok = [['확인', function () { box.el.remove(); }]];
@@ -984,7 +1003,7 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
   }
   function makeDock() {
     WINDOWS.forEach(function (def, i) {
-      var b = document.createElement('button'); b.type = 'button'; b.className = 'dk'; b.title = def.title;
+      var b = document.createElement('button'); b.type = 'button'; b.className = 'dk' + (FREE.indexOf(def.id) >= 0 ? ' free' : ''); b.title = def.title;
       var ic = document.createElement('span'); ic.className = 'ic';
       var im = document.createElement('img'); im.src = def.icon; im.alt = ''; im.draggable = false;
       ic.appendChild(im);
@@ -1001,12 +1020,26 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
   function setGap() { document.documentElement.style.setProperty('--gap', bottomGap() + 'px'); }
   setGap();
   // 지난번에 열어 둔 창을 쌓였던 순서대로 다시 엶 (처음이면 모두 닫힌 채 시작)
-  var order = (saved.order || []).concat(WINDOWS.map(function (d) { return d.id; }));
-  var opened = saved.open || [];
-  order.forEach(function (id) {
-    var e = wins.filter(function (o) { return o.def.id === id; })[0];
-    if (e && opened.indexOf(id) >= 0 && !isOpen(e)) openWin(e);
-  });
+  function restoreOpen() {
+    var order = (saved.order || []).concat(WINDOWS.map(function (d) { return d.id; }));
+    var opened = (saved.open || []).slice();
+    order.forEach(function (id) {
+      var e = wins.filter(function (o) { return o.def.id === id; })[0];
+      if (e && opened.indexOf(id) >= 0 && !isOpen(e) && (FREE.indexOf(id) >= 0 || allowed())) openWin(e);
+    });
+  }
+  // 로그인 · 권한이 확인될 때마다: 권한이 없으면 잠그고(선물 코드 · 알림 빼고 닫음), 생기면 지난 창을 다시 엶
+  var gateState = null;
+  function applyGate() {
+    var ok = allowed();
+    document.body.classList.toggle('locked', !ok);
+    if (ok === gateState) return;
+    gateState = ok;
+    if (!ok) wins.forEach(function (e) { if (isOpen(e) && FREE.indexOf(e.def.id) < 0) closeWin(e, true); });
+    restoreOpen();
+  }
+  if (window.Core) Core.onChange(function (st) { if (st.loaded) applyGate(); });
+  else applyGate();
   window.addEventListener('resize', function () {
     setGap();
     wins.forEach(function (e) {
