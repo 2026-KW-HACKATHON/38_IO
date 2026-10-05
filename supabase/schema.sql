@@ -126,10 +126,7 @@ create table if not exists public.gift_codes (
 );
 alter table public.gift_codes enable row level security;
 
-insert into public.gift_codes (code, kind, label, dept) values
-  ('***', 'student', '광운대학교', '전기공학과'),
-  ('***', 'activity', '우이천 런닝크루', null)
-on conflict (code) do nothing;
+-- 선물 코드는 이 파일에 적지 않음 (공개 저장소). Supabase 화면의 gift_codes 표에 직접 추가
 
 -- 10) 선물 코드 쓰기: 맞는 코드면 소속에 추가 (신분은 하나만, 새 신분이 예전 신분을 바꿈)
 create or replace function public.redeem_gift_code(input text) returns jsonb
@@ -184,10 +181,7 @@ alter table public.gift_codes drop constraint if exists gift_codes_kind_check;
 alter table public.gift_codes add constraint gift_codes_kind_check
   check (kind in ('resident', 'student', 'activity', 'owner'));
 
-insert into public.gift_codes (code, kind, label, spot) values
-  ('***', 'owner', 'CORD Jr. 점주', 'cord'),
-  ('***', 'owner', '디저트카페 후아나 점주', 'juana')
-on conflict (code) do nothing;
+-- 점주 코드도 gift_codes 표에 직접 추가 (kind: owner, spot: 가게)
 
 -- 선물 코드 쓰기 (다시 만듦): 점주 권한은 하나만, 바꾸려면 지금 것을 지운 뒤 새 코드
 create or replace function public.redeem_gift_code(input text) returns jsonb
@@ -222,6 +216,4 @@ alter table public.gift_codes drop constraint if exists gift_codes_kind_check;
 alter table public.gift_codes add constraint gift_codes_kind_check
   check (kind in ('resident', 'student', 'activity', 'owner', 'tester'));
 
-insert into public.gift_codes (code, kind, label) values
-  ('***', 'tester', '베타테스터')
-on conflict (code) do nothing;
+-- 베타테스터 코드도 gift_codes 표에 직접 추가 (kind: tester)
