@@ -107,32 +107,58 @@ fieldset.grp{border:1px solid #d0d0bf;border-radius:4px;padding:4px 10px 10px;ma
 .xsel{height:21px;border:1px solid #7f9db9;font:inherit;font-size:12px;background:#fff;border-radius:0;width:100%}
 @media (max-width:420px){ .avbox{grid-template-columns:1fr} }
 
-/* 라이선스 창: 위 도구 띠 + XP 스크롤 막대가 붙은 흰 칸 + 아래 상태 줄 */
-#lic{position:fixed;right:10px;bottom:10px;z-index:8000;width:250px;pointer-events:auto}
+/* 라이선스 창: 열 제목 줄 + XP 스크롤 막대가 붙은 목록 + 아래 상태 줄 */
+#lic{position:fixed;right:10px;bottom:10px;z-index:8000;width:300px;pointer-events:auto;display:flex;flex-direction:column}
 #lic .bar{cursor:default}
-#lic .ltool{height:10px;margin:0 3px;background:#ece9d8;border-bottom:1px solid #d6d2c2}
-#lic .lbody{height:104px;margin:0 3px;overflow-y:scroll;background:#fff;border:1px solid #7f9db9;border-width:1px 0;
-  font-size:11px;line-height:1.45;padding:4px 6px;box-sizing:border-box}
-#lic .lbody p{margin:0 0 6px}
-#lic .lbody b{display:block}
-#lic .lbody a{color:#00c}
+#lic .btn.max,#lic .btn.rst,#lic .btn.min{cursor:pointer}
+/* 열 제목: XP 목록 보기 머리줄, 누르면 그 열로 정렬 */
+#lic .lhead{display:grid;margin:0 3px;padding-right:17px;background:linear-gradient(180deg,#fff 0%,#f6f5f0 70%,#ebeadb 100%);border-bottom:1px solid #d6d2c2;font-size:11px}
+#lic .lhead button{appearance:none;border:0;border-right:1px solid #d6d2c2;box-shadow:1px 0 #fff;background:transparent;font:inherit;font-size:11px;
+  text-align:left;padding:3px 6px;cursor:pointer;color:#000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#lic .lhead button:hover{box-shadow:inset 0 -3px #f9b13c}
+/* 정렬 방향 작은 세모 */
+#lic .lhead button.on::after{content:"";display:inline-block;margin-left:5px;vertical-align:middle;
+  border-left:4px solid transparent;border-right:4px solid transparent;border-top:4px solid #8d8d8d}
+#lic .lhead button.on.up::after{border-top:0;border-bottom:4px solid #8d8d8d}
+#lic .lwrap{position:relative;display:flex;margin:0 3px;border-bottom:1px solid #7f9db9;background:#fff}
+#lic .lbody{flex:1;min-width:0;height:118px;overflow-y:scroll;font-size:11px;scrollbar-width:none}
+#lic .lbody::-webkit-scrollbar{display:none}
+#lic .lrow{display:grid;cursor:default}
+#lic .lrow > span{padding:3px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#lic .lrow.on{background:#316ac5;color:#fff}
+#lic .lrow.on a{color:#fff}
+#lic .lrow a{color:#00c}
+#lic .lempty{padding:8px;color:#6f6f6f}
+/* 좁을 때는 소유자 · 사용 위치만 */
+#lic .lhead,#lic .lrow{grid-template-columns:38% 1fr 16% 18%}
+#lic.narrow .lhead,#lic.narrow .lrow{grid-template-columns:44% 1fr}
+#lic.narrow .c-kind,#lic.narrow .c-url{display:none}
+/* XP 스크롤 막대 (그림은 XP.css) */
+.xscroll{width:17px;flex:none;display:flex;flex-direction:column;background:url("assets/space/xp/scroll-background.svg")}
+.xscroll .xs-up,.xscroll .xs-dn{height:17px;flex:none;cursor:pointer;background:center/17px 17px no-repeat}
+.xscroll .xs-up{background-image:url("assets/space/xp/scroll-arrow-up.svg")}
+.xscroll .xs-dn{background-image:url("assets/space/xp/scroll-arrow-down.svg")}
+.xscroll .xs-track{flex:1;position:relative}
+.xscroll .xs-thumb{position:absolute;left:0;right:0;top:0;min-height:12px;box-sizing:border-box;cursor:pointer;
+  background:#c8d6fb url("assets/space/xp/scroll-thumb.svg") center/7px no-repeat;border:1px solid #fff;border-radius:2px;
+  box-shadow:inset -3px 0 #bad1fc,inset 1px 1px #b7caf5;touch-action:none}
+.xscroll.off .xs-thumb{display:none}
 #lic .lstat{display:flex;height:20px;margin:0 3px;font-size:11px;background:#ece9d8;border-top:1px solid #fff}
-#lic .lstat span{display:flex;align-items:center;padding:0 4px;border-right:1px solid #aca899;box-shadow:1px 0 #fff;min-width:14px}
-#lic .lstat span:last-child{flex:1;border-right:0;box-shadow:none;justify-content:flex-end}
+#lic .lstat span{display:flex;align-items:center;padding:0 4px;border-right:1px solid #aca899;box-shadow:1px 0 #fff;min-width:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#lic .lstat #licSel{flex:1;min-width:0;display:block;line-height:20px}
+#lic .lstat span:last-child{border-right:0;box-shadow:none}
 #lic .lstat img{width:14px;height:14px}
-#lic.folded .ltool,#lic.folded .lbody,#lic.folded .lstat{display:none}
+#lic.folded .lhead,#lic.folded .lwrap,#lic.folded .lstat{display:none}
 #lic.folded{padding-bottom:0}
-/* XP 스크롤 막대 (XP.css 그림) */
-#lic .lbody::-webkit-scrollbar{width:17px}
-#lic .lbody::-webkit-scrollbar-track{background-image:url("assets/space/xp/scroll-background.svg")}
-#lic .lbody::-webkit-scrollbar-thumb{background:#c8d6fb url("assets/space/xp/scroll-thumb.svg") center/7px no-repeat;
-  border:1px solid #fff;border-radius:2px;box-shadow:inset -3px 0 #bad1fc,inset 1px 1px #b7caf5}
-#lic .lbody::-webkit-scrollbar-button:vertical:start:decrement{display:block;height:17px;background:url("assets/space/xp/scroll-arrow-up.svg")}
-#lic .lbody::-webkit-scrollbar-button:vertical:end:increment{display:block;height:17px;background:url("assets/space/xp/scroll-arrow-down.svg")}
-#lic .lbody::-webkit-scrollbar-button:vertical:start:increment,#lic .lbody::-webkit-scrollbar-button:vertical:end:decrement{display:none}
+/* 최대화: 화면을 꽉 채움 (모바일은 아래 작업 표시줄만큼 비움) */
+#lic.maxed{left:0;top:0;right:0;bottom:var(--gap,0px);width:auto;border-radius:0}
+#lic.maxed .bar{border-radius:0}
+#lic.maxed .lwrap{flex:1;min-height:0}
+#lic.maxed .lbody{height:auto}
+#lic.maxed ~ #hint{display:none}   /* 최대화하면 안내 글이 가리지 않게 */
 @media (max-width:700px){
-  #lic{bottom:calc(var(--gap,0px) + 6px);right:6px;width:210px}
-  #lic .lbody{height:76px}
+  #lic{bottom:calc(var(--gap,0px) + 6px);right:6px;width:240px}
+  #lic .lbody{height:84px}
 }
 /* QR 위치 확인 알림 창 */
 .win.msg .body{width:min(300px,calc(100vw - 40px));background:var(--surface);padding:14px 14px 12px;box-sizing:border-box}
@@ -237,10 +263,12 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
 <div id="desk"></div>
 <!-- 라이선스: 화면 구석에 항상 떠 있는 작은 XP 창 (최소화하면 제목줄만 남음) -->
 <div id="lic" class="win front" role="complementary" aria-label="라이선스">
-  <div class="bar"><img class="tic" src="assets/space/xp/icon-review.png" alt=""><span class="ttl">라이선스</span><span class="btn min" id="licMin" title="접기"></span></div>
-  <div class="ltool"></div>
-  <div class="lbody" id="licList"></div>
-  <div class="lstat"><span><img src="assets/space/xp/icon-map.png" alt=""></span><span></span><span></span><span id="licCount"></span></div>
+  <div class="bar"><img class="tic" src="assets/space/xp/icon-info.png" alt=""><span class="ttl">라이선스</span>
+    <span class="btn min" id="licMin" title="접기"></span><span class="btn max" id="licMax" title="최대화"></span></div>
+  <div class="lhead" id="licHead" role="row"></div>
+  <div class="lwrap"><div class="lbody" id="licList" role="table"></div><div class="xscroll" id="licBar" aria-hidden="true">
+    <span class="xs-up"></span><span class="xs-track"><span class="xs-thumb"></span></span><span class="xs-dn"></span></div></div>
+  <div class="lstat"><span><img src="assets/space/xp/icon-info.png" alt=""></span><span id="licSel"></span><span id="licCount"></span></div>
 </div>
 <p id="hint">아이콘을 누르면 창이 열려요 · 제목줄을 끌면 움직여요</p>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -936,25 +964,109 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
   }
 
 
-  /* ── 라이선스 창: 목록 채우기, 접기 (모바일은 접힌 채 시작) ── */
+  /* ── 라이선스 창: 열 제목을 누르면 정렬, 목록은 XP 스크롤 막대로 내림, 접기 · 최대화 ── */
   (function () {
-    var lic = document.getElementById('lic'), box = document.getElementById('licList'), list = window.LICENSES || [];
-    list.forEach(function (it) {
-      var p = document.createElement('p');
-      var b = document.createElement('b'); b.textContent = it.name; p.appendChild(b);
-      p.appendChild(document.createTextNode([it.by, it.license].filter(Boolean).join(' · ')));
-      if (it.url) {
-        p.appendChild(document.createElement('br'));
-        var a = document.createElement('a'); a.href = it.url; a.target = '_blank'; a.rel = 'noopener'; a.textContent = it.url.replace(/^https?:\/\//, '');
-        p.appendChild(a);
-      }
-      box.appendChild(p);
+    var lic = document.getElementById('lic'), head = document.getElementById('licHead'), box = document.getElementById('licList');
+    var sel = document.getElementById('licSel'), list = (window.LICENSES || []).slice();
+    var COLS = [['owner', '소유자'], ['use', '사용 위치'], ['kind', '종류'], ['url', '외부 링크']];
+    var sortKey = 'owner', sortUp = true, picked = null;
+    COLS.forEach(function (c) {
+      var b = document.createElement('button'); b.type = 'button'; b.className = 'c-' + c[0]; b.textContent = c[1];
+      b.addEventListener('click', function () {
+        if (sortKey === c[0]) sortUp = !sortUp; else { sortKey = c[0]; sortUp = true; }
+        draw();
+      });
+      head.appendChild(b);
     });
-    document.getElementById('licCount').textContent = '자료 ' + list.length + '개';
+    function draw() {
+      head.querySelectorAll('button').forEach(function (b) {
+        b.classList.toggle('on', b.className.indexOf('c-' + sortKey) >= 0); b.classList.toggle('up', !sortUp);
+      });
+      list.sort(function (a, b) { var r = String(a[sortKey] || '').localeCompare(String(b[sortKey] || ''), 'ko'); return sortUp ? r : -r; });
+      box.innerHTML = '';
+      if (!list.length) { var e = document.createElement('div'); e.className = 'lempty'; e.textContent = '등록된 자료가 없어요.'; box.appendChild(e); }
+      list.forEach(function (it) {
+        var row = document.createElement('div'); row.className = 'lrow' + (it === picked ? ' on' : ''); row.setAttribute('role', 'row');
+        COLS.forEach(function (c) {
+          var cell = document.createElement('span'); cell.className = 'c-' + c[0];
+          if (c[0] === 'url' && it.url) {
+            var a = document.createElement('a'); a.href = it.url; a.target = '_blank'; a.rel = 'noopener'; a.textContent = '열기';
+            cell.appendChild(a);
+          } else cell.textContent = it[c[0]] || '';
+          cell.title = it[c[0]] || '';
+          row.appendChild(cell);
+        });
+        // 누르면 고른 줄의 전체 내용을 상태 줄에 보여 줌
+        row.addEventListener('click', function () {
+          picked = it;
+          box.querySelectorAll('.lrow').forEach(function (r) { r.classList.toggle('on', r === row); });
+          sel.textContent = [it.owner, it.use, it.kind].filter(Boolean).join(' · ');
+        });
+        box.appendChild(row);
+      });
+      document.getElementById('licCount').textContent = '자료 ' + list.length + '개';
+      fit();
+    }
+    // 창이 좁으면 소유자 · 사용 위치만 보이게
+    function fit() {
+      lic.classList.toggle('narrow', !lic.classList.contains('maxed') && lic.offsetWidth < 420);
+      bar.sync();
+    }
+    var bar = xpScroll(box, document.getElementById('licBar'));
     if (window.innerWidth < 700) lic.classList.add('folded');
-    document.getElementById('licMin').addEventListener('click', function () { lic.classList.toggle('folded'); });
-    lic.querySelector('.bar').addEventListener('dblclick', function () { lic.classList.toggle('folded'); });
+    function fold() { lic.classList.remove('maxed'); setMaxIcon(); lic.classList.toggle('folded'); fit(); }
+    function setMaxIcon() {
+      var on = lic.classList.contains('maxed'), b = document.getElementById('licMax');
+      b.className = 'btn ' + (on ? 'rst' : 'max'); b.title = on ? '이전 크기로' : '최대화';
+    }
+    function toggleMaxLic() { lic.classList.remove('folded'); lic.classList.toggle('maxed'); setMaxIcon(); fit(); }
+    document.getElementById('licMin').addEventListener('click', fold);
+    document.getElementById('licMax').addEventListener('click', toggleMaxLic);
+    lic.querySelector('.bar').addEventListener('dblclick', function (e) { if (!e.target.classList.contains('btn')) toggleMaxLic(); });
+    window.addEventListener('resize', fit);
+    draw();
   })();
+
+  /* ── XP 스크롤 막대: 목록 옆에 붙어서 위 · 아래 단추, 끌 수 있는 손잡이, 빈 곳 누르면 한 쪽씩 이동 ── */
+  function xpScroll(view, bar) {
+    var track = bar.querySelector('.xs-track'), thumb = bar.querySelector('.xs-thumb');
+    function sync() {
+      var h = view.clientHeight, all = view.scrollHeight, th = track.clientHeight;
+      bar.classList.toggle('off', all <= h + 1);
+      var size = Math.max(12, th * h / Math.max(all, 1));
+      thumb.style.height = size + 'px';
+      thumb.style.top = ((th - size) * view.scrollTop / Math.max(1, all - h)) + 'px';
+    }
+    function step(d) { view.scrollTop += d; }
+    function hold(el, d) {
+      var t = null;
+      el.addEventListener('pointerdown', function (e) {
+        e.preventDefault(); step(d);
+        t = setInterval(function () { step(d); }, 80);
+      });
+      ['pointerup', 'pointerleave', 'pointercancel'].forEach(function (n) { el.addEventListener(n, function () { clearInterval(t); }); });
+    }
+    hold(bar.querySelector('.xs-up'), -18);
+    hold(bar.querySelector('.xs-dn'), 18);
+    track.addEventListener('pointerdown', function (e) {
+      if (e.target !== track) return;
+      step((e.offsetY < thumb.offsetTop ? -1 : 1) * view.clientHeight * 0.9);
+    });
+    var drag = null;
+    thumb.addEventListener('pointerdown', function (e) {
+      e.preventDefault(); drag = { y: e.clientY, top: view.scrollTop };
+      try { thumb.setPointerCapture(e.pointerId); } catch (er) {}
+    });
+    thumb.addEventListener('pointermove', function (e) {
+      if (!drag) return;
+      var room = track.clientHeight - thumb.offsetHeight;
+      view.scrollTop = drag.top + (e.clientY - drag.y) * (view.scrollHeight - view.clientHeight) / Math.max(1, room);
+    });
+    ['pointerup', 'pointercancel'].forEach(function (n) { thumb.addEventListener(n, function () { drag = null; }); });
+    view.addEventListener('scroll', sync);
+    if (window.ResizeObserver) new ResizeObserver(sync).observe(view);
+    return { sync: sync };
+  }
 
   /* ── QR로 들어온 경우 (주소 끝 ?spot=장소): 지금 위치가 그 장소 범위 안인지 확인 ── */
   var spotId = new URLSearchParams(location.search).get('spot');
