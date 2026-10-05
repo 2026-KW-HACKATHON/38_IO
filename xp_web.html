@@ -85,7 +85,8 @@ fieldset.grp{border:1px solid #d0d0bf;border-radius:4px;padding:4px 10px 10px;ma
 .kakao-who{display:flex;gap:12px;align-items:flex-start}
 .kpic{width:48px;height:48px;object-fit:cover;border:1px solid #7f9db9;background:#fff;flex:none}
 .kv{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;margin:0}
-.kv dt{color:#555}.kv dd{margin:0;word-break:break-all}
+.kv dt{color:#555}.kv dd{margin:0;word-break:break-all;min-height:15px}
+.xbtn.mini{min-width:0;height:18px;padding:0 6px;font-size:11px;margin-left:6px;vertical-align:middle}
 .role{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 0}
 .role + .role{border-top:1px solid #ecebe5}
 .rtxt{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
@@ -617,20 +618,36 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
       var r0 = el('div', 'prow'); r0.appendChild(button('카카오로 로그인', function () { Core.login(); })); g.appendChild(r0);
       panel.appendChild(g); return;
     }
-    var p = st.profile || {};
+    var p = st.profile || {}, me = kakaoInfo(st);
     var top = el('div', 'kakao-who');
     var pic = el('img', 'kpic'); pic.alt = ''; pic.src = p.avatar_url || 'assets/space/xp/icon-account.png';
     var kv = el('dl', 'kv');
-    [['닉네임', p.nickname || '카카오 사용자'], ['카카오 아이디', p.provider_id || '-'],
-     ['가입한 날', p.created_at ? new Date(p.created_at).toLocaleDateString('ko-KR') : '-']].forEach(function (x) {
-      kv.appendChild(el('dt', '', x[0])); kv.appendChild(el('dd', '', x[1]));
-    });
+    function line(k, v) { kv.appendChild(el('dt', '', k)); var d = el('dd', '', v); kv.appendChild(d); return d; }
+    line('닉네임', p.nickname || '카카오 사용자');
+    line('카카오 아이디', me.email);   // 이메일 제공에 동의한 사람만, 아니면 빈칸
+    // 고유 번호: 카카오가 정한 숫자, 눌러서 복사
+    var idd = line('고유 번호', me.id || '-');
+    if (me.id) {
+      var cp = el('button', 'xbtn mini', '복사'); cp.type = 'button';
+      cp.addEventListener('click', function () { copyText(me.id).then(function (ok) { Core.toast(ok ? '고유 번호를 복사했어요.' : '복사하지 못했어요.'); }); });
+      idd.appendChild(cp);
+    }
+    line('가입한 날', p.created_at ? new Date(p.created_at).toLocaleDateString('ko-KR') : '-');
     top.appendChild(pic); top.appendChild(kv); g.appendChild(top);
     var row = el('div', 'prow');
     row.appendChild(button('로그아웃', function () { Core.logout(); }));
     row.appendChild(button('계정 변경', function () { Core.login(true); }));   // 카카오 로그인 화면을 다시 띄움
     g.appendChild(row);
     panel.appendChild(g);
+
+    // 관리자 문의: 카카오톡 채널 추가 · 1:1 채팅 (머리말을 복사해 두고 채팅으로 이동)
+    var q = group('관리자 문의');
+    q.appendChild(el('p', 'note', '카카오톡 채널로 관리자에게 물어볼 수 있어요. ‘1:1 문의하기’를 누르면 내 고유 번호가 담긴 머리말이 복사돼요. 채팅창에 붙여 넣고 내용을 써 주세요.'));
+    var qr = el('div', 'prow');
+    qr.appendChild(button('채널 추가', function () { window.open(CHANNEL + '/friend', '_blank', 'noopener'); }));
+    qr.appendChild(button('1:1 문의하기', function () { askAdmin(st); }));
+    q.appendChild(qr);
+    panel.appendChild(q);
 
     var d = group('계정 삭제'); d.classList.add('danger');
     d.appendChild(el('p', 'note', '계정과 활동 기록, 아바타, 소속이 모두 지워지고 되돌릴 수 없어요.'));
@@ -645,6 +662,49 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
     });
     var r2 = el('div', 'prow'); r2.appendChild(del); d.appendChild(r2);
     panel.appendChild(d);
+  }
+
+  // 카카오 정보: 고유 번호(숫자)와, 동의한 경우의 이메일
+  function kakaoInfo(st) {
+    var u = st.user || {}, md = u.user_metadata || {}, p = st.profile || {};
+    return { id: String(p.provider_id || md.provider_id || md.sub || ''), email: u.email || md.email || '' };
+  }
+  // 글을 클립보드에 복사 (안 되는 브라우저는 예전 방식으로)
+  function copyText(t) {
+    if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(t).then(function () { return true; }, fallback);
+    return Promise.resolve(fallback());
+    function fallback() {
+      var ta = document.createElement('textarea'); ta.value = t; ta.style.cssText = 'position:fixed;left:-9999px;top:0';
+      document.body.appendChild(ta); ta.select();
+      var ok = false; try { ok = document.execCommand('copy'); } catch (e) {}
+      ta.remove(); return ok;
+    }
+  }
+  // 관리자 문의 머리말: 고유 번호 + (있으면) 카카오 아이디, 권한, 신분, 활동
+  var CHANNEL = 'https://pf.kakao.com/_RaxcaX';
+  function askHeader(st) {
+    var me = kakaoInfo(st), roles = (st.profile && st.profile.roles) || [], out = ['[관리자 문의]', '고유 번호: ' + (me.id || '-')];
+    if (me.email) out.push('카카오 아이디: ' + me.email);
+    var perms = [];
+    if (Core.isAdmin()) perms.push('관리자');
+    roles.forEach(function (r) { if (r.kind === 'owner' || r.kind === 'tester') perms.push(r.label); });
+    if (perms.length) out.push('권한: ' + perms.join(', '));
+    var id = roles.filter(function (r) { return KIND[r.kind]; })[0];
+    if (id) out.push('신분: ' + KIND[id.kind] + ' · ' + id.label + (id.dept ? ' ' + id.dept : ''));
+    var acts = roles.filter(function (r) { return r.kind === 'activity'; }).map(function (r) { return r.label; });
+    if (acts.length) out.push('활동: ' + acts.join(', '));
+    out.push('──────────', '문의 내용: ');
+    return out.join('\n');
+  }
+  function askAdmin(st) {
+    var text = askHeader(st);
+    copyText(text).then(function (ok) {
+      var box = msgBox('관리자 문의', 'icon-info.png');
+      box.say((ok ? '아래 머리말을 복사했어요. 카카오톡 채팅창에 붙여 넣고 문의 내용을 써 주세요.'
+                  : '복사하지 못했어요. 아래 내용을 길게 눌러 복사한 뒤 채팅창에 붙여 넣어 주세요.') + '\n\n' + text,
+        [['카카오톡으로 이동', function () { window.open(CHANNEL + '/chat', '_blank', 'noopener'); box.el.remove(); }],
+         ['닫기', function () { box.el.remove(); }]]);
+    });
   }
 
   // 아바타 칸: 왼쪽에 물고기 그림, 오른쪽에 닉네임 · 어종 · 이펙트 · 아이템
