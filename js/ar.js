@@ -253,9 +253,9 @@
       });
   }
   document.getElementById('go').addEventListener('click', startAR);
-  document.getElementById('goOrbit').addEventListener('click', function () {
-    enterOrbit(); Core.log('ar_start', { camera: false, motion: false });
-  });
+  function startOrbit() { enterOrbit(); Core.log('ar_start', { camera: false, motion: false }); }
+  document.getElementById('goOrbit').addEventListener('click', startOrbit);
+  document.getElementById('gateClose').addEventListener('click', startOrbit);   // 창을 닫으면 카메라 없이 둘러보기
 
   /* ── 로그인 영역 (위쪽 오른쪽) ── */
   var authBox = document.getElementById('auth');

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Reef AR</title>
+<title>월계 아쿠아</title>
 <link rel="stylesheet" href="css/app.css">
 <link rel="stylesheet" href="css/xp-font.css">
 </head>
@@ -15,7 +15,7 @@
   <!-- 위쪽: 이름, 권한 상태, 로그인 -->
   <div id="top">
     <div id="brand">
-      <b>Reef AR</b>
+      <b>월계 아쿠아</b>
       <div id="chips" class="hidden">
         <span class="chip" id="cCam">CAM —</span>
         <span class="chip" id="cGyro">GYRO —</span>
@@ -35,20 +35,32 @@
     <!-- [임시-촬영저장 끝] -->
   </div>
 
-  <!-- 처음 화면: 로그인 없이 바로 시작 가능 -->
+  <!-- 처음 화면: XP 'About' 창 모양, 로그인 없이 바로 시작 가능 -->
   <div id="gate">
-    <h1>Reef AR</h1>
-    <p>폰 카메라 화면 위에 물고기가 헤엄쳐요. 로그인 없이 바로 볼 수 있어요.</p>
-    <button class="primary" id="go" type="button">AR 시작</button>
-    <button class="ghost" id="goOrbit" type="button">카메라 없이 둘러보기</button>
-    <!-- 나의 공간: 로그인하면 보임 -->
-    <p class="modes hidden" id="mySpace"><a class="ghost" href="xp_web.html">나의 공간</a></p>
-    <p class="fine">카메라 · 위치 · 움직임 센서 권한을 물어봐요
-      <!-- [임시-촬영저장 시작] -->
-      · 촬영한 사진은 내 기기에 저장돼요
-      <!-- [임시-촬영저장 끝] -->
-      <br>로그인하면 접속 기록과 대략적인 위치가 관리자에게 보여요</p>
-  </div>
+    <div class="about" role="dialog" aria-labelledby="aboutTitle">
+      <div class="abar"><span class="attl" id="aboutTitle">About QRium</span><button class="acls" id="gateClose" type="button" title="닫기" aria-label="닫기"></button></div>
+      <div class="abanner">
+        <img src="assets/start/banner.jpg" alt="">
+        <div class="alogo"><span class="l1">월계 아쿠아</span><span class="l2">QRium</span></div>
+      </div>
+      <div class="abody">
+        <p>월계 아쿠아 (QRium)<br>Version 0.1 (Beta)<br>Copyright © 2026 38_IO</p>
+        <p>휴대폰 카메라 화면 위에 물고기가 헤엄칩니다.<br>로그인 없이 바로 볼 수 있습니다.</p>
+        <p class="fine">카메라 · 위치 · 움직임 센서 권한을 요청합니다.
+          <!-- [임시-촬영저장 시작] -->
+          촬영한 사진은 사용자의 기기에 저장됩니다.
+          <!-- [임시-촬영저장 끝] -->
+          로그인하면 접속 기록과 대략적인 위치가 관리자에게 표시됩니다.</p>
+        <!-- 나의 공간: 로그인하면 보임 -->
+        <p class="modes hidden" id="mySpace"><a href="xp_web.html">나의 공간으로 이동합니다.</a></p>
+        <hr>
+        <div class="abtns">
+          <button class="xbtn" id="goOrbit" type="button">카메라 없이 둘러보기</button>
+          <button class="xbtn def" id="go" type="button">AR 시작</button>
+        </div>
+      </div>
+    </div>
+</div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>

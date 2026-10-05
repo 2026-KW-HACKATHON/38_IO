@@ -42,13 +42,39 @@ button:focus-visible,a:focus-visible{outline:2px solid #fff;outline-offset:2px}
 #auth .mini{appearance:none;border:1px solid var(--edge);background:var(--panel);color:var(--dim);border-radius:8px;padding:5px 9px;font-size:11px;text-decoration:none}
 #bottom{position:absolute;left:0;right:0;bottom:calc(14px + env(safe-area-inset-bottom,0px));display:flex;
   justify-content:center;align-items:center;gap:8px;flex-wrap:wrap;z-index:6;padding:0 10px}
-#gate{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
-  padding:28px;text-align:center;z-index:8;background:radial-gradient(120% 90% at 50% 20%,#241C40 0%,#0B0916 70%)}
-#gate h1{margin:0;font-size:24px}
-#gate p{margin:0;max-width:36ch;color:var(--dim);font-size:13.5px;line-height:1.6}
-#gate .fine{font-family:ui-monospace,monospace;font-size:10.5px;color:#7E759B}
-#gate .modes{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
-#gate .modes a{text-decoration:none}
+/* 처음 화면: 윈도우 바탕화면 위에 XP 'About QRium' 창 */
+#gate{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:16px;z-index:8;
+  background:#2a6aa0 url("../assets/start/bg.jpg") center/cover no-repeat}
+#gate .about{width:min(420px,100%);background:#ece9d8;color:#000;border-radius:8px 8px 0 0;padding:0 0 3px;text-align:left;
+  box-shadow:inset -1px -1px #00138c,inset 1px 1px #0831d9,inset -2px -2px #001ea0,inset 2px 2px #166aee,
+    inset -3px -3px #003bda,inset 3px 3px #0855dd,3px 4px 10px rgba(0,0,0,.35)}
+#gate .abar{height:21px;display:flex;align-items:center;justify-content:space-between;padding:3px 5px 3px 6px;
+  background:linear-gradient(180deg,#0997ff 0%,#0053ee 8%,#0050ee 40%,#0066ff 88%,#0066ff 93%,#005bff 95%,#003dd7 96%,#003dd7 100%);
+  border-top:1px solid #0831d9;border-left:1px solid #0831d9;border-right:1px solid #001ea0;border-radius:8px 7px 0 0}
+#gate .attl{font-family:"Trebuchet MS","굴림",Gulim,"Nanum Gothic",sans-serif;font-size:13px;font-weight:700;color:#fff;text-shadow:1px 1px #0f1089}
+#gate .acls{appearance:none;border:0;padding:0;width:21px;height:21px;cursor:pointer;background:url("../assets/space/xp/close.svg") center/21px no-repeat}
+#gate .acls:hover{background-image:url("../assets/space/xp/close-hover.svg")}
+#gate .acls:active{background-image:url("../assets/space/xp/close-active.svg")}
+/* 배너: 수조 사진 위에 큰 이름, 아래 줄은 오른쪽 정렬 */
+#gate .abanner{position:relative;margin:0 3px;aspect-ratio:1000/400;overflow:hidden;border-bottom:3px solid #e8892c}
+#gate .abanner img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 40%;display:block}
+#gate .alogo{position:absolute;left:8%;right:8%;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;
+  color:#fff;text-shadow:0 2px 6px rgba(0,40,80,.55),0 0 2px rgba(0,40,80,.4);line-height:1.05}
+#gate .alogo .l1{font-size:clamp(34px,11vw,52px);font-weight:700;letter-spacing:-.02em}
+#gate .alogo .l2{align-self:flex-end;font-size:clamp(22px,7vw,32px);font-weight:400;margin-top:2px}
+#gate .abody{margin:0 3px;padding:14px 18px 12px;font-size:13px;line-height:1.55}
+#gate .abody p{margin:0 0 10px;max-width:none;color:#000}
+#gate .abody .fine{font-size:11px;color:#555}
+#gate .abody hr{border:0;border-top:1px solid #aca899;margin:8px 0 10px}
+#gate .modes a{color:#2d4ea0;text-decoration:none}
+#gate .modes a:hover{text-decoration:underline}
+#gate .abtns{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+/* XP 단추 (기본 단추는 파란 테두리) */
+#gate .xbtn{min-width:86px;height:26px;padding:0 12px;font-size:12px;color:#000;border:1px solid #003c74;border-radius:3px;cursor:pointer;
+  background:linear-gradient(180deg,#fff 0%,#ecebe5 86%,#d8d0c4 100%)}
+#gate .xbtn:hover{box-shadow:inset -1px 1px #fff0cf,inset 1px 2px #fdd889,inset -2px 2px #fbc761,inset 2px -2px #e5a01a}
+#gate .xbtn.def{box-shadow:inset -1px 1px #cee7ff,inset 1px 2px #98b8ea,inset -2px 2px #bcd4f6,inset 1px -1px #89ade4,inset 2px -2px #89ade4}
+#gate .xbtn:active{box-shadow:none;background:linear-gradient(180deg,#cdcac3 0%,#e3e3db 8%,#e5e5de 94%,#f2f2f1 100%)}
 .reef-layer{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:4}
 
 /* 관리자·QR 화면 */
