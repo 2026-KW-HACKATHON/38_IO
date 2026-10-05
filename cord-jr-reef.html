@@ -115,7 +115,7 @@ kit.loadData().then(function(d){
   if (!gotLive) build(d);
   frame();
   kit.watchData(d.updated, build);
-}).catch(function(){ document.getElementById('name').textContent = 'reef-data.json을 읽지 못했어요'; });
+}).catch(function(){ document.getElementById('name').textContent = 'reef-data.json을 읽지 못했습니다'; });
 // All Reefs 미리보기 창에서는 고치는 중인 데이터를 바로 받음
 kit.onLiveData(function(d, m){ gotLive = true; if (m && m.reef) REEF_ID = m.reef; build(d); });
 })();

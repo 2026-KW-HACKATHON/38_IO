@@ -61,9 +61,9 @@
   </div>
   <div id="gate">
     <h1>Reef · Marker Test</h1>
-    <p id="gatemsg">벽에 붙인 4cm 형광 큐브를 찾아서, 폰이 큐브를 얼마나 떨어져서 어느 각도로 보는지 계산하고 그 앞에 물고기 떼를 띄워요. 자이로 없이 카메라 화면만 써요.</p>
+    <p id="gatemsg">벽에 붙인 4cm 형광 큐브를 찾아서, 폰이 큐브를 얼마나 떨어져서 어느 각도로 보는지 계산하고 그 앞에 물고기 떼를 띄웁니다. 자이로 없이 카메라 화면만 씁니다.</p>
     <button id="go" type="button">카메라 시작</button>
-    <p class="fine" id="gatefine">카메라 권한이 필요해요 · 물고기를 누르면 말해요 · 주소 끝 #sim = 가짜 카메라 시험</p>
+    <p class="fine" id="gatefine">카메라 권한이 필요합니다 · 물고기를 누르면 말합니다 · 주소 끝 #sim = 가짜 카메라 시험</p>
   </div>
 </div>
 
@@ -995,12 +995,12 @@ function started(){ gate.classList.add('hidden'); hud.classList.remove('hidden')
 document.getElementById('go').addEventListener('click', function(){
   if (SIM){ started(); return; }
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
-    fail('이 브라우저에서는 카메라를 쓸 수 없어요. Safari나 Chrome에서 열어주세요.'); return;
+    fail('이 브라우저에서는 카메라를 쓸 수 없습니다. Safari나 Chrome에서 열어 주십시오.'); return;
   }
   navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}, width:{ideal:1920}, height:{ideal:1080}}, audio:false})
     .then(function(stream){ video.srcObject = stream; return video.play(); })
     .then(started)
-    .catch(function(err){ fail('카메라 권한이 거부됐어요 (' + (err && err.name ? err.name : 'error') + '). https 주소인지, 권한 설정을 확인해주세요.'); });
+    .catch(function(err){ fail('카메라 권한이 거부되었습니다 (' + (err && err.name ? err.name : 'error') + '). https 주소인지, 권한 설정을 확인해 주십시오.'); });
 });
 
 // 시험용 손잡이 (#sim에서 자동 시험할 때 씀)
@@ -1013,7 +1013,7 @@ var gotLive = false;
 kit.loadData().then(function(d){
   if (!gotLive) build(d);
   kit.watchData(d.updated, build);
-}).catch(function(e){ fail('reef-data.json을 읽지 못했어요: ' + (e && e.message || e)); });
+}).catch(function(e){ fail('reef-data.json을 읽지 못했습니다: ' + (e && e.message || e)); });
 kit.onLiveData(function(d, m){ gotLive = true; if (m && m.reef) REEF_ID = m.reef; build(d); });
 
 if (PREVIEW){

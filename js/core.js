@@ -43,7 +43,7 @@
 
   // other가 참이면 카카오 로그인 화면을 다시 띄워 다른 계정으로 들어갈 수 있게 함
   function login(other) {
-    if (!sb) { toast('서버 설정 전이라 로그인을 쓸 수 없어요'); return; }
+    if (!sb) { toast('서버 설정 전이라 로그인을 쓸 수 없습니다'); return; }
     // 카카오 이메일은 사용자가 동의한 경우에만 받아짐
     var opt = { redirectTo: location.origin + location.pathname, scopes: 'profile_nickname profile_image account_email' };
     if (other === true) opt.queryParams = { prompt: 'login' };

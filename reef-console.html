@@ -1018,7 +1018,7 @@ try {
 }
 var gotLive = false;
 kit.loadData().then(function(d){ if (!gotLive) useData(d); kit.watchData(d.updated, useData); })
-  .catch(function(e){ toast('reef-data.json을 못 읽었어요'); renderList(); });
+  .catch(function(e){ toast('reef-data.json을 못 읽었습니다'); renderList(); });
 kit.onLiveData(function(d, m){
   gotLive = true;
   // 미리보기 창에서 다른 reef 설정을 보라고 하면, 기본 목록을 그걸로 다시 채움

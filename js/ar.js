@@ -232,7 +232,7 @@
     askLocation();
 
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      setChip(cCam, 'CAM 없음', false); Core.toast('이 브라우저는 카메라를 쓸 수 없어요. 둘러보기로 볼게요');
+      setChip(cCam, 'CAM 없음', false); Core.toast('이 브라우저는 카메라를 쓸 수 없습니다. 둘러보기로 봅니다');
       enterOrbit(); return;
     }
     navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false })
@@ -247,7 +247,7 @@
       })
       .catch(function () {
         setChip(cCam, 'CAM 거부', false);
-        Core.toast('카메라 권한이 없어서 둘러보기로 볼게요');
+        Core.toast('카메라 권한이 없어서 둘러보기로 봅니다');
         enterOrbit();
         Core.log('ar_start', { camera: false, motion: !motionDenied });
       });
@@ -284,7 +284,7 @@
     baseData = d; goldData = makeGold(d);
     build(); frame();
   }).catch(function (e) {
-    Core.toast('reef-data.json을 읽지 못했어요');
+    Core.toast('reef-data.json을 읽지 못했습니다');
     frame();
   });
 

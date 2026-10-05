@@ -100,7 +100,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 </head>
 <body>
 <div id="desk"></div>
-<p id="hint">제목줄을 끌면 창이 움직여요 · 창을 두 번 누르면 맨 앞으로 와요</p>
+<p id="hint">제목줄을 끌면 창이 움직입니다 · 창을 두 번 누르면 맨 앞으로 옵니다</p>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/config.js"></script>
 <script src="js/core.js"></script>
@@ -164,10 +164,10 @@ button{font:inherit;color:inherit;cursor:pointer}
     } else if (def.kind === 'gift') {
       // 코드 입력 창 (아직 기능은 없음)
       body.innerHTML = '<label class="glabel" for="gift-code">코드 입력</label>' +
-        '<input id="gift-code" class="gin" type="text" maxlength="24" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="선물 코드를 입력하세요">' +
+        '<input id="gift-code" class="gin" type="text" maxlength="24" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="선물 코드를 입력하십시오">' +
         '<button class="gok" type="button">OK</button>';
     } else if (def.kind === 'friends') {
-      body.innerHTML = '친구 목록이 비어 있어요.<br>친구 관리 기능은 준비 중이에요.';
+      body.innerHTML = '친구 목록이 비어 있습니다.<br>친구 관리 기능은 준비 중입니다.';
     } else if (def.kind === 'map') {
       buildMap(body);
     }

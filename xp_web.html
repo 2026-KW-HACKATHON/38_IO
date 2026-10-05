@@ -273,7 +273,7 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
     <span class="xs-up"></span><span class="xs-track"><span class="xs-thumb"></span></span><span class="xs-dn"></span></div></div>
   <div class="lstat"><span><img src="assets/space/xp/icon-info.png" alt=""></span><span id="licSel"></span><span id="licCount"></span></div>
 </div>
-<p id="hint">아이콘을 누르면 창이 열려요 · 제목줄을 끌면 움직여요</p>
+<p id="hint">아이콘을 누르면 창이 열립니다 · 제목줄을 끌면 움직입니다</p>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/config.js"></script>
 <script src="js/core.js"></script>
@@ -358,7 +358,7 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
     } else if (def.kind === 'gift') {
       // 코드 입력 창: 맞는 코드면 소속(신분 · 활동)이 바뀜
       body.innerHTML = '<label class="glabel" for="gift-code">코드 입력</label>' +
-        '<input id="gift-code" class="gin" type="text" maxlength="24" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="선물 코드를 입력하세요">' +
+        '<input id="gift-code" class="gin" type="text" maxlength="24" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="선물 코드를 입력하십시오">' +
         '<button class="xbtn" type="button">확인</button>';
       var gin = body.querySelector('.gin');
       body.querySelector('.xbtn').addEventListener('click', function () { redeem(gin); });
@@ -366,7 +366,7 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
     } else if (def.kind === 'account') {
       buildAccount(entry);
     } else if (def.kind === 'friends') {
-      body.innerHTML = '친구 목록이 비어 있어요.<br>친구 관리 기능은 준비 중이에요.';
+      body.innerHTML = '친구 목록이 비어 있습니다.<br>친구 관리 기능은 준비 중입니다.';
     } else if (def.kind === 'map') {
       buildMap(body);
     }
@@ -412,7 +412,7 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
     var btns = [['선물 코드 열기', function () { box.el.remove(); openWin(wins.filter(function (o) { return o.def.id === 'gift'; })[0]); }],
                 ['확인', function () { box.el.remove(); }]];
     if (window.Core && Core.ready && !st.user) btns.unshift(['카카오 로그인', function () { Core.login(); }]);
-    box.say('이 창은 권한이 있는 사람만 열 수 있어요.\n받은 선물 코드를 넣어 권한을 등록한 뒤 다시 시도해 주세요.', btns);
+    box.say('이 창은 권한이 있는 사람만 열 수 있습니다.\n받은 선물 코드를 넣어 권한을 등록한 뒤 다시 시도해 주십시오.', btns);
   }
   function toggleMax(entry) {
     var on = !entry.el.classList.contains('maxed');
@@ -441,7 +441,7 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
     // 못 불러오면 그림 지도로 바꾸고 이유를 잠깐 보여 줌
     function fail(why) {
       win.classList.remove('live'); box.remove(); sh.remove(); buildPictureMap(body);
-      if (window.Core) Core.toast('카카오 지도를 못 불러왔어요: ' + why);
+      if (window.Core) Core.toast('카카오 지도를 못 불러왔습니다: ' + why);
       console.warn('카카오 지도 실패:', why, location.origin);
     }
     var sc = document.createElement('script');
@@ -525,10 +525,10 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
     var btn = document.createElement('button'); btn.type = 'button'; btn.className = 'xbtn mebtn'; btn.textContent = '내 위치';
     btn.addEventListener('click', function () {
       if (here) map.panTo(here);
-      else if (window.Core) Core.toast('아직 위치를 찾는 중이에요');
+      else if (window.Core) Core.toast('아직 위치를 찾는 중입니다');
     });
     body.appendChild(btn);
-    if (!navigator.geolocation) { if (window.Core) Core.toast('이 기기에서는 위치를 알 수 없어요'); return; }
+    if (!navigator.geolocation) { if (window.Core) Core.toast('이 기기에서는 위치를 알 수 없습니다'); return; }
     var first = true, warned = false;
     navigator.geolocation.watchPosition(function (p) {
       here = new kakao.maps.LatLng(p.coords.latitude, p.coords.longitude);
@@ -537,7 +537,7 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
     }, function (err) {
       if (!window.Core || warned) return;
       warned = true;   // 안내는 한 번만
-      Core.toast(err.code === 1 ? '위치 권한이 꺼져 있어요 (브라우저 설정에서 켜 주세요)' : '현재 위치를 찾지 못했어요');
+      Core.toast(err.code === 1 ? '위치 권한이 꺼져 있습니다 (브라우저 설정에서 켜 주십시오)' : '현재 위치를 찾지 못했습니다');
     }, { enableHighAccuracy: true, maximumAge: 10000, timeout: 20000 });
   }
 
@@ -550,7 +550,7 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
     if (!window.Core || !Core.ready || !st.user) {
       var lb = msgBox('선물 코드', 'icon-gift.png'), bs = [['확인', function () { lb.el.remove(); }]];
       if (window.Core && Core.ready) bs.unshift(['카카오 로그인', function () { Core.login(); }]);
-      lb.say('로그인한 뒤에 쓸 수 있어요.', bs); return;
+      lb.say('로그인한 뒤에 쓸 수 있습니다.', bs); return;
     }
     Core.sb.rpc('redeem_gift_code', { input: code }).then(function (r) {
       var box = msgBox('선물 코드', 'icon-gift.png');
@@ -558,10 +558,10 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
       if (r.error) { box.say(errText(r.error), ok); return; }
       var g = r.data || {};
       var name = g.label + (g.dept ? ' ' + g.dept : '');
-      box.say(g.already ? '이미 등록된 코드예요. (' + name + ')'
-        : g.kind === 'activity' ? '‘' + name + '’ 활동이 추가됐어요.'
-        : g.kind === 'owner' || g.kind === 'tester' ? '‘' + name + '’ 권한이 등록됐어요.'
-        : '‘' + name + '’ ' + (g.kind === 'student' ? '학생' : '주민') + '으로 인증됐어요.', ok);
+      box.say(g.already ? '이미 등록된 코드입니다. (' + name + ')'
+        : g.kind === 'activity' ? '‘' + name + '’ 활동이 추가되었습니다.'
+        : g.kind === 'owner' || g.kind === 'tester' ? '‘' + name + '’ 권한이 등록되었습니다.'
+        : '‘' + name + '’ ' + (g.kind === 'student' ? '학생' : '주민') + '으로 인증되었습니다.', ok);
       input.value = '';
       Core.reload();
     });
@@ -569,8 +569,8 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
   // 서버 오류를 읽기 쉬운 말로
   function errText(e) {
     var m = (e && e.message) || '';
-    if (/function|column|schema cache|does not exist/i.test(m)) return '서버 설정이 아직 안 됐어요. (관리자: supabase/schema.sql 8~12번 실행)';
-    return m || '잠시 뒤 다시 해 주세요.';
+    if (/function|column|schema cache|does not exist/i.test(m)) return '서버 설정이 아직 안 되었습니다. (관리자: supabase/schema.sql 8~12번 실행)';
+    return m || '잠시 뒤 다시 해 주십시오.';
   }
 
   /* ── 3D 도구 불러오기 (나의 계정의 물고기 그림에만 필요해서 처음 열 때 한 번) ── */
@@ -608,9 +608,9 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
       tabs.querySelectorAll('.ptab').forEach(function (b) { b.setAttribute('aria-selected', b.dataset.tab === cur ? 'true' : 'false'); });
       panel.innerHTML = '';
       var st = window.Core ? Core.state : {};
-      if (!window.Core || !Core.ready) { panel.appendChild(el('p', 'empty', '서버 설정 전이라 계정을 쓸 수 없어요.')); return; }
+      if (!window.Core || !Core.ready) { panel.appendChild(el('p', 'empty', '서버 설정 전이라 계정을 쓸 수 없습니다.')); return; }
       if (!st.user && cur !== 'kakao') {
-        panel.appendChild(el('p', 'empty', '카카오로 로그인하면 쓸 수 있어요.'));
+        panel.appendChild(el('p', 'empty', '카카오로 로그인하면 쓸 수 있습니다.'));
         panel.appendChild(button('카카오로 로그인', function () { Core.login(); }));
         return;
       }
@@ -633,7 +633,7 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
   function drawKakao(panel, st) {
     var g = group('카카오 계정');
     if (!st.user) {
-      g.appendChild(el('p', 'empty', '로그인하지 않았어요.'));
+      g.appendChild(el('p', 'empty', '로그인하지 않았습니다.'));
       var r0 = el('div', 'prow'); r0.appendChild(button('카카오로 로그인', function () { Core.login(); })); g.appendChild(r0);
       panel.appendChild(g); return;
     }
@@ -648,7 +648,7 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
     var idd = line('고유 번호', me.id || '-');
     if (me.id) {
       var cp = el('button', 'xbtn mini', '복사'); cp.type = 'button';
-      cp.addEventListener('click', function () { copyText(me.id).then(function (ok) { Core.toast(ok ? '고유 번호를 복사했어요.' : '복사하지 못했어요.'); }); });
+      cp.addEventListener('click', function () { copyText(me.id).then(function (ok) { Core.toast(ok ? '고유 번호를 복사했습니다.' : '복사하지 못했습니다.'); }); });
       idd.appendChild(cp);
     }
     line('가입한 날', p.created_at ? new Date(p.created_at).toLocaleDateString('ko-KR') : '-');
@@ -661,7 +661,7 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
 
     // 관리자 문의: 카카오톡 채널 추가 · 1:1 채팅 (머리말을 복사해 두고 채팅으로 이동)
     var q = group('관리자 문의');
-    q.appendChild(el('p', 'note', '카카오톡 채널로 관리자에게 물어볼 수 있어요. ‘1:1 문의하기’를 누르면 내 고유 번호가 담긴 머리말이 복사돼요. 채팅창에 붙여 넣고 내용을 써 주세요.'));
+    q.appendChild(el('p', 'note', '카카오톡 채널로 관리자에게 물어볼 수 있습니다. ‘1:1 문의하기’를 누르면 내 고유 번호가 담긴 머리말이 복사됩니다. 채팅창에 붙여 넣고 내용을 써 주십시오.'));
     var qr = el('div', 'prow');
     qr.appendChild(button('채널 추가', function () { window.open(CHANNEL + '/friend', '_blank', 'noopener'); }));
     qr.appendChild(button('1:1 문의하기', function () { askAdmin(st); }));
@@ -669,14 +669,14 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
     panel.appendChild(q);
 
     var d = group('계정 삭제'); d.classList.add('danger');
-    d.appendChild(el('p', 'note', '계정과 활동 기록, 아바타, 소속이 모두 지워지고 되돌릴 수 없어요.'));
+    d.appendChild(el('p', 'note', '계정과 활동 기록, 아바타, 소속이 모두 지워지고 되돌릴 수 없습니다.'));
     var armed = false, t = null;
     var del = button('계정 삭제…', function () {
-      if (!armed) { armed = true; del.textContent = '정말 삭제할까요? 한 번 더 누르기'; t = setTimeout(function () { armed = false; del.textContent = '계정 삭제…'; }, 4000); return; }
+      if (!armed) { armed = true; del.textContent = '정말 삭제하시겠습니까? 한 번 더 누르기'; t = setTimeout(function () { armed = false; del.textContent = '계정 삭제…'; }, 4000); return; }
       clearTimeout(t); del.disabled = true;
       Core.sb.rpc('delete_my_account').then(function (r) {
         if (r.error) { del.disabled = false; armed = false; del.textContent = '계정 삭제…'; Core.toast(errText(r.error)); return; }
-        Core.sb.auth.signOut(); Core.toast('계정을 삭제했어요.');
+        Core.sb.auth.signOut(); Core.toast('계정을 삭제했습니다.');
       });
     });
     var r2 = el('div', 'prow'); r2.appendChild(del); d.appendChild(r2);
@@ -718,8 +718,8 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
     var text = askHeader(st);
     copyText(text).then(function (ok) {
       var box = msgBox('관리자 문의', 'icon-info.png');
-      box.say((ok ? '아래 머리말을 복사했어요. 카카오톡 채팅창에 붙여 넣고 문의 내용을 써 주세요.'
-                  : '복사하지 못했어요. 아래 내용을 길게 눌러 복사한 뒤 채팅창에 붙여 넣어 주세요.') + '\n\n' + text,
+      box.say((ok ? '아래 머리말을 복사했습니다. 카카오톡 채팅창에 붙여 넣고 문의 내용을 써 주십시오.'
+                  : '복사하지 못했습니다. 아래 내용을 길게 눌러 복사한 뒤 채팅창에 붙여 넣어 주십시오.') + '\n\n' + text,
         [['카카오톡으로 이동', function () { window.open(CHANNEL + '/chat', '_blank', 'noopener'); box.el.remove(); }],
          ['닫기', function () { box.el.remove(); }]]);
     });
@@ -776,7 +776,7 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
         var v = nin.value.trim(); if (!v) return;
         Core.sb.from('profiles').update({ nickname: v }).eq('id', st.user.id).then(function (r) {
           if (r.error) { Core.toast(errText(r.error)); return; }
-          Core.toast('닉네임을 바꿨어요.'); Core.reload();
+          Core.toast('닉네임을 바꿨습니다.'); Core.reload();
         });
       }));
       right.appendChild(nrow);
@@ -825,7 +825,7 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
         clearTimeout(timer); stat.textContent = '저장 중…';
         timer = setTimeout(function () {
           Core.sb.from('profiles').update({ avatar: av }).eq('id', st.user.id).then(function (r) {
-            stat.textContent = r.error ? errText(r.error) : '저장됐어요.';
+            stat.textContent = r.error ? errText(r.error) : '저장되었습니다.';
             if (!r.error && st.profile) st.profile.avatar = JSON.parse(JSON.stringify(av));
           });
         }, 500);
@@ -833,7 +833,7 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
       drawPrev();
       panel.appendChild(box);
     }, function () {
-      panel.innerHTML = ''; panel.appendChild(el('p', 'empty', '물고기 그림을 불러오지 못했어요.'));
+      panel.innerHTML = ''; panel.appendChild(el('p', 'empty', '물고기 그림을 불러오지 못했습니다.'));
     });
   }
 
@@ -891,7 +891,7 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
     if (Core.isAdmin()) {
       var ar = el('div', 'role'), at = el('div', 'rtxt');
       at.appendChild(el('b', 'badge admin', '관리자')); at.appendChild(el('span', '', '사이트 관리자'));
-      ar.appendChild(at); ar.appendChild(el('span', 'note', '여기서 지울 수 없어요'));
+      ar.appendChild(at); ar.appendChild(el('span', 'note', '여기서 지울 수 없습니다'));
       pg.appendChild(ar);
     }
     owners.forEach(function (r) {
@@ -930,7 +930,7 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
       a.appendChild(row);
     });
     panel.appendChild(a);
-    panel.appendChild(el('p', 'note', '선물 코드 창에 받은 코드를 넣으면 권한 · 신분 · 활동이 자동으로 추가돼요. 점주 권한을 바꾸려면 지금 권한을 삭제한 뒤 새 코드를 넣어 주세요.'));
+    panel.appendChild(el('p', 'note', '선물 코드 창에 받은 코드를 넣으면 권한 · 신분 · 활동이 자동으로 추가됩니다. 점주 권한을 바꾸려면 지금 권한을 삭제한 뒤 새 코드를 넣어 주십시오.'));
   }
 
   /* ── 맨 앞으로 ── */
@@ -1076,7 +1076,7 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
       });
       list.sort(function (a, b) { var r = String(a[sortKey] || '').localeCompare(String(b[sortKey] || ''), 'ko'); return sortUp ? r : -r; });
       box.innerHTML = '';
-      if (!list.length) { var e = document.createElement('div'); e.className = 'lempty'; e.textContent = '등록된 자료가 없어요.'; box.appendChild(e); }
+      if (!list.length) { var e = document.createElement('div'); e.className = 'lempty'; e.textContent = '등록된 자료가 없습니다.'; box.appendChild(e); }
       list.forEach(function (it) {
         var row = document.createElement('div'); row.className = 'lrow' + (it === picked ? ' on' : ''); row.setAttribute('role', 'row');
         COLS.forEach(function (c) {
@@ -1195,24 +1195,24 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
   function checkSpot(spot) {
     var box = msgBox(spot ? spot.name : '위치 확인');
     function close() { box.el.remove(); }
-    if (!spot) { box.say('알 수 없는 QR이에요.', [['확인', close]]); return; }
-    if (!navigator.geolocation) { box.say('이 기기에서는 위치를 알 수 없어요.', [['확인', close]]); return; }
+    if (!spot) { box.say('알 수 없는 QR입니다.', [['확인', close]]); return; }
+    if (!navigator.geolocation) { box.say('이 기기에서는 위치를 알 수 없습니다.', [['확인', close]]); return; }
     function run() {
-      box.say('지금 위치를 확인하고 있어요…');
+      box.say('지금 위치를 확인하고 있습니다…');
       navigator.geolocation.getCurrentPosition(function (p) {
         var lat = p.coords.latitude, lng = p.coords.longitude, acc = Math.round(p.coords.accuracy || 0);
         if (inSpot(spot, lat, lng)) {
           box.el.classList.add('ok');
-          box.say(spot.name + '에 도착했어요!', [['확인', close]]);
+          box.say(spot.name + '에 도착했습니다!', [['확인', close]]);
           if (window.Core) Core.log('spot_ok', { spot: spot.id, acc: acc });
           return;
         }
         var far = Math.round(spotDistance(spot, lat, lng));
-        var note = acc > 30 ? '\n(지금 위치 오차가 ±' + acc + 'm라 정확하지 않을 수 있어요. 창가나 밖에서 다시 해 보세요)' : '';
-        box.say('아직 ' + spot.name + '에 도착하지 않았어요. 약 ' + far + 'm 떨어져 있어요.' + note, [['다시 확인', run], ['닫기', close]]);
+        var note = acc > 30 ? '\n(지금 위치 오차가 ±' + acc + 'm라 정확하지 않을 수 있습니다. 창가나 밖에서 다시 해 보십시오)' : '';
+        box.say('아직 ' + spot.name + '에 도착하지 않았습니다. 약 ' + far + 'm 떨어져 있습니다.' + note, [['다시 확인', run], ['닫기', close]]);
         if (window.Core) Core.log('spot_far', { spot: spot.id, far: far, acc: acc });
       }, function (err) {
-        box.say(err.code === 1 ? '위치 권한이 꺼져 있어요. 브라우저 설정에서 위치를 허용한 뒤 다시 해 주세요.' : '위치를 찾지 못했어요.',
+        box.say(err.code === 1 ? '위치 권한이 꺼져 있습니다. 브라우저 설정에서 위치를 허용한 뒤 다시 해 주십시오.' : '위치를 찾지 못했습니다.',
           [['다시 확인', run], ['닫기', close]]);
       }, { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 });
     }

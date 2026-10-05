@@ -50,8 +50,8 @@
 
   btn.addEventListener('click', function () {
     compose().toBlob(function (blob) {
-      if (!blob) { Core.toast('사진을 만들지 못했어요'); return; }
-      save(blob).then(function () { Core.toast('촬영본을 저장했어요'); Core.log('photo'); });
+      if (!blob) { Core.toast('사진을 만들지 못했습니다'); return; }
+      save(blob).then(function () { Core.toast('촬영본을 저장했습니다'); Core.log('photo'); });
     }, 'image/png');
   });
 })();

@@ -422,7 +422,7 @@
     kit.watchData(d.updated, build);
   }).catch(function(e){
     msg.hidden = false;
-    msg.textContent = 'reef-data.json을 읽지 못했어요. 이 파일과 같은 폴더에 reef-data.json과 reef-kit.js가 있는지 확인해 주세요. (' + (e && e.message || e) + ')';
+    msg.textContent = 'reef-data.json을 읽지 못했습니다. 이 파일과 같은 폴더에 reef-data.json과 reef-kit.js가 있는지 확인해 주십시오. (' + (e && e.message || e) + ')';
     frame();
   });
   // All Reefs 미리보기 창에서는 어떤 reef 설정을 쓸지 같이 알려줌

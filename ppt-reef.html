@@ -225,7 +225,7 @@
   <p id="msg" hidden></p>
 </div>
 <div class="xp-only xpal" id="xpPal"><span class="xcur"><i id="xpCur"></i></span><div class="xswatch" id="xpSw"></div></div>
-<div class="xp-only xstat"><span id="xpHelp">물고기를 누르면 말을 해요 · 아래 색을 누르면 배경색이 바뀌어요</span><span id="xpCount"></span></div>
+<div class="xp-only xstat"><span id="xpHelp">물고기를 누르면 말을 합니다 · 아래 색을 누르면 배경색이 바뀝니다</span><span id="xpCount"></span></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="reef-kit.js"></script>
@@ -683,7 +683,7 @@
     } },
     { label: '도움말', items: function(){ return [
       { label: '끌어서 돌리기 · 휠로 확대', off: true },
-      { label: '물고기를 누르면 말을 해요', off: true }
+      { label: '물고기를 누르면 말을 합니다', off: true }
     ]; } }
   ];
   var openAt = null, openedAt = 0;
@@ -780,7 +780,7 @@
     kit.watchData(d.updated, build);
   }).catch(function(e){
     msg.hidden = false;
-    msg.textContent = 'reef-data.json을 읽지 못했어요. 이 파일과 같은 폴더에 reef-data.json과 reef-kit.js가 있는지 확인해 주세요. (' + (e && e.message || e) + ')';
+    msg.textContent = 'reef-data.json을 읽지 못했습니다. 이 파일과 같은 폴더에 reef-data.json과 reef-kit.js가 있는지 확인해 주십시오. (' + (e && e.message || e) + ')';
     frame();
   });
   // All Reefs 미리보기 창에서는 어떤 reef 설정을 쓸지 같이 알려줌

@@ -44,19 +44,19 @@
     main.innerHTML = '';
     if (!Core.ready) {
       var c = el('div', 'card');
-      c.appendChild(el('p', 'muted', '서버 설정이 아직 비어 있어요. js/config.js에 Supabase 주소와 키를 넣어 주세요.'));
+      c.appendChild(el('p', 'muted', '서버 설정이 아직 비어 있습니다. js/config.js에 Supabase 주소와 키를 넣어 주십시오.'));
       main.appendChild(c); return;
     }
     if (!state.loaded) { main.appendChild(el('p', 'muted', '불러오는 중…')); return; }
     if (!state.user) {
       var c2 = el('div', 'card center');
-      c2.appendChild(el('p', 'muted', '관리자 계정으로 로그인해 주세요.'));
+      c2.appendChild(el('p', 'muted', '관리자 계정으로 로그인해 주십시오.'));
       var b = el('button', 'kakao', '카카오 로그인'); b.type = 'button'; b.addEventListener('click', Core.login);
       c2.appendChild(b); main.appendChild(c2); return;
     }
     if (!Core.isAdmin()) {
       var c3 = el('div', 'card');
-      c3.appendChild(el('p', 'muted', '여기서 뭐하세요 :('));
+      c3.appendChild(el('p', 'muted', '여기서 무엇을 하십니까 :('));
       main.appendChild(c3); return;
     }
     drawDashboard();
@@ -159,7 +159,7 @@
         t.appendChild(tr);
       });
       wrap.appendChild(t); card.appendChild(wrap);
-      if (!(r.data || []).length) card.appendChild(el('p', 'muted', '아직 기록이 없어요.'));
+      if (!(r.data || []).length) card.appendChild(el('p', 'muted', '아직 기록이 없습니다.'));
     });
   }
 
