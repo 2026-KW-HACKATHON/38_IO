@@ -1,0 +1,72 @@
+/* 월계 아쿠아(AR 화면) 전용: 윈도우 비스타 모양. 글꼴은 Segoe UI / 맑은 고딕 (없으면 나눔고딕) */
+@import url("https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@400;700&display=swap");
+:root{ --vfont:"Segoe UI","맑은 고딕","Malgun Gothic","Nanum Gothic","Apple SD Gothic Neo",sans-serif; }
+html,body,button,input{font-family:var(--vfont)}
+body{background:#1f5f97}
+
+/* 카메라를 쓰지 않을 때 뒤에 깔리는 바탕화면 (카메라를 켜면 카메라 화면이 덮음) */
+#stage{background:#2a6aa0 url("../assets/start/bg.jpg") center/cover no-repeat}
+
+/* 비스타 단추: 위 절반은 밝고 아래 절반은 조금 어두운 회색, 올리면 하늘색, 누르면 진한 하늘색 */
+.pill,.kakao,#auth .mini,#gate .xbtn{appearance:none;display:inline-block;font-size:13px;line-height:1.2;color:#000;text-decoration:none;
+  padding:5px 16px;border:1px solid #707070;border-radius:3px;letter-spacing:0;font-weight:400;cursor:pointer;
+  background:linear-gradient(180deg,#f2f2f2 0%,#ebebeb 49%,#dddddd 50%,#cfcfcf 100%);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.75),0 1px 2px rgba(0,0,0,.18);backdrop-filter:none;-webkit-backdrop-filter:none}
+.pill:hover,.kakao:hover,#auth .mini:hover,#gate .xbtn:hover{border-color:#3c7fb1;
+  background:linear-gradient(180deg,#eaf6fd 0%,#d9f0fc 49%,#bee6fd 50%,#a7d9f5 100%);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.75),0 1px 2px rgba(0,0,0,.18)}
+.pill:active,.kakao:active,#auth .mini:active,#gate .xbtn:active,
+.pill[aria-pressed="true"],.pill.gold[aria-pressed="true"]{border-color:#2c628b;color:#000;font-weight:400;
+  background:linear-gradient(180deg,#e5f4fc 0%,#c4e5f6 49%,#98d1ef 50%,#68b3db 100%);
+  box-shadow:inset 1px 1px 2px rgba(0,0,0,.28)}
+/* 기본 단추 (AR 시작): 파란 테두리 안쪽에 하늘빛 테두리 */
+#gate .xbtn.def{border-color:#3c7fb1;box-shadow:inset 0 0 0 1px #48d1f5,inset 0 0 0 2px rgba(255,255,255,.6),0 1px 2px rgba(0,0,0,.18)}
+.pill:focus-visible,.kakao:focus-visible,#gate .xbtn:focus-visible{outline:1px dotted #000;outline-offset:-4px}
+.kakao::before{content:"";display:inline-block;width:9px;height:9px;margin-right:6px;border-radius:2px;background:#fee500;
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.25);vertical-align:0}
+
+/* 위쪽: 이름과 권한 상태 */
+#brand b{font-size:17px;font-weight:600;color:#fff;text-shadow:0 1px 3px rgba(0,30,60,.6)}
+.chip{font-family:var(--vfont);font-size:11px;letter-spacing:0;color:#1e395b;padding:3px 8px;border-radius:3px;
+  background:linear-gradient(180deg,rgba(255,255,255,.9),rgba(228,236,246,.85));border:1px solid rgba(80,100,130,.55);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.7);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.chip.on{color:#1a6b1a;border-color:rgba(60,140,60,.6)}
+.chip.off{color:#b0281a;border-color:rgba(190,60,40,.6)}
+#auth .who{color:#fff;font-size:13px;text-shadow:0 1px 3px rgba(0,30,60,.7)}
+#auth .mini{padding:3px 10px;font-size:12px}
+
+/* 안내 글: 비스타 풍선 도움말 */
+#toast{background:linear-gradient(180deg,#fff 0%,#e4e5f0 100%);color:#575757;border:1px solid #767676;border-radius:3px;
+  box-shadow:1px 2px 4px rgba(0,0,0,.3);font-size:13px;padding:6px 12px}
+
+/* ── 처음 화면: 비스타 유리 창 'About QRium' ── */
+#gate .about{position:relative;width:min(440px,100%);padding:0 7px 7px;border-radius:7px;color:#000;
+  border:1px solid rgba(30,45,70,.75);
+  background:linear-gradient(115deg,rgba(255,255,255,0) 28%,rgba(255,255,255,.35) 36%,rgba(255,255,255,0) 46%),
+    linear-gradient(180deg,rgba(255,255,255,.62) 0%,rgba(200,222,243,.5) 40%,rgba(170,200,232,.55) 100%);
+  backdrop-filter:blur(7px) saturate(1.5);-webkit-backdrop-filter:blur(7px) saturate(1.5);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.7),0 8px 24px rgba(0,0,0,.45)}
+#gate .abar{position:relative;height:30px;padding:0 0 0 4px;background:none;border:0;border-radius:0;display:flex;align-items:center}
+#gate .attl{font-family:var(--vfont);font-size:13px;font-weight:400;color:#000;text-shadow:0 0 8px #fff,0 0 4px #fff,0 0 2px #fff}
+/* 빨간 닫기 단추: 위 테두리에 매달린 모양 */
+#gate .acls{position:absolute;top:-1px;right:-1px;width:43px;height:19px;border:1px solid #4a1209;border-top:0;border-radius:0 0 4px 4px;
+  background:url("../assets/start/vclose.svg") center/43px 18px no-repeat,
+    linear-gradient(180deg,#e9a99a 0%,#d47a64 42%,#b8381c 50%,#c4482a 75%,#de7c5a 100%);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.45)}
+#gate .acls:hover{background:url("../assets/start/vclose.svg") center/43px 18px no-repeat,
+    linear-gradient(180deg,#f7c3b5 0%,#ea8d73 42%,#d43d1c 50%,#e05530 75%,#ff9a6a 100%);box-shadow:inset 0 0 0 1px rgba(255,255,255,.55),0 0 8px rgba(255,120,80,.8)}
+#gate .acls:active{background:url("../assets/start/vclose.svg") center/43px 18px no-repeat,
+    linear-gradient(180deg,#c86f5a 0%,#a83a22 50%,#8d2510 100%)}
+/* 안쪽: 배너 + 흰 본문 + 회색 단추 줄, 가는 테두리 */
+#gate .abanner{margin:0;border:1px solid rgba(40,60,90,.55);border-bottom:0;aspect-ratio:1000/380}
+#gate .alogo .l1{font-family:var(--vfont);font-weight:600}
+#gate .alogo .l2{font-family:var(--vfont);font-weight:300}
+#gate .abody{margin:0;padding:0;background:#fff;border:1px solid rgba(40,60,90,.55);border-top:0;font-size:13px}
+#gate .abody > p{padding:0 18px}
+#gate .abody > p:first-child{padding-top:14px}
+#gate .abody .lead{color:#1e5aa8;font-size:15px}
+#gate .abody .fine{color:#666;font-size:12px}
+#gate .modes a{color:#0066cc}
+#gate .abody hr{display:none}
+#gate .abtns{background:#f0f0f0;border-top:1px solid #dfdfdf;padding:10px 12px;margin-top:4px}
+#gate .xbtn{min-width:86px;height:auto}
