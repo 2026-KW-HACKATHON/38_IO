@@ -58,11 +58,12 @@
 
   function isAdmin() { return !!(state.profile && state.profile.is_admin); }
 
-  // 권한 목록: 'admin'(관리자), 'owner:가게'(점주). 화면에서 다른 작업을 허락할 때 can('owner:cord')처럼 씀
+  // 권한 목록: 'admin'(관리자), 'owner:가게'(점주), 'tester'(베타테스터). 화면에서 다른 작업을 허락할 때 can('owner:cord')처럼 씀
   function perms() {
     var list = isAdmin() ? ['admin'] : [];
     ((state.profile && state.profile.roles) || []).forEach(function (r) {
       if (r.kind === 'owner') list.push('owner:' + (r.spot || r.code));
+      if (r.kind === 'tester') list.push('tester');
     });
     return list;
   }

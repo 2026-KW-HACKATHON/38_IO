@@ -214,3 +214,14 @@ begin
 end $$;
 revoke all on function public.redeem_gift_code(text) from public, anon;
 grant execute on function public.redeem_gift_code(text) to authenticated;
+
+-- ───────── 베타테스터 권한 (아래만 따로 붙여넣고 Run 해도 됨, 13번을 먼저 실행해야 함) ─────────
+
+-- 14) 선물 코드 종류에 tester(베타테스터) 추가. 다른 권한 · 신분과 함께 가질 수 있음
+alter table public.gift_codes drop constraint if exists gift_codes_kind_check;
+alter table public.gift_codes add constraint gift_codes_kind_check
+  check (kind in ('resident', 'student', 'activity', 'owner', 'tester'));
+
+insert into public.gift_codes (code, kind, label) values
+  ('***', 'tester', '베타테스터')
+on conflict (code) do nothing;

@@ -90,7 +90,7 @@ fieldset.grp{border:1px solid #d0d0bf;border-radius:4px;padding:4px 10px 10px;ma
 .role + .role{border-top:1px solid #ecebe5}
 .rtxt{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
 .badge{font-weight:700;color:#fff;background:#316ac5;padding:1px 6px;border-radius:2px;font-size:11px}
-.badge.admin{background:#c0392b}.badge.owner{background:#2e8b3e}
+.badge.admin{background:#c0392b}.badge.owner{background:#2e8b3e}.badge.tester{background:#7b4bb7}
 .rsub{flex-basis:100%;color:#444;padding-left:2px}
 /* 아바타 */
 .avbox{display:grid;grid-template-columns:112px 1fr;gap:12px;align-items:start}
@@ -476,7 +476,7 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
       var name = g.label + (g.dept ? ' ' + g.dept : '');
       box.say(g.already ? '이미 등록된 코드예요. (' + name + ')'
         : g.kind === 'activity' ? '‘' + name + '’ 활동이 추가됐어요.'
-        : g.kind === 'owner' ? '‘' + name + '’ 권한이 등록됐어요.'
+        : g.kind === 'owner' || g.kind === 'tester' ? '‘' + name + '’ 권한이 등록됐어요.'
         : '‘' + name + '’ ' + (g.kind === 'student' ? '학생' : '주민') + '으로 인증됐어요.', ok);
       input.value = '';
       Core.reload();
@@ -743,9 +743,9 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
       });
     }
 
-    // 권한: 관리자는 다른 권한과 함께 가질 수 있음 (여기서는 못 지움), 점주는 하나만
+    // 권한: 관리자 · 베타테스터는 다른 권한과 함께 가질 수 있음 (관리자는 여기서 못 지움), 점주는 하나만
     var pg = group('권한');
-    var owners = roles.filter(function (r) { return r.kind === 'owner'; });
+    var owners = roles.filter(function (r) { return r.kind === 'owner' || r.kind === 'tester'; });
     if (Core.isAdmin()) {
       var ar = el('div', 'role'), at = el('div', 'rtxt');
       at.appendChild(el('b', 'badge admin', '관리자')); at.appendChild(el('span', '', '사이트 관리자'));
@@ -754,7 +754,9 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
     }
     owners.forEach(function (r) {
       var row = el('div', 'role'), txt = el('div', 'rtxt');
-      txt.appendChild(el('b', 'badge owner', '점주')); txt.appendChild(el('span', '', r.label));
+      if (r.kind === 'tester') txt.appendChild(el('b', 'badge tester', '베타'));
+      else txt.appendChild(el('b', 'badge owner', '점주'));
+      txt.appendChild(el('span', '', r.label));
       row.appendChild(txt);
       var b0 = button('삭제', function () { del(r.code, b0); }); row.appendChild(b0);
       pg.appendChild(row);
