@@ -9,43 +9,55 @@
 </head>
 <body>
 <div id="app">
-  <!-- 위쪽: 제목과 작은 링크 -->
-  <header id="head">
-    <div class="ttl"><b>디저트카페 후아나</b><span>한 줄 남기면 물고기가 어항에 풀려나요</span></div>
-    <nav class="links">
-      <button id="bLogin" type="button">카카오 로그인</button>
-      <a href="xp_web.html">월계 공간</a>
-    </nav>
-  </header>
-
-  <!-- 어항: 남긴 리뷰마다 물고기 한 마리, 2분 안에 같이 남기면 한 무리 -->
-  <main id="tank">
-    <img class="bgfx" src="assets/reef/water-tank.webp" alt="">
-    <canvas id="gl"></canvas>
-    <p id="empty" class="hidden">아직 물고기가 없어요. 첫 리뷰를 남겨 보세요!</p>
-  </main>
-
-  <!-- 아래쪽: 남기기 / 보기 -->
-  <section id="sheet">
-    <div class="tabs">
-      <button id="tWrite" class="on" type="button">남기기</button>
-      <button id="tList" type="button">리뷰 보기 <b id="cnt"></b></button>
+  <div class="win">
+    <!-- 제목줄: 비스타 유리 창 -->
+    <div class="cap">
+      <img class="ico" src="assets/space/aero/icon-fish.png" alt="">
+      <span class="attl">디저트카페 후아나 - 월계 아쿠아</span>
+      <span class="cbtns" aria-hidden="true"><i class="cmin"></i><i class="cmax"></i><i class="cx"></i></span>
+    </div>
+    <!-- 주소 줄과 작은 단추들 -->
+    <div class="cmd">
+      <span class="crumb">« 후아나 ▸ 어항</span>
+      <nav class="links">
+        <button id="bAdmin" class="vbtn hidden" type="button">관리자 모드</button>
+        <button id="bLogin" class="vbtn" type="button">카카오 로그인</button>
+        <a class="vbtn" href="xp_web.html">월계 공간</a>
+      </nav>
     </div>
 
-    <div id="pWrite">
-      <!-- 위치 확인 상태와 안내 -->
-      <div id="gstat"></div>
-      <div id="form" class="hidden">
-        <div class="lbl">물고기 고르기</div>
-        <div id="picks" class="picks"></div>
-        <label class="fld"><span>닉네임 (선택)</span><input id="nick" type="text" maxlength="12" autocomplete="off" placeholder="비워도 돼요"></label>
-        <label class="fld"><span>한 줄 평</span><input id="body" type="text" maxlength="60" autocomplete="off" placeholder="단어나 이모지도 좋아요 😊"></label>
-        <button id="send" class="big" type="button">물고기 풀어주기</button>
-      </div>
-    </div>
+    <div class="client">
+      <!-- 어항: 남긴 리뷰마다 물고기 한 마리, 2분 안에 같이 남기면 한 무리 -->
+      <main id="tank">
+        <img class="bgfx" src="assets/reef/water-tank.webp" alt="">
+        <canvas id="gl"></canvas>
+        <p id="empty" class="hidden">아직 물고기가 없어요. 첫 리뷰를 남겨 보세요!</p>
+      </main>
 
-    <div id="pList" class="hidden"><div id="list"></div></div>
-  </section>
+      <!-- 아래쪽: 남기기 / 보기 -->
+      <section id="sheet">
+        <div class="tabs">
+          <button id="tWrite" class="on" type="button">남기기</button>
+          <button id="tList" type="button">리뷰 보기 <b id="cnt"></b></button>
+        </div>
+        <div class="pane">
+          <div id="pWrite">
+            <div id="gstat"></div>
+            <div id="form" class="hidden">
+              <div class="lbl">물고기 고르기</div>
+              <div id="picks" class="picks"></div>
+              <div class="lbl">아이템 (선택)</div>
+              <div id="items" class="chips"></div>
+              <label class="fld"><span>닉네임 (선택)</span><input id="nick" type="text" maxlength="12" autocomplete="off" placeholder="비워도 돼요"></label>
+              <label class="fld"><span>한 줄 평</span><input id="body" type="text" maxlength="60" autocomplete="off" placeholder="단어나 이모지도 좋아요 😊"></label>
+              <div class="foot"><button id="send" class="vbtn def big" type="button">물고기 풀어주기</button></div>
+            </div>
+          </div>
+          <div id="pList" class="hidden"><div id="list"></div></div>
+        </div>
+      </section>
+    </div>
+  </div>
 </div>
 <input id="rcpt" type="file" accept="image/*" hidden>
 <div id="toast"></div>

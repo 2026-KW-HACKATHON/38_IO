@@ -1,15 +1,19 @@
-/* 후아나 방문자 첫 화면: 위치(또는 영수증)로 방문을 확인하고, 물고기와 한 줄 평을 남기면 어항에 풀어 줌
-   서버(submit_wall_review)가 위치를 다시 확인하고, 2분 안에 남긴 리뷰는 같은 무리로 묶음 */
+/* 후아나 방문자 첫 화면: 위치(또는 영수증)로 방문을 확인하고, 물고기 · 아이템 · 한 줄 평을 남기면 어항에 풀어 줌
+   서버(submit_wall_review)가 위치를 다시 확인하고, 2분 안에 남긴 리뷰는 같은 무리로 묶음
+   관리자는 '관리자 모드'로 위치와 상관없이 남기고, 리뷰를 지울 수 있음 */
 (function () {
   "use strict";
   var SPOT = 'juana';
   var MAX_FISH = 24;                  // 어항에 동시에 띄우는 물고기 수 (최근 것부터)
   var POLL = 15000;                   // 새 리뷰 확인 간격
-  // 고를 수 있는 물고기 (reef-data.json의 id) 와 화면에 보일 이름
-  var SPECIES = [
-    ['blue-tang', '블루탱'], ['ryukin-goldfish', '금붕어'], ['emperor-angelfish', '엔젤피쉬'],
-    ['discus', '디스커스'], ['seahorse', '해마'], ['sea-turtle', '바다거북']
-  ];
+  // 고를 수 있는 물고기: reef-data.json의 id → 화면에 보일 이름 (이 순서대로 보임)
+  var NAMES = {
+    'clownfish': '흰동가리', 'blue-tang': '블루탱', 'ryukin-goldfish': '금붕어', 'emperor-angelfish': '엔젤피쉬',
+    'powder-blue-tang': '파우더블루', 'yellow-tang': '옐로탱', 'moorish-idol': '깃대돔', 'discus': '디스커스',
+    'seahorse': '해마', 'sea-turtle': '바다거북', 'shark': '상어', 'manta-ray': '만타가오리',
+    'tomato-clownfish': '토마토클라운', 'percula-clownfish': '퍼큘라클라운', 'domino-clownfish': '도미노클라운', 'snowflake-clownfish': '스노우플레이크'
+  };
+  var SIZE = { 'shark': 0.6, 'sea-turtle': 0.45, 'manta-ray': 0.6 };   // 어항 속 물고기 길이 (없으면 0.32)
   var kit = ReefKit(THREE);
   var $ = function (id) { return document.getElementById(id); };
   var sb = window.Core && Core.sb;
@@ -19,43 +23,40 @@
   function button(text, cls, fn) { var b = el('button', cls, text); b.type = 'button'; b.addEventListener('click', fn); return b; }
   function spot() { return (window.SPOTS || []).filter(function (o) { return o.id === SPOT; })[0]; }
 
-  /* ══ 1. 방문 확인: 위치 → 안 되면 영수증 ══ */
-  var proof = null;                   // { kind: 'gps' | 'receipt', lat, lng, receipt }
+  /* ══ 1. 방문 확인: 위치 → 안 되면 영수증 (관리자는 관리자 모드) ══ */
+  var proof = null, adminMode = false;   // proof: { kind: 'gps' | 'receipt' | 'admin', ... }
   var gstat = $('gstat'), form = $('form');
 
-  var lastShow = null;
   function show(msg, sub, cls, buttons, extra) {
-    lastShow = extra ? null : [msg, sub, cls, buttons];
     gstat.innerHTML = '';
     var m = el('div', 'msg ' + (cls || '')); m.appendChild(el('b', '', msg)); if (sub) m.appendChild(document.createTextNode(sub));
     if (extra) m.appendChild(extra);
     gstat.appendChild(m);
-    var ad = adminBtn(); if (ad && buttons) buttons = buttons.concat([ad]);
     if (buttons && buttons.length) { var r = el('div', 'row'); buttons.forEach(function (b) { r.appendChild(b); }); gstat.appendChild(r); }
     form.classList.add('hidden');
   }
   function verified(p) {
     proof = p;
     gstat.innerHTML = '';
-    gstat.appendChild(el('div', 'msg ok', p.kind === 'gps' ? '✔ 후아나에서 확인됐어요' : p.kind === 'admin' ? '✔ 관리자 시험 모드 (위치 확인 없음)' : '✔ 영수증으로 확인됐어요'));
+    gstat.appendChild(el('div', 'msg ok', p.kind === 'gps' ? '✔ 후아나에서 확인됐어요' : p.kind === 'admin' ? '✔ 관리자 모드 (위치 확인 없음)' : '✔ 영수증으로 확인됐어요'));
     form.classList.remove('hidden');
   }
-  // 관리자는 위치와 상관없이 시험 글을 남길 수 있음 (서버도 관리자인지 다시 확인)
-  function adminBtn() { return Core.isAdmin() ? button('관리자로 시험하기', 'sub', function () { verified({ kind: 'admin' }); }) : null; }
-  function receiptBtn() { return button('영수증으로 인증하기', 'sub', function () { $('rcpt').value = ''; $('rcpt').click(); }); }
-  function retryBtn() { return button('위치 다시 확인', 'sub', checkGeo); }
+  function receiptBtn() { return button('영수증으로 인증하기', 'vbtn', function () { $('rcpt').value = ''; $('rcpt').click(); }); }
+  function retryBtn() { return button('위치 다시 확인', 'vbtn', checkGeo); }
 
   function checkGeo() {
     proof = null;
     show('위치를 확인하는 중…', '위치 권한을 허용해 주세요', '', []);
     if (!navigator.geolocation) { show('위치를 쓸 수 없어요', '영수증으로 대신 인증할 수 있어요', 'bad', [receiptBtn()]); return; }
     navigator.geolocation.getCurrentPosition(function (p) {
+      if (adminMode) return;
       var sp = spot(), lat = p.coords.latitude, lng = p.coords.longitude;
       if (!sp || !sp.box) { show('매장 정보를 불러오지 못했어요', '잠시 뒤 다시 해 주세요', 'bad', [retryBtn()]); return; }
       var d = Math.round(window.spotDistance(sp, lat, lng));
       if (d <= window.SPOT_MARGIN_M) verified({ kind: 'gps', lat: lat, lng: lng });
       else show('후아나에서 ' + d + 'm 떨어져 있어요', '매장 안이나 바로 앞에서 남길 수 있어요', 'bad', [retryBtn(), receiptBtn()]);
     }, function (e) {
+      if (adminMode) return;
       if (e && e.code === 1) show('위치 권한이 꺼져 있어요', '영수증이 있으면 영수증으로 인증할 수 있어요', 'bad', [receiptBtn(), retryBtn()]);
       else show('위치를 찾지 못했어요', '잠시 뒤 다시 하거나 영수증으로 인증해 주세요', 'bad', [retryBtn(), receiptBtn()]);
     }, { enableHighAccuracy: true, timeout: 12000, maximumAge: 20000 });
@@ -81,6 +82,16 @@
     }, function () { show('영수증을 읽지 못했어요', '인터넷 연결을 확인하고 다시 해 주세요', 'bad', [receiptBtn(), retryBtn()]); });
   });
 
+  // 관리자 모드: 위치와 상관없이 남기고 리뷰를 지울 수 있음 (서버도 관리자인지 다시 확인)
+  function setAdmin(on) {
+    adminMode = on && Core.isAdmin();
+    $('bAdmin').classList.toggle('on', adminMode);
+    $('bAdmin').textContent = adminMode ? '관리자 모드 끄기' : '관리자 모드';
+    if (adminMode) verified({ kind: 'admin' }); else checkGeo();
+    drawList();
+  }
+  $('bAdmin').addEventListener('click', function () { setAdmin(!adminMode); });
+
   /* ══ 2. 어항 ══ */
   var renderer = new THREE.WebGLRenderer({ canvas: $('gl'), alpha: true, antialias: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
@@ -89,7 +100,7 @@
   scene.add(new THREE.HemisphereLight(0xdff6ff, 0x1a3a5a, 1.1));
   var sun = new THREE.DirectionalLight(0xffffff, 1.2); sun.position.set(3, 6, 4); scene.add(sun);
   var world = new THREE.Group(); scene.add(world);
-  var talk = null, speciesCfg = {}, style = null;
+  var talk = null, speciesCfg = {}, speciesIds = [], itemsCfg = [];
 
   var tank = $('tank'), camT = 0;
   function resize() {
@@ -114,28 +125,100 @@
   function addFish(r) {
     if (byId[r.id]) return;
     byId[r.id] = { r: r, pending: true };
-    var cfg = speciesCfg[r.fish] || speciesCfg[SPECIES[0][0]];
+    var cfg = speciesCfg[r.fish] || speciesCfg[speciesIds[0]];
     if (!cfg) return;
     queue = queue.then(function () {
-      return ReefModel.load(THREE, [Object.assign({}, cfg, { swim: 'path', count: null })]).then(function (m) {
-        var p = m.fish[0], g = groupOf(r.grp), L = p.sizeK * m.ref, k = g.n++;
+      if (!byId[r.id]) return;   // 불러오는 사이 지워진 리뷰
+      return ReefModel.load(THREE, [cfg]).then(function (m) {
+        if (!byId[r.id]) return;
+        var p = m.fish[0], g = groupOf(r.grp), k = g.n++, len;
         m.holder.position.set(g.c[0], g.c[1], g.c[2]);
-        // 같은 무리는 같은 고리 길을 조금씩 간격을 두고 돎
-        p.lane = { rx: g.rx, rz: g.rz, y: ((k % 3) - 1) * 0.035, sp: 0.9 * L / ((g.rx + g.rz) / 2) * p.speedK * 1.4, ph: k * 0.6 + g.c[0], dir: g.dir };
+        if (p.kind === 'path') {
+          // 혼자 헤엄치는 물고기: 같은 무리는 같은 고리 길을 조금씩 간격을 두고 돎
+          len = SIZE[r.fish] || 0.32;
+          p.obj.scale.setScalar(len / (p.sizeK * m.ref));
+          p.lane = { rx: g.rx, rz: g.rz, y: ((k % 3) - 1) * 0.035, sp: 0.25 * p.speedK / ((g.rx + g.rz) / 2), ph: k * 0.6 + g.c[0], dir: g.dir };
+        } else {
+          // 떼 물고기: 파일에 들어 있는 길을 돎. 어항 크기에 맞추고 같은 무리끼리는 시작 시각을 달리함
+          var sc = Math.min(0.3 / m.ref, 0.8 / m.size);
+          m.holder.scale.setScalar(sc); len = m.ref * sc;
+          m.update(k * 1.7);
+        }
         p.heads[0].userData.halfH = -1.5;
-        p.obj.scale.setScalar(1.6);   // 어항이 작아서 물고기를 키움
         world.add(m.holder);
-        var f = { r: r, m: m, p: p };
+        var f = { r: r, m: m, p: p, len: len };
         fishes.push(f); byId[r.id] = f;
-        while (fishes.length > MAX_FISH) { var old = fishes.shift(); world.remove(old.m.holder); delete byId[old.r.id]; }
+        wear(f);
+        while (fishes.length > MAX_FISH) dropFish(fishes[0]);
         $('empty').classList.add('hidden');
         if (r.fresh) say(f, 5);
       }).catch(function () { delete byId[r.id]; });
     });
   }
+  function dropFish(f) {
+    world.remove(f.m.holder);
+    if (f.worn) world.remove(f.worn.obj);
+    fishes.splice(fishes.indexOf(f), 1); delete byId[f.r.id];
+  }
+
+  /* ── 아이템: 머리 위에 띄움 (튀기 · 빛나기 · 둥실) ── */
+  var itemScenes = {}, haloTex = null;
+  function itemScene(url) {
+    return itemScenes[url] || (itemScenes[url] = new Promise(function (ok, no) { new THREE.GLTFLoader().load(url, function (g) { ok(g.scene); }, null, no); }));
+  }
+  function halo() {
+    if (haloTex) return haloTex;
+    var c = document.createElement('canvas'); c.width = c.height = 64;
+    var x = c.getContext('2d'), g = x.createRadialGradient(32, 32, 0, 32, 32, 32);
+    g.addColorStop(0, 'rgba(255,230,150,1)'); g.addColorStop(0.4, 'rgba(255,210,100,.45)'); g.addColorStop(1, 'rgba(255,200,80,0)');
+    x.fillStyle = g; x.fillRect(0, 0, 64, 64);
+    return (haloTex = new THREE.CanvasTexture(c));
+  }
+  function wear(f) {
+    var it = f.r.item && itemsCfg.filter(function (x) { return x.id === f.r.item; })[0];
+    if (!it || !it.model) return;
+    itemScene(it.model).then(function (sc) {
+      if (byId[f.r.id] !== f) return;
+      var o = sc.clone(true), wrap = new THREE.Group();
+      var box = new THREE.Box3().setFromObject(o), c = box.getCenter(new THREE.Vector3()), sz = box.getSize(new THREE.Vector3());
+      o.position.sub(c); wrap.add(o);
+      var w = { obj: wrap, wear: it.wear, ph: Math.random() * 6, lit: [] };
+      if (it.wear === 'glow') {   // 비치는 유리 부분만 빛나게 하고 빛 번짐을 붙임
+        var gb = new THREE.Box3(); wrap.updateMatrixWorld(true);
+        o.traverse(function (m) {
+          if (!m.isMesh || !m.material.transparent) return;
+          m.material = m.material.clone(); m.material.emissive = new THREE.Color(0xffd36a); w.lit.push(m.material); gb.expandByObject(m);
+        });
+        if (w.lit.length) {
+          w.halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: halo(), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+          gb.getCenter(w.halo.position); w.halo.scale.setScalar(Math.max.apply(null, gb.getSize(new THREE.Vector3()).toArray()) * 2); wrap.add(w.halo);
+        }
+      }
+      w.d = f.len * (+it.size || 0.4) * 1.1;
+      wrap.scale.setScalar(w.d / (Math.max(sz.x, sz.y, sz.z) || 1));
+      world.add(wrap); f.worn = w;
+    }).catch(function () {});
+  }
+  var wv = new THREE.Vector3();
+  function wearTick(t) {
+    fishes.forEach(function (f) {
+      var w = f.worn; if (!w) return;
+      f.p.heads[0].getWorldPosition(wv);
+      var hop = 0, a = t + w.ph;
+      if (w.wear === 'bounce') { hop = Math.abs(Math.sin(a * 3.2)) * w.d * 1.2; w.obj.rotation.y = a * 1.5; }
+      else if (w.wear === 'glow') {
+        hop = Math.sin(a * 1.4) * w.d * 0.08; w.obj.rotation.set(0, a * 0.4, Math.sin(a * 1.3) * 0.15);
+        var k = Math.max(0, Math.sin(a * 1.8)), on = k * k;
+        w.lit.forEach(function (m) { m.emissiveIntensity = on * 1.6; });
+        if (w.halo) w.halo.material.opacity = on * 0.7;
+      } else if (w.wear === 'float') { hop = (Math.sin(a * 1.6) + 1) * w.d * 0.15; w.obj.rotation.set(Math.sin(a * 1.1) * 0.12, a * 0.6, 0); }
+      else w.obj.rotation.y = a * 1.5;
+      w.obj.position.set(wv.x, wv.y + w.d * 0.9 + hop, wv.z);
+    });
+  }
 
   function say(f, sec) {
-    if (!talk || !f) return;
+    if (!talk || !f || !f.p) return;
     talk.say(f.p.heads[0], (f.r.nick ? f.r.nick + ': ' : '') + f.r.body, sec);
   }
 
@@ -164,6 +247,7 @@
     requestAnimationFrame(frame);
     var dt = Math.min(clock.getDelta(), 0.05);
     fishes.forEach(function (f) { f.m.update(dt); });
+    wearTick(clock.elapsedTime);
     // 화면이 좁으면 뒤로 물러나 무리가 다 보이게, 카메라는 천천히 흔들림
     camT += dt;
     var dist = Math.max(2.3, 0.9 / (Math.tan(20 * Math.PI / 180) * camera.aspect));
@@ -181,19 +265,29 @@
     }
   })();
 
-  /* ══ 3. 물고기 고르기 (작은 그림은 모델을 한 번씩 그려서 만듦) ══ */
-  var picks = $('picks'), chosen = SPECIES[Math.floor(Math.random() * SPECIES.length)][0], thumbs = {};
-  var btns = {};
+  /* ══ 3. 물고기 · 아이템 고르기 (작은 그림은 모델을 한 번씩 그려서 만듦) ══ */
+  var picks = $('picks'), chosen = '', chosenItem = '', thumbs = {}, btns = {};
   function drawPicks() {
-    SPECIES.forEach(function (s) {
-      var b = el('button', 'pick' + (s[0] === chosen ? ' on' : '')); b.type = 'button';
-      var ph = el('div', 'ph'); ph.style.background = (speciesCfg[s[0]] && speciesCfg[s[0]].color) || '#8cc';
-      b.appendChild(ph); b.appendChild(el('span', '', s[1]));
+    picks.innerHTML = ''; btns = {};
+    speciesIds.forEach(function (id) {
+      var b = el('button', 'pick' + (id === chosen ? ' on' : '')); b.type = 'button';
+      var ph = el('div', 'ph'); ph.style.background = speciesCfg[id].color || '#8cc';
+      b.appendChild(ph); b.appendChild(el('span', '', NAMES[id] || speciesCfg[id].name || id));
       b.addEventListener('click', function () {
-        chosen = s[0];
+        chosen = id;
         Object.keys(btns).forEach(function (k) { btns[k].classList.toggle('on', k === chosen); });
       });
-      btns[s[0]] = b; picks.appendChild(b);
+      btns[id] = b; picks.appendChild(b);
+    });
+  }
+  function drawItems() {
+    var box = $('items'); box.innerHTML = '';
+    var all = [{ id: '', name: '없음' }].concat(itemsCfg), bs = [];
+    all.forEach(function (it) {
+      var b = button(it.name || it.id, 'vbtn' + (it.id === chosenItem ? ' on' : ''), function () {
+        chosenItem = it.id; bs.forEach(function (x) { x[1].classList.toggle('on', x[0] === chosenItem); });
+      });
+      bs.push([it.id, b]); box.appendChild(b);
     });
   }
   function makeThumbs() {
@@ -203,19 +297,23 @@
     sc.add(new THREE.HemisphereLight(0xffffff, 0x446688, 1.2)); var l = new THREE.DirectionalLight(0xffffff, 1.1); l.position.set(2, 3, 4); sc.add(l);
     cam.position.set(0, 0, 3.4);
     var chain = Promise.resolve();
-    SPECIES.forEach(function (s) {
+    speciesIds.forEach(function (id) {
       chain = chain.then(function () {
-        var cfg = speciesCfg[s[0]]; if (!cfg) return;
-        return ReefModel.load(THREE, [Object.assign({}, cfg, { swim: 'path', count: null })]).then(function (m) {
-          var p = m.fish[0];
+        return ReefModel.load(THREE, [speciesCfg[id]]).then(function (m) {
+          var p = m.fish[0], v = new THREE.Vector3();
           m.update(0.4);
-          p.obj.position.set(0, 0, 0); p.obj.rotation.set(0, -0.5, 0);
-          m.holder.scale.setScalar(1.5 / (p.sizeK * m.ref));
+          if (p.kind === 'path') {
+            p.obj.position.set(0, 0, 0); p.obj.rotation.set(0, -0.5, 0);
+            m.holder.scale.setScalar(1.5 / (p.sizeK * m.ref));
+          } else {   // 떼 물고기: 머리가 가운데 오게 옮김
+            m.holder.scale.setScalar(2.2 / m.ref); m.holder.updateMatrixWorld(true);
+            p.heads[0].getWorldPosition(v); m.holder.position.sub(v);
+          }
           sc.add(m.holder); r2.render(sc, cam);
-          thumbs[s[0]] = r2.domElement.toDataURL('image/png');
+          thumbs[id] = r2.domElement.toDataURL('image/png');
           sc.remove(m.holder);
-          var img = el('img'); img.alt = s[1]; img.src = thumbs[s[0]];
-          var b = btns[s[0]]; b.replaceChild(img, b.firstChild);
+          var img = el('img'); img.alt = id; img.src = thumbs[id];
+          var b = btns[id]; if (b) b.replaceChild(img, b.firstChild);
           drawList();
         }).catch(function () {});
       });
@@ -232,7 +330,7 @@
     if (!sb) { toast('서버 설정 전이라 남길 수 없어요'); return; }
     sending = true; $('send').disabled = true;
     sb.rpc('submit_wall_review', {
-      spot_id: SPOT, nick: nick || null, body: body, fish_id: chosen,
+      spot_id: SPOT, nick: nick || null, body: body, fish_id: chosen, item_id: chosenItem || null,
       lat: proof.kind === 'gps' ? proof.lat : null, lng: proof.kind === 'gps' ? proof.lng : null,
       proof: proof.kind, receipt: proof.kind === 'receipt' ? proof.receipt : null
     }).then(function (res) {
@@ -244,25 +342,32 @@
       }
       $('body').value = '';
       var d = res.data || {};
-      pushReview({ id: d.id, grp: d.grp, nick: nick || null, body: body, fish: chosen, created_at: new Date().toISOString(), fresh: true });
+      pushReview({ id: d.id, grp: d.grp, nick: nick || null, body: body, fish: chosen, item: chosenItem || null, created_at: new Date().toISOString(), fresh: true });
       toast('물고기가 어항에 풀려났어요 🐟');
       Core.log('wall_review', { spot: SPOT, proof: proof.kind });
     }, function () { sending = false; $('send').disabled = false; toast('인터넷 연결을 확인해 주세요'); });
   });
   $('body').addEventListener('keydown', function (e) { if (e.key === 'Enter') $('send').click(); });
 
-  /* ══ 5. 리뷰 불러오기와 목록 ══ */
+  /* ══ 5. 리뷰 불러오기 · 목록 · 삭제 ══ */
   var reviews = [];                   // 새것이 앞
   function pushReview(r) {
     if (reviews.some(function (x) { return x.id === r.id; })) return;
     reviews.unshift(r); reviews.sort(function (a, b) { return new Date(b.created_at) - new Date(a.created_at); });
     addFish(r); drawList();
   }
+  function removeReview(id) {
+    reviews = reviews.filter(function (x) { return x.id !== id; });
+    var f = byId[id]; if (f && f.m) dropFish(f); else delete byId[id];
+    if (!reviews.length) $('empty').classList.remove('hidden');
+    drawList();
+  }
   function ago(iso) {
     var s = Math.max(0, (Date.now() - new Date(iso).getTime()) / 1000);
     if (s < 60) return '방금'; if (s < 3600) return Math.floor(s / 60) + '분 전';
     if (s < 86400) return Math.floor(s / 3600) + '시간 전'; return Math.floor(s / 86400) + '일 전';
   }
+  function itemName(id) { var it = itemsCfg.filter(function (x) { return x.id === id; })[0]; return it ? it.name || it.id : ''; }
   function drawList() {
     var box = $('list'); box.innerHTML = '';
     $('cnt').textContent = reviews.length ? '(' + reviews.length + ')' : '';
@@ -273,16 +378,31 @@
       var img = el('img'); img.alt = ''; if (thumbs[r.fish]) img.src = thumbs[r.fish];
       var tx = el('div', 'tx'), b = el('b', '', r.body), sm = el('small', '', (r.nick || '익명') + ' · ' + ago(r.created_at));
       if (size[r.grp] > 1) sm.appendChild(el('span', 'tag', '무리 ' + size[r.grp]));
+      if (r.item && itemName(r.item)) sm.appendChild(el('span', 'tag', itemName(r.item)));
       tx.appendChild(b); tx.appendChild(sm); it.appendChild(img); it.appendChild(tx);
-      it.addEventListener('click', function () { showTab(false); say(byId[r.id] && byId[r.id].p ? byId[r.id] : null, 4); });
+      it.addEventListener('click', function () { showTab(false); say(byId[r.id], 4); });
+      if (adminMode) {
+        it.appendChild(button('삭제', 'vbtn del', function (e) {
+          e.stopPropagation();
+          if (!window.confirm('이 리뷰를 지울까요?\n"' + r.body + '"')) return;
+          sb.from('wall_reviews').delete().eq('id', r.id).select('id').then(function (res) {
+            if (res.error || !res.data || !res.data.length) { toast('지우지 못했어요. 관리자 로그인을 확인해 주세요'); return; }
+            removeReview(r.id); toast('지웠어요');
+          });
+        }));
+      }
       box.appendChild(it);
     });
   }
   function fetchReviews() {
     if (!sb) return;
-    sb.from('wall_reviews').select('id,nick,body,fish,grp,created_at').eq('spot', SPOT).order('created_at', { ascending: false }).limit(60)
+    sb.from('wall_reviews').select('id,nick,body,fish,item,grp,created_at').eq('spot', SPOT).order('created_at', { ascending: false }).limit(60)
       .then(function (r) {
         if (r.error || !r.data) return;
+        var have = {}; r.data.forEach(function (x) { have[x.id] = 1; });
+        // 다른 곳(관리자)에서 지운 리뷰는 어항에서도 뺌 (받은 범위 안에 있어야 할 것만 봄)
+        var oldest = r.data.length >= 60 ? new Date(r.data[r.data.length - 1].created_at) : null;
+        reviews.slice().forEach(function (x) { if (!have[x.id] && !x.fresh && (!oldest || new Date(x.created_at) >= oldest)) removeReview(x.id); });
         r.data.slice().reverse().forEach(function (x) { pushReview(x); });
         if (!reviews.length) $('empty').classList.remove('hidden');
       });
@@ -297,26 +417,28 @@
   $('tWrite').addEventListener('click', function () { showTab(false); });
   $('tList').addEventListener('click', function () { showTab(true); });
 
-  /* ══ 6. 로그인 단추 (작게) ══ */
+  /* ══ 6. 로그인 · 관리자 단추 (작게) ══ */
   Core.onChange(function (st) {
     var b = $('bLogin');
     b.textContent = st.user ? '로그아웃' : '카카오 로그인';
     b.onclick = st.user ? Core.logout : function () { Core.login(); };
-    // 관리자 정보가 뒤늦게 도착하면 안내 화면을 다시 그려 '관리자로 시험하기' 단추를 보여 줌
-    if (!proof && lastShow && Core.isAdmin()) show.apply(null, lastShow);
     if (!Core.ready) b.classList.add('hidden');
+    $('bAdmin').classList.toggle('hidden', !Core.isAdmin());
+    if (adminMode && !Core.isAdmin()) setAdmin(false);
   });
   Core.start();
 
   /* ══ 시작 ══ */
-  drawPicks();
   var spotsReady = window.loadSpots ? window.loadSpots(sb) : Promise.resolve();
   kit.loadData().then(function (d) {
     var r = ReefModel.reef(d);
     ((r && r.config.fish) || []).forEach(function (f) { speciesCfg[f.id] = f; });
-    kit.applyStyle(d.style); style = d.style; talk = kit.Talk(tank, camera, d.style);
-    SPECIES.forEach(function (s) { if (btns[s[0]] && speciesCfg[s[0]]) btns[s[0]].firstChild.style.background = speciesCfg[s[0]].color || '#8cc'; });
-    makeThumbs(); fetchReviews();
+    var order = Object.keys(NAMES).filter(function (id) { return speciesCfg[id]; });
+    Object.keys(speciesCfg).forEach(function (id) { if (order.indexOf(id) < 0) order.push(id); });
+    speciesIds = order; itemsCfg = (d.items || []).filter(function (x) { return x && x.id; });
+    chosen = speciesIds[Math.floor(Math.random() * speciesIds.length)] || '';
+    kit.applyStyle(d.style); talk = kit.Talk(tank, camera, d.style);
+    drawPicks(); drawItems(); makeThumbs(); fetchReviews();
   }).catch(function () { toast('물고기 정보를 읽지 못했어요'); });
   spotsReady.then(checkGeo);
 })();
