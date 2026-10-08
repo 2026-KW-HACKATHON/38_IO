@@ -131,7 +131,7 @@
       <label class="fl"><span>물고기</span><i class="chip" id="fdChip"></i><select id="fdFish"></select></label>
       <fieldset><legend>할 말 (3개까지)</legend>
         <input type="text" maxlength="40" data-say="0"><input type="text" maxlength="40" data-say="1"><input type="text" maxlength="40" data-say="2">
-        <span class="note">비워 두면 기본 말을 합니다.</span>
+        <span class="note">모두 비우면 말을 하지 않습니다.</span>
       </fieldset>
       <fieldset><legend>꾸미기</legend>
         <label class="fl"><span>이펙트</span><select id="fdFx"></select></label>
@@ -203,21 +203,32 @@ function build(d){
 
 /* ── 나의 어항 설정: 물고기마다 할 말(3개까지), 이펙트, 아이템 ──
    나의 공간 창 안에서는 로그인한 사람의 profiles.tank에 저장, 서버에 못 쓰면 이 기기에만 저장
-   모양: { fish: { 물고기 id: { says: [..], effect: '', item: '' } } } */
+   모양: { fish: { 물고기 id: { says: [..], effect: '', item: '' } } }, says가 빈 목록이면 말을 하지 않음
+   ?friend=친구 id: 친구 어항 구경 (친구 설정을 읽기만 함) */
 var tank = {fish:{}};
+var FRIEND = new URLSearchParams(Q).get('friend') || '';
 function host(){ try { return window.parent !== window && window.parent.Core || null; } catch(e){ return null; } }
 function tankKey(){ var C = host(); return 'qrium.tank.' + ((C && C.state.user && C.state.user.id) || 'guest'); }
 function readTank(){
-  var C = host(), t = C && C.state.profile && C.state.profile.tank;
+  var C = host();
+  if (FRIEND){
+    if (!C || !C.sb) return;
+    C.sb.rpc('friend_tank', {target: FRIEND}).then(function(r){
+      var t = r.data && r.data.tank;
+      tank = t && t.fish ? t : {fish:{}}; applyTank();
+    });
+    return;
+  }
+  var t = C && C.state.profile && C.state.profile.tank;
   if (!t || !t.fish){ try { t = JSON.parse(localStorage.getItem(tankKey())); } catch(e){ t = null; } }
   tank = t && t.fish ? JSON.parse(JSON.stringify(t)) : {fish:{}};
   applyTank();
 }
 function mineOf(id){ return tank.fish[id] || {}; }
-// 내가 정한 말이 있으면 그 말, 없으면 기본 말
+// 내가 정한 말이 있으면 그 말(비어 있으면 말 안 함), 없으면 기본 말
 function saysOf(f){
-  var mine = (mineOf(f.id).says || []).filter(function(x){ return String(x).trim(); });
-  return mine.length ? mine : (f.says || []);
+  var mine = mineOf(f.id).says;
+  return Array.isArray(mine) ? mine.filter(function(x){ return String(x).trim(); }) : (f.says || []);
 }
 function applyTank(){
   if (!fish) return;
@@ -238,11 +249,12 @@ function saveTank(){
   });
 }
 
-// 물고기가 말하기: 할 말을 차례대로, 없으면 이름 (말풍선은 머리 위)
+// 물고기가 말하기: 할 말을 차례대로, 없으면 조용히 (말풍선은 머리 위)
 function speak(hit){
   if (!talk || !hit) return;
   var p = hit.fish, lines = (p.says || []).filter(function(x){ return String(x).trim(); });
-  var text = lines.length ? lines[(p.sayIdx = ((p.sayIdx == null ? -1 : p.sayIdx) + 1) % lines.length)] : p.name;
+  if (!lines.length) return;
+  var text = lines[(p.sayIdx = ((p.sayIdx == null ? -1 : p.sayIdx) + 1) % lines.length)];
   hit.bone.userData.halfH = -1.5;   // 말풍선 자리 = 머리 바로 위 (reef-kit 말풍선은 halfH + 1.5만큼 위)
   talk.say(hit.bone, text);
 }
@@ -303,7 +315,7 @@ function drawSwatches(){
   (cfg.fish || []).forEach(function(f){
     var b = document.createElement('button'); b.type = 'button'; b.title = f.name || f.id;
     b.style.background = f.color || '#888';
-    b.addEventListener('mouseenter', function(){ pmsg.textContent = (f.name || f.id) + ' - 두 번 누르면 특성을 정합니다.'; });
+    b.addEventListener('mouseenter', function(){ pmsg.textContent = (f.name || f.id) + (FRIEND ? '' : ' - 두 번 누르면 특성을 정합니다.'); });
     b.addEventListener('mouseleave', function(){ pmsg.textContent = HELP; });
     b.addEventListener('click', function(){
       box.querySelectorAll('button').forEach(function(x){ x.classList.toggle('on', x === b); });
@@ -331,6 +343,7 @@ if (PAINT){
     drop.classList.add('open'); imgMenu.classList.add('on');
   });
   document.addEventListener('pointerdown', function(e){ if (!drop.contains(e.target) && e.target !== imgMenu) closeDrop(); });
+  document.getElementById('pAttr').disabled = !!FRIEND;   // 친구 어항은 구경만
   document.getElementById('pAttr').addEventListener('click', function(){ closeDrop(); openAttr(); });
   document.getElementById('pAttr').addEventListener('mouseenter', function(){ pmsg.textContent = '물고기가 할 말과 이펙트, 아이템을 정합니다.'; });
   document.addEventListener('keydown', function(e){
@@ -352,22 +365,25 @@ function fillPick(sel, list, val){
   });
   sel.value = val || ''; sel.disabled = !list.length;
 }
+function fishOf(id){ return (cfg.fish || []).filter(function(x){ return x.id === id; })[0] || {}; }
+// 입력한 값을 임시 보관 (기본 말 그대로이고 꾸미기도 없으면 따로 남기지 않음)
 function keepForm(){
   if (!curId) return;
-  var o = draft[curId] || (draft[curId] = {});
-  o.says = sayIns.map(function(i){ return i.value.trim(); }).filter(Boolean);
-  o.effect = fdFx.value; o.item = fdItem.value;
+  var says = sayIns.map(function(i){ return i.value.trim(); }).filter(Boolean);
+  var o = {says: says, effect: fdFx.value, item: fdItem.value};
+  if (!o.effect && !o.item && says.join('\n') === (fishOf(curId).says || []).slice(0, 3).join('\n')) delete draft[curId];
+  else draft[curId] = o;
 }
 function showFish(id){
   curId = id;
-  var f = (cfg.fish || []).filter(function(x){ return x.id === id; })[0] || {}, o = draft[id] || {};
+  var f = fishOf(id), o = draft[id] || {}, says = Array.isArray(o.says) ? o.says : (f.says || []);
   document.getElementById('fdChip').style.background = f.color || '#888';
-  sayIns.forEach(function(inp, i){ inp.value = (o.says || [])[i] || ''; inp.placeholder = (f.says || [])[i] || ''; });
+  sayIns.forEach(function(inp, i){ inp.value = says[i] || ''; });
   fillPick(fdFx, data.effects || [], o.effect);
   fillPick(fdItem, data.items || [], o.item);
 }
 function openAttr(id){
-  if (!(cfg.fish || []).length) return;
+  if (FRIEND || !(cfg.fish || []).length) return;
   draft = JSON.parse(JSON.stringify(tank.fish));
   fdFish.innerHTML = '';
   cfg.fish.forEach(function(f){ var o = document.createElement('option'); o.value = f.id; o.textContent = f.name || f.id; fdFish.appendChild(o); });
@@ -380,8 +396,6 @@ function closeAttr(){ dlg.classList.remove('open'); }
 fdFish.addEventListener('change', function(){ keepForm(); showFish(fdFish.value); });
 document.getElementById('fdOk').addEventListener('click', function(){
   keepForm();
-  // 아무것도 안 정한 물고기는 뺌
-  Object.keys(draft).forEach(function(k){ var o = draft[k]; if (!(o.says || []).length && !o.effect && !o.item) delete draft[k]; });
   tank = {fish: draft}; applyTank(); saveTank(); closeAttr();
 });
 document.getElementById('fdReset').addEventListener('click', function(){ delete draft[curId]; showFish(curId); });
