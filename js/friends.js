@@ -293,5 +293,5 @@
     });
   }
 
-  window.XPFriends = { build: build, checkInvite: checkInvite };
+  window.XPFriends = { build: build, checkInvite: checkInvite, names: loadNames, stockName: stockName };
 })();

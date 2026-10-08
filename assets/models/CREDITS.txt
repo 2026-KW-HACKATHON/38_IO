@@ -30,3 +30,9 @@ shark.glb
   Creative Commons Attribution-NonCommercial 4.0 (http://creativecommons.org/licenses/by-nc/4.0/).
   Changes: textures resized to 512px and converted to WebP, unused UV sets
   removed, vertex data quantized, animation resampled.
+
+tennis-ball.glb
+  "Tennis Ball Low-poly PBR" by MaX3Dd (https://sketchfab.com/MaX3Dd),
+  Sketchfab Standard license (https://sketchfab.com/licenses).
+  Changes: textures resized to 256px and converted to WebP, unused UV sets
+  removed, vertex data quantized.

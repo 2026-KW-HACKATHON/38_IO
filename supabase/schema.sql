@@ -42,6 +42,8 @@ create table if not exists public.gift_codes (
   created_at timestamptz not null default now()
 );
 alter table public.gift_codes add column if not exists spot text;
+-- reward: 코드를 쓰면 함께 주는 재고 (예: [{"kind":"item","ref":"tennis-ball"}]), 한 사람에게 한 번만
+alter table public.gift_codes add column if not exists reward jsonb not null default '[]'::jsonb;
 alter table public.gift_codes drop constraint if exists gift_codes_kind_check;
 alter table public.gift_codes add constraint gift_codes_kind_check
   check (kind in ('resident', 'student', 'activity', 'owner', 'tester')) not valid;
@@ -146,6 +148,16 @@ begin
       from jsonb_array_elements(cur) r where r->>'kind' not in ('resident', 'student');
   end if;
   update public.profiles set roles = cur || jsonb_build_array(item) where id = auth.uid();
+  -- 함께 주는 재고: 받은 선물로 남겨서 '선물 도착' 알림이 뜸 (같은 코드로는 한 번만)
+  if jsonb_array_length(g.reward) > 0 and not exists (select 1 from public.gifts x where x.to_id = auth.uid() and x.code = g.code) then
+    perform public.give_starter(auth.uid());
+    for item in select * from jsonb_array_elements(g.reward) loop
+      insert into public.stock (user_id, kind, ref, qty) values (auth.uid(), item->>'kind', item->>'ref', coalesce((item->>'qty')::int, 1))
+      on conflict (user_id, kind, ref) do update set qty = public.stock.qty + excluded.qty;
+      insert into public.gifts (from_id, to_id, kind, ref, via, code) values (null, auth.uid(), item->>'kind', item->>'ref', g.label, g.code);
+    end loop;
+    return jsonb_build_object('code', g.code, 'kind', g.kind, 'label', g.label, 'dept', g.dept, 'reward', g.reward);
+  end if;
   return item;
 end $$;
 
@@ -333,6 +345,9 @@ create table if not exists public.gifts (
   ref text not null,
   created_at timestamptz not null default now()
 );
+alter table public.gifts add column if not exists via text;      -- 선물 코드로 받았으면 코드 이름
+alter table public.gifts add column if not exists code text;     -- 받은 선물 코드 (같은 코드 보상은 한 번만)
+alter table public.gifts add column if not exists seen boolean not null default false;   -- 알림을 띄웠는지
 create index if not exists gifts_to_idx on public.gifts (to_id, created_at desc);
 alter table public.gifts enable row level security;
 
@@ -456,7 +471,7 @@ end $$;
 create or replace function public.my_gifts()
 returns table (from_name text, kind text, ref text, created_at timestamptz)
 language sql stable security definer set search_path = public as $$
-  select coalesce(f.alias, p.nickname, '알 수 없음'), g.kind, g.ref, g.created_at
+  select coalesce(f.alias, p.nickname, g.via, '알 수 없음'), g.kind, g.ref, g.created_at
   from public.gifts g
   left join public.profiles p on p.id = g.from_id
   left join public.friends f on f.user_id = auth.uid() and f.friend_id = g.from_id
@@ -464,6 +479,21 @@ language sql stable security definer set search_path = public as $$
   order by g.created_at desc
   limit 30
 $$;
+
+-- 새로 받은 선물: 알림을 띄울 것만 주고 본 것으로 표시
+create or replace function public.new_gifts()
+returns table (from_name text, kind text, ref text, created_at timestamptz)
+language plpgsql security definer set search_path = public as $$
+begin
+  return query
+    select coalesce(f.alias, p.nickname, g.via, '알 수 없음'), g.kind, g.ref, g.created_at
+    from public.gifts g
+    left join public.profiles p on p.id = g.from_id
+    left join public.friends f on f.user_id = auth.uid() and f.friend_id = g.from_id
+    where g.to_id = auth.uid() and not g.seen
+    order by g.created_at;
+  update public.gifts set seen = true where to_id = auth.uid() and not seen;
+end $$;
 
 -- 14) 친구 · 재고 함수 실행 권한: 로그인한 사람만
 revoke all on function public.my_invite(boolean) from public, anon;
@@ -476,6 +506,7 @@ revoke all on function public.friend_tank(uuid) from public, anon;
 revoke all on function public.my_stock() from public, anon;
 revoke all on function public.gift_send(uuid, text, text) from public, anon;
 revoke all on function public.my_gifts() from public, anon;
+revoke all on function public.new_gifts() from public, anon;
 grant execute on function public.my_invite(boolean) to authenticated;
 grant execute on function public.friend_join(text) to authenticated;
 grant execute on function public.friend_accept(uuid) to authenticated;
@@ -486,3 +517,4 @@ grant execute on function public.friend_tank(uuid) to authenticated;
 grant execute on function public.my_stock() to authenticated;
 grant execute on function public.gift_send(uuid, text, text) to authenticated;
 grant execute on function public.my_gifts() to authenticated;
+grant execute on function public.new_gifts() to authenticated;

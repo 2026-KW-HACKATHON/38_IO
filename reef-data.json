@@ -29,7 +29,15 @@
  },
  "guide": "[물고기 설계 지침]\n1. 모델은 '옆모습 도트(side)' 한 장 + 그 위에 얹는 부위(parts)로 만든다. 머리는 항상 오른쪽(열 번호가 큰 쪽).\n2. side는 같은 길이의 문자열 배열. '.'은 빈칸, 나머지 한 글자는 palette의 색 이름.\n3. 격자 크기는 가로 12~28칸, 세로 8~18칸. 실제 비율보다 살짝 뭉툭하고 크게.\n4. 몸은 직육면체(box) 2~4개로: head(머리) / body(몸통) / stock(꼬리자루). 칸 좌표 x,y는 왼쪽 위 칸, w,h는 칸 수, d는 두께(칸).\n5. 얇은 부분(꼬리, 등·뒷지느러미)은 평면(plane). 꼬리는 role \"caudal\", 등·뒷지느러미는 role \"body\".\n6. 가슴지느러미는 plane + role \"pect\" + 자체 도트(paint, 'X'=color 색) + z(몸 옆으로 떨어진 거리). 한쪽만 쓰면 반대쪽은 자동.\n7. 눈은 머리 박스 안 옆모습에 어두운 색 1칸.\n8. 색은 5~9개. 순백(#FFFFFF)은 쓰지 말고 따뜻한 흰색(#FBF2E6 근처). 카메라 화면 위에서도 보이게 채도는 약간 높게.\n9. 줄무늬·무늬는 지느러미까지 이어서 칠한다.\n10. 규격 밖 모양이 필요하면 kind \"free\" (shape: box/cylinder/cone/sphere/wedge/mesh, size, pos[열,행,z], rot[도], color)로 추가.\n11. swim: speed(1=보통), beat(초당 꼬리 박자 0.3~1.2), wag(꼬리 흔들기 0.2~0.9), bend(몸 휘기 0~1), pect, bob, roll.\n12. says: 그 물고기가 할 짧은 말 2~3개 (한국어, 20자 안쪽).",
  "species": [],
- "items": [],
+ "items": [
+  {
+   "id": "tennis-ball",
+   "name": "테니스 볼",
+   "model": "assets/models/tennis-ball.glb",
+   "wear": "bounce",
+   "size": 0.4
+  }
+ ],
  "effects": [],
  "reefs": [
   {

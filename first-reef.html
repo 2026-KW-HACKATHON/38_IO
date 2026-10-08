@@ -236,6 +236,45 @@ function applyTank(){
     var f = (cfg.fish || []).filter(function(x){ return x.id === p.id; })[0];
     if (f){ p.name = f.name || f.id; p.says = saysOf(f); p.sayIdx = null; }
   });
+  applyItems();
+}
+
+/* ── 착용 아이템: 3D 모델 아이템을 물고기 머리 위에 띄움 (wear 'bounce'면 통통 튐) ── */
+var worn = [], wearTok = 0, itemScenes = {};
+function itemScene(url){
+  return itemScenes[url] || (itemScenes[url] = new Promise(function(ok, no){ new THREE.GLTFLoader().load(url, function(g){ ok(g.scene); }, null, no); }));
+}
+function applyItems(){
+  if (!fish) return;
+  worn.forEach(function(w){ if (w.obj.parent) w.obj.parent.remove(w.obj); });
+  worn = [];
+  var tok = ++wearTok, holder = fish.holder, ref = fish.ref || fish.size * 0.15;
+  fish.fish.forEach(function(p){
+    var id = mineOf(p.id).item, it = id && (data.items || []).filter(function(x){ return x.id === id; })[0];
+    if (!it || !it.model) return;
+    itemScene(it.model).then(function(sc){
+      if (tok !== wearTok) return;
+      // 크기: 떼 물고기 한 마리 길이의 size배, 가운데가 원점
+      var o = sc.clone(true), wrap = new THREE.Group();
+      var box = new THREE.Box3().setFromObject(o), c = box.getCenter(new THREE.Vector3()), sz = box.getSize(new THREE.Vector3());
+      o.position.sub(c); wrap.add(o);
+      var d = ref * (+it.size || 0.4);
+      wrap.scale.setScalar(d / (Math.max(sz.x, sz.y, sz.z) || 1));
+      holder.add(wrap);
+      worn.push({p: p, obj: wrap, d: d, bounce: it.wear === 'bounce', ph: Math.random() * 6});
+    }).catch(function(){});
+  });
+}
+// 매 프레임: 머리 자리를 따라가며 위아래로 튐 (바닥에서 빠르고 꼭대기에서 느리게)
+var wv = new THREE.Vector3();
+function wearTick(t){
+  worn.forEach(function(w){
+    w.obj.visible = w.p.obj.visible;
+    w.p.heads[0].getWorldPosition(wv); w.obj.parent.worldToLocal(wv);
+    var hop = w.bounce ? Math.abs(Math.sin(t * 3.2 + w.ph)) * w.d * 1.2 : 0;
+    w.obj.position.set(wv.x, wv.y + w.d * 0.9 + hop, wv.z);
+    w.obj.rotation.y = t * 1.5 + w.ph;
+  });
 }
 function saveTank(){
   try { localStorage.setItem(tankKey(), JSON.stringify(tank)); } catch(e){}
@@ -380,10 +419,21 @@ function showFish(id){
   document.getElementById('fdChip').style.background = f.color || '#888';
   sayIns.forEach(function(inp, i){ inp.value = says[i] || ''; });
   fillPick(fdFx, data.effects || [], o.effect);
-  fillPick(fdItem, data.items || [], o.item);
+  fillPick(fdItem, (data.items || []).filter(function(x){ return !owned || owned[x.id] || x.id === o.item; }), o.item);
+}
+// 나의 공간에서는 재고에 있는 아이템만 고를 수 있음 (null이면 모두)
+var owned = null;
+function loadOwned(){
+  var C = host();
+  if (!C || !C.sb || !C.state.user) return Promise.resolve();
+  return C.sb.rpc('my_stock').then(function(r){
+    if (r.error) return;
+    owned = {}; (r.data || []).forEach(function(s){ if (s.kind === 'item') owned[s.ref] = true; });
+  });
 }
 function openAttr(id){
   if (FRIEND || !(cfg.fish || []).length) return;
+  loadOwned().then(function(){ if (dlg.classList.contains('open') && curId){ keepForm(); showFish(curId); } });
   draft = JSON.parse(JSON.stringify(tank.fish));
   fdFish.innerHTML = '';
   cfg.fish.forEach(function(f){ var o = document.createElement('option'); o.value = f.id; o.textContent = f.name || f.id; fdFish.appendChild(o); });
@@ -463,6 +513,7 @@ var clock = new THREE.Clock();
   var dt = Math.min(clock.getDelta(), 0.05);
   idle += dt; if (idle > 3) cam.theta += dt * 0.12;
   if (fish) fish.update(dt);
+  wearTick(clock.elapsedTime);
   applyCam();
   renderer.render(scene, camera);
   if (talk) talk.update();

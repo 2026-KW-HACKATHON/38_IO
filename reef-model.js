@@ -160,7 +160,7 @@
       }
       step(0);
       return {
-        holder: holder, size: S, fish: parts,
+        holder: holder, size: S, ref: m.ref, fish: parts,   // ref: 떼 물고기 한 마리 길이
         setSpeed: function (s) { speed = s == null ? 1 : +s; },
         update: step,
         // 크기를 맞춤: 지름이 d가 되게

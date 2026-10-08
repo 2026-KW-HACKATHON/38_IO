@@ -196,6 +196,15 @@ body.locked .dk:not(.free) .ic{opacity:.45;filter:grayscale(.6)}   /* 막힌 창
 .qrimg{flex:none;width:132px;height:132px;padding:4px;background:#fff;border:1px solid #7f9db9}
 .qrimg img,.qrimg canvas{display:block;width:132px!important;height:132px!important}
 .qrurl{font-size:11px;word-break:break-all;color:#444;-webkit-user-select:text;user-select:text}
+/* 선물 도착 알림: 오른쪽 위에 쌓이는 작은 XP 창, 닫기 단추만 */
+#notes{position:fixed;right:10px;top:10px;z-index:9500;display:flex;flex-direction:column;gap:8px;align-items:flex-end;pointer-events:none}
+.win.note{position:relative;width:210px;pointer-events:auto;animation:pop .2s ease-out}
+.win.note .bar{cursor:default}
+.win.note .body{background:var(--surface);display:flex;gap:8px;align-items:center;padding:8px 10px;box-sizing:border-box}
+.win.note .body img{width:32px;height:32px;flex:none}
+.win.note .body b{display:block;font-size:12px}
+.win.note .body span{font-size:11px;color:#444}
+@media (max-width:700px){ #notes{top:calc(10px + env(safe-area-inset-top,0px))} }
 /* QR 위치 확인 알림 창 */
 .win.msg .body{width:min(300px,calc(100vw - 40px));background:var(--surface);padding:14px 14px 12px;box-sizing:border-box}
 .win.msg .mtx{margin:0 0 12px;line-height:1.6;white-space:pre-line}
@@ -328,7 +337,7 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
 <script src="js/config.js"></script>
 <script src="js/core.js"></script>
 <script src="js/spots.js"></script>
-<script src="js/licenses.js?v=7"></script>
+<script src="js/licenses.js?v=8"></script>
 <script src="js/receipt.js"></script>
 <script src="js/friends.js"></script>
 <script>
@@ -760,8 +769,31 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
         : '‘' + name + '’ ' + (g.kind === 'student' ? '학생' : '주민') + '으로 인증되었습니다.', ok);
       input.value = '';
       Core.reload();
+      if (g.reward) giftNotices();   // 코드로 받은 선물
     });
   }
+  /* ── 선물 도착 알림: 새로 받은 선물마다 작은 창 (닫기 단추로만 지움) ── */
+  function giftNotices() {
+    if (!window.Core || !Core.sb || !Core.state.user) return;
+    Core.sb.rpc('new_gifts').then(function (r) {
+      if (r.error || !r.data || !r.data.length) return;
+      var names = window.XPFriends ? XPFriends.names() : Promise.resolve({});
+      names.then(function (n) { r.data.forEach(function (g) { giftNote(XPFriends.stockName(n, g.kind, g.ref), g.from_name); }); });
+    });
+  }
+  function giftNote(name, from) {
+    var box = document.getElementById('notes');
+    if (!box) { box = document.createElement('div'); box.id = 'notes'; document.body.appendChild(box); }
+    var w = document.createElement('div'); w.className = 'win note front'; w.setAttribute('role', 'status');
+    w.innerHTML = '<div class="bar"><img class="tic" src="assets/space/xp/icon-gift.png" alt=""><span class="ttl">선물 도착!</span>' +
+      '<span class="btn cls" title="닫기"></span></div><div class="body"><img src="assets/space/xp/icon-gift.png" alt=""><div><b></b><span></span></div></div>';
+    w.querySelector('b').textContent = name;
+    w.querySelector('.body span').textContent = from ? '보낸 이: ' + from : '';
+    w.querySelector('.cls').addEventListener('click', function () { w.remove(); });
+    box.appendChild(w);
+  }
+  if (window.Core) Core.onChange(function (st) { if (st.user && !giftNotices.done) { giftNotices.done = true; giftNotices(); } });
+
   // 서버 오류를 읽기 쉬운 말로
   function errText(e) {
     var m = (e && e.message) || '';
