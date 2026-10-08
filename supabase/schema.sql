@@ -548,12 +548,15 @@ create table if not exists public.wall_reviews (
   nick text check (nick is null or char_length(nick) <= 12),
   body text not null check (char_length(body) between 1 and 60),
   fish text not null check (char_length(fish) between 1 and 40),
-  proof text not null check (proof in ('gps', 'receipt')),
+  proof text not null check (proof in ('gps', 'receipt', 'admin')),
   dist real,
   receipt jsonb,
   grp bigint not null,
   created_at timestamptz not null default now()
 );
+-- 이미 만든 표에는 관리자 시험 글(admin)을 허용하도록 검사를 다시 검사
+alter table public.wall_reviews drop constraint if exists wall_reviews_proof_check;
+alter table public.wall_reviews add constraint wall_reviews_proof_check check (proof in ('gps', 'receipt', 'admin'));
 create index if not exists wall_reviews_spot_time on public.wall_reviews (spot, created_at desc);
 alter table public.wall_reviews enable row level security;
 drop policy if exists "wall_select" on public.wall_reviews;
@@ -588,6 +591,9 @@ begin
     if d > margin then raise exception '매장 근처에서만 남길 수 있습니다'; end if;
   elsif proof = 'receipt' then
     if receipt is null or jsonb_typeof(receipt) <> 'object' then raise exception '영수증 정보가 없습니다'; end if;
+  elsif proof = 'admin' then
+    -- 기능 시험용: 관리자만, 위치와 상관없이 (글에는 admin으로 남음)
+    if not public.is_admin() then raise exception '관리자만 쓸 수 있습니다'; end if;
   else
     raise exception '확인 방식이 올바르지 않습니다';
   end if;
