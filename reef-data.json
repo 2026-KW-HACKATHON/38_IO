@@ -261,6 +261,104 @@
       "forward": "+z",
       "speed": 0.4,
       "says": []
+     },
+     {
+      "id": "betta",
+      "name": "Betta",
+      "model": "assets/models/betta.glb",
+      "color": "#2FB5A0",
+      "swim": "path",
+      "size": 1.3,
+      "forward": "-x",
+      "speed": 0.6,
+      "says": [
+       "조용하니 딱 좋아",
+       "혼자가 편해"
+      ]
+     },
+     {
+      "id": "anchovy",
+      "name": "Anchovy",
+      "model": "assets/models/anchovy.glb",
+      "color": "#9FB3C2",
+      "swim": "path",
+      "size": 0.9,
+      "forward": "-z",
+      "speed": 1.2,
+      "says": [
+       "많을수록 신나!",
+       "다 같이 가자"
+      ]
+     },
+     {
+      "id": "greenland-shark",
+      "name": "Greenland Shark",
+      "model": "assets/models/greenland-shark.glb",
+      "color": "#4A4744",
+      "swim": "path",
+      "size": 4.0,
+      "forward": "-z",
+      "speed": 0.3,
+      "says": [
+       "시원하고 좋네",
+       "추위? 그게 뭔데"
+      ]
+     },
+     {
+      "id": "bobtail-squid",
+      "name": "Bobtail Squid",
+      "model": "assets/models/bobtail-squid.glb",
+      "color": "#6A4A6E",
+      "swim": "path",
+      "size": 1.3,
+      "forward": "-z",
+      "speed": 0.5,
+      "says": [
+       "먹물 좀 묻으면 어때",
+       "깔끔은 사치야"
+      ]
+     },
+     {
+      "id": "pufferfish",
+      "name": "Pufferfish",
+      "model": "assets/models/pufferfish.glb",
+      "color": "#F2C933",
+      "swim": "path",
+      "size": 1.3,
+      "forward": "+z",
+      "speed": 0.5,
+      "says": [
+       "냄새쯤이야",
+       "나도 좀 뿜거든"
+      ]
+     },
+     {
+      "id": "jellyfish",
+      "name": "Jellyfish",
+      "model": "assets/models/jellyfish.glb",
+      "color": "#E59BE8",
+      "swim": "path",
+      "size": 1.5,
+      "forward": "+x",
+      "upright": true,
+      "speed": 0.3,
+      "says": [
+       "어두우면 내가 빛나지",
+       "불 꺼도 괜찮아"
+      ]
+     },
+     {
+      "id": "medaka",
+      "name": "Medaka",
+      "model": "assets/models/medaka.glb",
+      "color": "#3FA0E0",
+      "swim": "path",
+      "size": 0.9,
+      "forward": "+z",
+      "speed": 0.9,
+      "says": [
+       "작아도 씩씩해"
+      ]
      }
     ]
    }

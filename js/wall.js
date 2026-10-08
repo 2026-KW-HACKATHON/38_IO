@@ -11,9 +11,11 @@
     'clownfish': '흰동가리', 'blue-tang': '블루탱', 'ryukin-goldfish': '금붕어', 'emperor-angelfish': '엔젤피쉬',
     'powder-blue-tang': '파우더블루', 'yellow-tang': '옐로탱', 'moorish-idol': '깃대돔', 'discus': '디스커스',
     'seahorse': '해마', 'sea-turtle': '바다거북', 'shark': '상어', 'manta-ray': '만타가오리',
-    'tomato-clownfish': '토마토클라운', 'percula-clownfish': '퍼큘라클라운', 'domino-clownfish': '도미노클라운', 'snowflake-clownfish': '스노우플레이크'
+    'tomato-clownfish': '토마토클라운', 'percula-clownfish': '퍼큘라클라운', 'domino-clownfish': '도미노클라운', 'snowflake-clownfish': '스노우플레이크',
+    'betta': '베타', 'anchovy': '멸치', 'greenland-shark': '그린란드 상어', 'bobtail-squid': '오징어',
+    'pufferfish': '복어', 'jellyfish': '해파리', 'medaka': '송사리'
   };
-  var SIZE = { 'shark': 0.6, 'sea-turtle': 0.45, 'manta-ray': 0.6 };   // 어항 속 물고기 길이 (없으면 0.32)
+  var SIZE = { 'shark': 0.6, 'sea-turtle': 0.45, 'manta-ray': 0.6, 'greenland-shark': 0.6 };   // 어항 속 물고기 길이 (없으면 0.32)
   var kit = ReefKit(THREE);
   var $ = function (id) { return document.getElementById(id); };
   var sb = window.Core && Core.sb;

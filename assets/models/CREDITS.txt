@@ -83,3 +83,45 @@ skins/clownfish-domino.webp, skins/clownfish-snowflake.webp
   (https://skfb.ly/6WpRz) by Titanas YT (https://sketchfab.com/pcarnage252),
   licensed under Creative Commons Attribution 4.0 (http://creativecommons.org/licenses/by/4.0/).
   Changes: bands and fin edges repainted for each clownfish morph, resized to 1024px.
+
+betta.glb
+  "Blue Betta" (https://skfb.ly/CM66) by Chaitanya Krishnan, licensed under
+  Creative Commons Attribution 4.0 (http://creativecommons.org/licenses/by/4.0/).
+  Changes: textures converted to WebP, vertex data quantized.
+
+anchovy.glb
+  "Sardine Swim" (https://skfb.ly/6wsno) by Drake, licensed under
+  Creative Commons Attribution 4.0 (http://creativecommons.org/licenses/by/4.0/).
+  Changes: textures resized to 512px and converted to WebP, vertex data
+  quantized, animation resampled. Shown as an anchovy.
+
+greenland-shark.glb
+  "Greenland Shark" (https://skfb.ly/pt8AC) by An Evil Sonic, licensed under
+  Creative Commons Attribution 4.0 (http://creativecommons.org/licenses/by/4.0/).
+  Changes: materials converted to metal/roughness, textures resized to 512px
+  and converted to WebP, vertex data quantized.
+
+bobtail-squid.glb
+  "Bobtail Squid" (https://skfb.ly/6BpJC) by Penny, licensed under
+  Creative Commons Attribution 4.0 (http://creativecommons.org/licenses/by/4.0/).
+  Changes: mesh simplified, textures resized to 512px and converted to WebP,
+  vertex data quantized, animation resampled.
+
+pufferfish.glb
+  "Smiling Pufferfish" (https://skfb.ly/pGrDI) by Ragner1811, licensed under
+  Creative Commons Attribution-ShareAlike 4.0 (http://creativecommons.org/licenses/by-sa/4.0/).
+  Changes: mesh heavily simplified, textures resized to 512px and converted
+  to WebP, vertex data quantized. This modified model is shared under the
+  same license (CC BY-SA 4.0).
+
+jellyfish.glb
+  "Jellyfish_003" (https://skfb.ly/6VRXn) by n-, licensed under
+  Creative Commons Attribution 4.0 (http://creativecommons.org/licenses/by/4.0/).
+  Changes: rotated so the bell points up, texture resized to 512px and
+  converted to WebP, vertex data quantized.
+
+medaka.glb
+  "Paracheirodon Innesi / Tetra Neon" (https://skfb.ly/6SBqx) by BlueMesh, licensed under
+  Creative Commons Attribution 4.0 (http://creativecommons.org/licenses/by/4.0/).
+  Changes: textures resized to 512px and converted to WebP, vertex data
+  quantized, animation resampled. Shown as a medaka.
