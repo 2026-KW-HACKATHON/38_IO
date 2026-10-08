@@ -23,20 +23,25 @@
   var proof = null;                   // { kind: 'gps' | 'receipt', lat, lng, receipt }
   var gstat = $('gstat'), form = $('form');
 
+  var lastShow = null;
   function show(msg, sub, cls, buttons, extra) {
+    lastShow = extra ? null : [msg, sub, cls, buttons];
     gstat.innerHTML = '';
     var m = el('div', 'msg ' + (cls || '')); m.appendChild(el('b', '', msg)); if (sub) m.appendChild(document.createTextNode(sub));
     if (extra) m.appendChild(extra);
     gstat.appendChild(m);
+    var ad = adminBtn(); if (ad && buttons) buttons = buttons.concat([ad]);
     if (buttons && buttons.length) { var r = el('div', 'row'); buttons.forEach(function (b) { r.appendChild(b); }); gstat.appendChild(r); }
     form.classList.add('hidden');
   }
   function verified(p) {
     proof = p;
     gstat.innerHTML = '';
-    gstat.appendChild(el('div', 'msg ok', p.kind === 'gps' ? '✔ 후아나에서 확인됐어요' : '✔ 영수증으로 확인됐어요'));
+    gstat.appendChild(el('div', 'msg ok', p.kind === 'gps' ? '✔ 후아나에서 확인됐어요' : p.kind === 'admin' ? '✔ 관리자 시험 모드 (위치 확인 없음)' : '✔ 영수증으로 확인됐어요'));
     form.classList.remove('hidden');
   }
+  // 관리자는 위치와 상관없이 시험 글을 남길 수 있음 (서버도 관리자인지 다시 확인)
+  function adminBtn() { return Core.isAdmin() ? button('관리자로 시험하기', 'sub', function () { verified({ kind: 'admin' }); }) : null; }
   function receiptBtn() { return button('영수증으로 인증하기', 'sub', function () { $('rcpt').value = ''; $('rcpt').click(); }); }
   function retryBtn() { return button('위치 다시 확인', 'sub', checkGeo); }
 
@@ -297,6 +302,8 @@
     var b = $('bLogin');
     b.textContent = st.user ? '로그아웃' : '카카오 로그인';
     b.onclick = st.user ? Core.logout : function () { Core.login(); };
+    // 관리자 정보가 뒤늦게 도착하면 안내 화면을 다시 그려 '관리자로 시험하기' 단추를 보여 줌
+    if (!proof && lastShow && Core.isAdmin()) show.apply(null, lastShow);
     if (!Core.ready) b.classList.add('hidden');
   });
   Core.start();
