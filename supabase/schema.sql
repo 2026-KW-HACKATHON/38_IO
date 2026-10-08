@@ -14,6 +14,10 @@ alter table public.profiles add column if not exists avatar jsonb not null defau
 alter table public.profiles add column if not exists roles jsonb not null default '[]'::jsonb;
 -- 나의 어항 설정: 물고기마다 할 말, 이펙트, 아이템
 alter table public.profiles add column if not exists tank jsonb not null default '{}'::jsonb;
+-- 프로필 사진 (물고기 아바타와 따로, 친구에게 보임): 작게 줄인 그림 글자(data:image/jpeg…)
+alter table public.profiles add column if not exists photo text check (char_length(photo) <= 60000);
+-- 친구 초대 코드
+alter table public.profiles add column if not exists invite text unique;
 
 -- 2) 활동 기록 표 (계정이 지워지면 함께 지워짐)
 create table if not exists public.activity_logs (
@@ -71,10 +75,10 @@ insert into public.profiles (id, nickname)
 select id, coalesce(raw_user_meta_data->>'nickname', raw_user_meta_data->>'name', '카카오 사용자') from auth.users
 on conflict (id) do nothing;
 
--- 6) 표 사용 권한과 접근 규칙: 본인 것만, 관리자는 전부. 본인은 닉네임 · 아바타 · 어항 설정만 고침
+-- 6) 표 사용 권한과 접근 규칙: 본인 것만, 관리자는 전부. 본인은 닉네임 · 아바타 · 어항 설정 · 프로필 사진만 고침
 grant usage on schema public to anon, authenticated;
 grant select on public.profiles to authenticated;
-grant update (nickname, avatar, tank) on public.profiles to authenticated;
+grant update (nickname, avatar, tank, photo) on public.profiles to authenticated;
 grant select, insert on public.activity_logs to authenticated;
 
 alter table public.profiles enable row level security;
@@ -265,3 +269,220 @@ revoke all on function public.submit_receipt(text, text, timestamptz, boolean, t
 revoke all on function public.my_receipts() from public, anon;
 grant execute on function public.submit_receipt(text, text, timestamptz, boolean, text, integer, text) to authenticated;
 grant execute on function public.my_receipts() to authenticated;
+
+-- 12) 매장 정보: 누구나 보고, 관리자만 추가 · 고침 · 지움 (서버를 못 읽으면 js/spots.js 목록을 씀)
+--     box: 장소 범위 { n, s, w, e } (위도 · 경도), alias: 영수증에 적힐 수 있는 다른 이름들
+create table if not exists public.spots (
+  id text primary key check (id ~ '^[a-z0-9-]{1,40}$'),
+  name text not null check (char_length(name) between 1 and 40),
+  addr text check (char_length(addr) <= 100),
+  phone text check (char_length(phone) <= 30),
+  hours text check (char_length(hours) <= 100),
+  about text check (char_length(about) <= 300),
+  alias jsonb not null default '[]'::jsonb,
+  biz text check (char_length(biz) <= 12),
+  icon text check (char_length(icon) <= 200),
+  box jsonb,
+  sort integer not null default 0,
+  updated_at timestamptz not null default now()
+);
+insert into public.spots (id, name, addr, alias, icon, box, sort) values
+  ('bima', '광운대학교 비마관', '서울 노원구 광운로 20', '["비마관"]', 'assets/space/xp/pin-bima.png',
+   '{"n":37.619987483334455,"s":37.6191135141168,"w":127.05936500409865,"e":127.06055430225365}', 1),
+  ('cord', 'CORD Jr.', '서울 노원구 석계로13길 40', '["코드주니어","CORD JR"]', 'assets/space/xp/pin-cord.png',
+   '{"n":37.62106796460786,"s":37.62085396841135,"w":127.06116716658116,"e":127.0613512473039}', 2),
+  ('juana', '디저트카페후아나', '서울 노원구 석계로1길 18', '["후아나","JUANA"]', 'assets/space/xp/pin-juana.png',
+   '{"n":37.61562467460713,"s":37.61544673714494,"w":127.06366299880865,"e":127.06383011353108}', 3)
+on conflict (id) do nothing;
+grant select on public.spots to anon, authenticated;
+grant insert, update, delete on public.spots to authenticated;
+alter table public.spots enable row level security;
+drop policy if exists "spots_select" on public.spots;
+create policy "spots_select" on public.spots for select using (true);
+drop policy if exists "spots_admin" on public.spots;
+create policy "spots_admin" on public.spots for all to authenticated using (public.is_admin()) with check (public.is_admin());
+
+-- 13) 친구: 한 쌍마다 두 줄 (내 쪽 · 상대 쪽)
+--     state: sent(내가 보낸 요청) / got(받은 요청) / friend(친구), alias: 내가 붙인 친구 이름
+--     표는 직접 못 만지고 아래 함수로만 씀
+create table if not exists public.friends (
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  friend_id uuid not null references public.profiles(id) on delete cascade,
+  state text not null check (state in ('sent', 'got', 'friend')),
+  alias text check (char_length(alias) <= 20),
+  created_at timestamptz not null default now(),
+  primary key (user_id, friend_id),
+  check (user_id <> friend_id)
+);
+alter table public.friends enable row level security;
+
+-- 재고: 사람마다 물고기 · 아이템 · 이펙트 개수 / 선물 기록
+create table if not exists public.stock (
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  kind text not null check (kind in ('fish', 'item', 'effect')),
+  ref text not null check (char_length(ref) between 1 and 40),
+  qty integer not null default 0 check (qty >= 0),
+  primary key (user_id, kind, ref)
+);
+alter table public.stock enable row level security;
+create table if not exists public.gifts (
+  id bigint generated always as identity primary key,
+  from_id uuid references public.profiles(id) on delete set null,
+  to_id uuid not null references public.profiles(id) on delete cascade,
+  kind text not null,
+  ref text not null,
+  created_at timestamptz not null default now()
+);
+create index if not exists gifts_to_idx on public.gifts (to_id, created_at desc);
+alter table public.gifts enable row level security;
+
+-- 내 초대 코드 (없거나 renew면 새로 만듦)
+create or replace function public.my_invite(renew boolean default false) returns text
+language plpgsql security definer set search_path = public as $$
+declare c text;
+begin
+  if auth.uid() is null then raise exception '로그인이 필요합니다'; end if;
+  select invite into c from public.profiles where id = auth.uid();
+  if c is null or renew then
+    loop
+      c := substr(md5(random()::text || clock_timestamp()::text), 1, 8);
+      begin
+        update public.profiles set invite = c where id = auth.uid();
+        exit;
+      exception when unique_violation then
+      end;
+    end loop;
+  end if;
+  return c;
+end $$;
+
+-- 초대 코드로 친구 요청: 상대는 보낸 요청, 나는 받은 요청 (수락은 friend_accept)
+-- 상대가 이미 나에게 요청을 받은 상태면 바로 친구
+create or replace function public.friend_join(code text) returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare t public.profiles; cur text;
+begin
+  if auth.uid() is null then raise exception '로그인이 필요합니다'; end if;
+  select * into t from public.profiles where invite = lower(trim(code));
+  if not found then raise exception '없는 초대 코드입니다'; end if;
+  if t.id = auth.uid() then raise exception '내 초대 코드입니다'; end if;
+  select state into cur from public.friends where user_id = auth.uid() and friend_id = t.id;
+  if cur = 'sent' then
+    update public.friends set state = 'friend' where (user_id = auth.uid() and friend_id = t.id) or (user_id = t.id and friend_id = auth.uid());
+    cur := 'friend';
+  elsif cur is null then
+    insert into public.friends (user_id, friend_id, state) values (auth.uid(), t.id, 'got'), (t.id, auth.uid(), 'sent');
+    cur := 'got';
+  end if;
+  return jsonb_build_object('id', t.id, 'nickname', t.nickname, 'photo', coalesce(t.photo, t.avatar_url), 'state', cur);
+end $$;
+
+-- 받은 요청 수락
+create or replace function public.friend_accept(target uuid) returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  if not exists (select 1 from public.friends where user_id = auth.uid() and friend_id = target and state = 'got') then
+    raise exception '받은 요청이 없습니다';
+  end if;
+  update public.friends set state = 'friend' where (user_id = auth.uid() and friend_id = target) or (user_id = target and friend_id = auth.uid());
+end $$;
+
+-- 친구 삭제 · 요청 거절 · 보낸 요청 취소 (두 줄 모두 지움)
+create or replace function public.friend_remove(target uuid) returns void
+language sql security definer set search_path = public as $$
+  delete from public.friends where (user_id = auth.uid() and friend_id = target) or (user_id = target and friend_id = auth.uid());
+$$;
+
+-- 친구 이름 따로 붙이기 (빈칸이면 닉네임으로)
+create or replace function public.friend_alias(target uuid, name text) returns void
+language sql security definer set search_path = public as $$
+  update public.friends set alias = nullif(left(trim(name), 20), '') where user_id = auth.uid() and friend_id = target;
+$$;
+
+-- 내 친구 · 요청 목록: 이름, 프로필 사진(없으면 카카오 사진)
+create or replace function public.my_friends()
+returns table (id uuid, state text, alias text, nickname text, photo text, created_at timestamptz)
+language sql stable security definer set search_path = public as $$
+  select f.friend_id, f.state, f.alias, p.nickname, coalesce(p.photo, p.avatar_url), f.created_at
+  from public.friends f join public.profiles p on p.id = f.friend_id
+  where f.user_id = auth.uid()
+  order by f.state, coalesce(f.alias, p.nickname)
+$$;
+
+-- 친구 어항 구경: 친구일 때만 어항 설정을 줌
+create or replace function public.friend_tank(target uuid) returns jsonb
+language sql stable security definer set search_path = public as $$
+  select jsonb_build_object('nickname', p.nickname, 'tank', p.tank)
+  from public.profiles p
+  where p.id = target and exists (select 1 from public.friends f where f.user_id = auth.uid() and f.friend_id = target and f.state = 'friend')
+$$;
+
+-- 시작 재고: 재고가 한 번도 없던 사람에게 물고기를 한 마리씩 (First Reef 물고기)
+create or replace function public.give_starter(uid uuid) returns void
+language sql security definer set search_path = public as $$
+  insert into public.stock (user_id, kind, ref, qty)
+  select uid, 'fish', x, 1 from unnest(array['clownfish', 'moorish-idol', 'yellow-tang', 'powder-blue-tang',
+                                              'discus', 'blue-tang', 'seahorse', 'shark']) x
+  where not exists (select 1 from public.stock s where s.user_id = uid);
+$$;
+revoke all on function public.give_starter(uuid) from public, anon, authenticated;
+
+-- 내 재고
+create or replace function public.my_stock() returns table (kind text, ref text, qty integer)
+language plpgsql security definer set search_path = public as $$
+begin
+  if auth.uid() is null then raise exception '로그인이 필요합니다'; end if;
+  perform public.give_starter(auth.uid());
+  return query select s.kind, s.ref, s.qty from public.stock s where s.user_id = auth.uid() and s.qty > 0 order by s.kind, s.ref;
+end $$;
+
+-- 친구에게 선물: 내 재고에서 하나 빼서 친구 재고에 더함
+create or replace function public.gift_send(target uuid, gkind text, gref text) returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  if not exists (select 1 from public.friends where user_id = auth.uid() and friend_id = target and state = 'friend') then
+    raise exception '친구에게만 보낼 수 있습니다';
+  end if;
+  perform public.give_starter(auth.uid());
+  perform public.give_starter(target);
+  update public.stock set qty = qty - 1 where user_id = auth.uid() and kind = gkind and ref = gref and qty > 0;
+  if not found then raise exception '보낼 재고가 없습니다'; end if;
+  insert into public.stock (user_id, kind, ref, qty) values (target, gkind, gref, 1)
+  on conflict (user_id, kind, ref) do update set qty = public.stock.qty + 1;
+  insert into public.gifts (from_id, to_id, kind, ref) values (auth.uid(), target, gkind, gref);
+end $$;
+
+-- 받은 선물: 최근 30개 (보낸 사람 이름은 내가 붙인 이름 먼저)
+create or replace function public.my_gifts()
+returns table (from_name text, kind text, ref text, created_at timestamptz)
+language sql stable security definer set search_path = public as $$
+  select coalesce(f.alias, p.nickname, '알 수 없음'), g.kind, g.ref, g.created_at
+  from public.gifts g
+  left join public.profiles p on p.id = g.from_id
+  left join public.friends f on f.user_id = auth.uid() and f.friend_id = g.from_id
+  where g.to_id = auth.uid()
+  order by g.created_at desc
+  limit 30
+$$;
+
+-- 14) 친구 · 재고 함수 실행 권한: 로그인한 사람만
+revoke all on function public.my_invite(boolean) from public, anon;
+revoke all on function public.friend_join(text) from public, anon;
+revoke all on function public.friend_accept(uuid) from public, anon;
+revoke all on function public.friend_remove(uuid) from public, anon;
+revoke all on function public.friend_alias(uuid, text) from public, anon;
+revoke all on function public.my_friends() from public, anon;
+revoke all on function public.friend_tank(uuid) from public, anon;
+revoke all on function public.my_stock() from public, anon;
+revoke all on function public.gift_send(uuid, text, text) from public, anon;
+revoke all on function public.my_gifts() from public, anon;
+grant execute on function public.my_invite(boolean) to authenticated;
+grant execute on function public.friend_join(text) to authenticated;
+grant execute on function public.friend_accept(uuid) to authenticated;
+grant execute on function public.friend_remove(uuid) to authenticated;
+grant execute on function public.friend_alias(uuid, text) to authenticated;
+grant execute on function public.my_friends() to authenticated;
+grant execute on function public.friend_tank(uuid) to authenticated;
+grant execute on function public.my_stock() to authenticated;
+grant execute on function public.gift_send(uuid, text, text) to authenticated;
+grant execute on function public.my_gifts() to authenticated;
