@@ -617,3 +617,5 @@ begin
 end $$;
 revoke all on function public.submit_wall_review(text, text, text, text, double precision, double precision, text, jsonb, text) from public;
 grant execute on function public.submit_wall_review(text, text, text, text, double precision, double precision, text, jsonb, text) to anon, authenticated;
+-- 서버(API)가 새 함수 · 칸을 바로 알도록 목록을 다시 읽게 함
+notify pgrst, 'reload schema';

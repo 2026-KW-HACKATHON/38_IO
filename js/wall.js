@@ -497,7 +497,7 @@
       sending = false; $('send').disabled = false;
       if (res.error) {
         var m = res.error.message || '';
-        toast(/function|schema cache|does not exist/i.test(m) ? '서버 준비가 안 됐어요. 잠시 뒤 다시 해 주세요' : m || '잠시 뒤 다시 해 주세요');
+        toast(/function|schema cache|does not exist/i.test(m) ? '서버 준비가 안 됐어요 (' + m + ')' : m || '잠시 뒤 다시 해 주세요');   // 원인을 알 수 있게 서버 글을 같이 보여 줌
         return;
       }
       $('body').value = '';
