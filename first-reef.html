@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>First Reef</title>
+<link rel="stylesheet" href="assets/fonts/galmuri11.css">
 <style>
   html,body{height:100%;margin:0;overflow:hidden;background:#1EB6F0;color:#F2EEF9;
     font-family:system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-user-select:none;user-select:none}
@@ -21,7 +22,7 @@
 
   /* ══ 그림판 모양 (?paint): 윈도우 XP 그림판 그대로 (메뉴 줄 · 도구 상자 · 캔버스 · 색 상자 · 상태 줄) ══ */
   body.paint{display:flex;flex-direction:column;background:#ece9d8;color:#000;
-    font-family:Tahoma,"굴림",Gulim,"Apple SD Gothic Neo",sans-serif;font-size:11px}
+    font-family:Tahoma,"굴림",Gulim,"Galmuri11",sans-serif;font-size:11px;-webkit-font-smoothing:none;font-smooth:never}
   body.paint .paint-only{display:flex}
   body.paint #top{display:none}
   .pmenu{flex:none;height:19px;align-items:center;padding:0 0 0 1px;font-size:11px}
@@ -63,7 +64,7 @@
   .pswatch button{width:16px;height:16px;padding:0;border:1px solid;border-color:#808080 #fff #fff #808080;box-shadow:inset 1px 1px #404040;cursor:default}
   .pstatus{flex:none;height:22px;align-items:stretch;gap:2px;padding:2px 0 0 2px;border-top:1px solid #fff;font-size:11px}
   .pstatus span{line-height:17px;padding:0 3px;border:1px solid;border-color:#a0a0a0 #fff #fff #a0a0a0;overflow:hidden;white-space:nowrap}
-  .pstatus .msg{flex:1}.pstatus .xy,.pstatus .wh{width:110px;flex:none}
+  .pstatus .msg{flex:1;min-width:0}.pstatus .xy,.pstatus .wh{width:58px;flex:none}
   .pstatus .grip{flex:none;width:12px;border:0;padding:0;
     background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' shape-rendering='crispEdges'%3E%3Cg fill='%23fff'%3E%3Crect x='9' y='3' width='2' height='2'/%3E%3Crect x='6' y='6' width='2' height='2'/%3E%3Crect x='9' y='6' width='2' height='2'/%3E%3Crect x='3' y='9' width='2' height='2'/%3E%3Crect x='6' y='9' width='2' height='2'/%3E%3Crect x='9' y='9' width='2' height='2'/%3E%3C/g%3E%3Cg fill='%23a0a0a0'%3E%3Crect x='8' y='2' width='2' height='2'/%3E%3Crect x='5' y='5' width='2' height='2'/%3E%3Crect x='8' y='5' width='2' height='2'/%3E%3Crect x='2' y='8' width='2' height='2'/%3E%3Crect x='5' y='8' width='2' height='2'/%3E%3Crect x='8' y='8' width='2' height='2'/%3E%3C/g%3E%3C/svg%3E") right bottom no-repeat}
 </style>
