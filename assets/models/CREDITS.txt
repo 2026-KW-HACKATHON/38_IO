@@ -76,12 +76,6 @@ lightbulb.glb
   Changes: textures resized to 256px and converted to WebP, mesh simplified,
   vertex data quantized.
 
-cake.glb
-  "Piece of Cake" (https://sketchfab.com/3d-models/piece-of-cake-8bad4ac75423461ba8101c53c934a585)
-  by kny1010 (https://sketchfab.com/kny1010), licensed under
-  Creative Commons Attribution 4.0 (http://creativecommons.org/licenses/by/4.0/).
-  Changes: texture resized to 512px and converted to WebP, mesh simplified,
-  vertex data quantized.
 
 skins/clownfish-tomato.webp, skins/clownfish-percula.webp,
 skins/clownfish-domino.webp, skins/clownfish-snowflake.webp

@@ -51,8 +51,7 @@
    "name": "조각 케이크",
    "model": "assets/models/cake.glb",
    "starter": true,
-   "wear": "float",
-   "size": 0.55
+   "wear": "body"
   }
  ],
  "effects": [],
@@ -241,6 +240,7 @@
       "id": "sea-turtle",
       "name": "Sea Turtle",
       "model": "assets/models/sea-turtle.glb",
+      "carry": "back",
       "color": "#5E8C3A",
       "swim": "path",
       "size": 1.6,
@@ -253,6 +253,7 @@
       "id": "manta-ray",
       "name": "Manta Ray",
       "model": "assets/models/manta-ray.glb",
+      "carry": "back",
       "color": "#3C4656",
       "swim": "path",
       "size": 1.6,
