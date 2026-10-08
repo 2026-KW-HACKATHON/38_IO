@@ -68,3 +68,17 @@ manta-ray.glb
   Creative Commons Attribution 4.0 (http://creativecommons.org/licenses/by/4.0/).
   Changes: textures resized to 512px and converted to WebP, vertex data
   quantized, animation keyframes thinned.
+
+lightbulb.glb
+  "A Simple Lightbulb" (https://sketchfab.com/3d-models/a-simple-lightbulb-b63f65374f0640f69b3fe7a95e2cbc8b)
+  by Miguel Adão (https://sketchfab.com/theauditor), licensed under
+  Creative Commons Attribution 4.0 (http://creativecommons.org/licenses/by/4.0/).
+  Changes: textures resized to 256px and converted to WebP, mesh simplified,
+  vertex data quantized.
+
+cake.glb
+  "Piece of Cake" (https://sketchfab.com/3d-models/piece-of-cake-8bad4ac75423461ba8101c53c934a585)
+  by kny1010 (https://sketchfab.com/kny1010), licensed under
+  Creative Commons Attribution 4.0 (http://creativecommons.org/licenses/by/4.0/).
+  Changes: texture resized to 512px and converted to WebP, mesh simplified,
+  vertex data quantized.

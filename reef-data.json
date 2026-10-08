@@ -36,6 +36,20 @@
    "model": "assets/models/tennis-ball.glb",
    "wear": "bounce",
    "size": 0.4
+  },
+  {
+   "id": "lightbulb",
+   "name": "전구",
+   "model": "assets/models/lightbulb.glb",
+   "wear": "glow",
+   "size": 0.5
+  },
+  {
+   "id": "cake",
+   "name": "조각 케이크",
+   "model": "assets/models/cake.glb",
+   "wear": "float",
+   "size": 0.55
   }
  ],
  "effects": [],
