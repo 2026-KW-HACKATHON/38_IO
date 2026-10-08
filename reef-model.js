@@ -6,7 +6,8 @@
    쓰는 법: ReefModel.load(THREE, cfg.fish).then(function (s) { scene.add(s.holder); 매 프레임 s.update(dt); })
    cfg.fish 한 줄:
      { id, name, model, color(대표 색), swim: 'school' | 'path', count(떼 물고기를 몇 마리 보일지, 기본 1),
-       size(혼자 헤엄치는 물고기 길이, 떼 물고기 한 마리 길이 대비), speed(혼자 헤엄치는 빠르기 배수), says(할 말), forward(머리 방향 '+x' '-z' 등), upright(해마처럼 서서 헤엄) }
+       size(혼자 헤엄치는 물고기 길이, 떼 물고기 한 마리 길이 대비), speed(혼자 헤엄치는 빠르기 배수), says(할 말), forward(머리 방향 '+x' '-z' 등), upright(해마처럼 서서 헤엄),
+       flutter(지느러미 떨림, 아래 참고) }
      school: 같은 떼에서 나눈 파일이라 자리와 헤엄이 파일 안에 들어 있음
      path:   혼자 있는 모델이라 여기서 고리 모양 길을 따라 헤엄치게 함
 */
@@ -36,6 +37,64 @@
   // 뼈 이름 앞부분 (예: Clown1head6_10 → Clown1): 떼 안의 물고기 한 마리
   function who(name) { var m = /^([A-Za-z_]+?\d+)/.exec(name || ''); return m ? m[1] : ''; }
   function num(v, d) { v = +v; return isFinite(v) ? v : d; }
+
+  /* ── 지느러미 떨림: 모델에 지느러미 동작이 없을 때, 등 뒤로 튀어나온 얇은 판을 옆으로 물결치게 함 ──
+     flutter: { y: [아래, 위], back: 등 선, depth: 튀어나온 길이, amp: 흔들림 폭, rate: 빠르기, wave: 물결 촘촘함 }
+     좌표는 모델 파일 안쪽 좌표 (압축된 모델은 -1~1). 등 선(back)보다 뒤로 나온 만큼 더 크게 흔들림 */
+  var clock = { value: 0 };
+  var GET = ['getX', 'getY', 'getZ', 'getW'];
+  // 꼭짓점 값 읽기 (압축된 값은 원래 크기로 풂)
+  function raw(attr, i, k) {
+    var v = attr[GET[k]](i), a = attr.isInterleavedBufferAttribute ? attr.data.array : attr.array;
+    if (!attr.normalized) return v;
+    return a instanceof Int16Array ? Math.max(v / 32767, -1) : a instanceof Int8Array ? Math.max(v / 127, -1)
+         : a instanceof Uint16Array ? v / 65535 : a instanceof Uint8Array ? v / 255 : v;
+  }
+  function addFlutter(THREE, root, fl) {
+    root.traverse(function (o) {
+      if (!o.isMesh) return;
+      var pos = o.geometry.attributes.position, n = pos.count, w = new Float32Array(n), y0 = fl.y[0], y1 = fl.y[1];
+      for (var i = 0; i < n; i++) {
+        var y = raw(pos, i, 1), z = raw(pos, i, 2);
+        if (y > y0 && y < y1 && z < fl.back) w[i] = Math.min(1, (fl.back - z) / fl.depth);
+      }
+      o.geometry.setAttribute('finW', new THREE.BufferAttribute(w, 1));
+      var m = o.material;
+      m.onBeforeCompile = function (sh) {
+        sh.uniforms.finT = clock;
+        sh.vertexShader = 'attribute float finW;\nuniform float finT;\n' + sh.vertexShader.replace('#include <begin_vertex>',
+          '#include <begin_vertex>\ntransformed.x += finW * ' + (+fl.amp).toFixed(4) + ' * sin(finT * ' + (+fl.rate).toFixed(3) + ' - position.y * ' + (+fl.wave).toFixed(3) + ');');
+      };
+      m.customProgramCacheKey = function () { return 'flutter'; };
+      m.needsUpdate = true;
+    });
+  }
+
+  // 뼈로 움직이는 모델은 뼈를 적용한 모양으로 크기를 잼 (파일의 기본 모양과 크기가 다를 수 있음)
+  function skinnedBox(THREE, root) {
+    root.updateMatrixWorld(true);
+    var box = new THREE.Box3(), v = new THREE.Vector3(), skinned = false;
+    root.traverse(function (o) {
+      if (!o.isSkinnedMesh) return;
+      skinned = true;
+      o.skeleton.update();
+      var g = o.geometry.attributes, n = g.position.count, step = Math.max(1, Math.floor(n / 600));
+      var base = new THREE.Vector3(), part = new THREE.Vector3(), mat = new THREE.Matrix4(), bones = o.skeleton.bones;
+      for (var i = 0; i < n; i += step) {
+        // 압축된 값도 풀어서: 기본 자리 → 뼈마다 움직인 자리를 무게만큼 더함
+        base.set(raw(g.position, i, 0), raw(g.position, i, 1), raw(g.position, i, 2)).applyMatrix4(o.bindMatrix);
+        v.set(0, 0, 0);
+        for (var k = 0; k < 4; k++) {
+          var w = raw(g.skinWeight, i, k); if (!w) continue;
+          var b = g.skinIndex[GET[k]](i);
+          mat.multiplyMatrices(bones[b].matrixWorld, o.skeleton.boneInverses[b]);
+          v.addScaledVector(part.copy(base).applyMatrix4(mat), w);
+        }
+        box.expandByPoint(v.applyMatrix4(o.bindMatrixInverse).applyMatrix4(o.matrixWorld));
+      }
+    });
+    return skinned ? box : new THREE.Box3().setFromObject(root);
+  }
 
   function gltf(THREE, url) { return new Promise(function (ok, no) { new THREE.GLTFLoader().load(url, ok, null, no); }); }
 
@@ -77,6 +136,7 @@
     return gltf(THREE, f.model).then(function (g) {
       var model = g.scene, mixer = null;
       model.traverse(function (o) { if (o.isMesh) o.frustumCulled = false; });
+      if (f.flutter && f.flutter.y) addFlutter(THREE, model, f.flutter);
       if (g.animations.length) {
         mixer = new THREE.AnimationMixer(model);
         g.animations.forEach(function (a) { mixer.clipAction(a).play(); });
@@ -85,7 +145,7 @@
       turn.add(model); pivot.add(turn);
       turn.rotation.y = TURN[f.forward] || 0;
       // 가운데로 옮기고 머리 방향(+x) 길이를 잼
-      var box = new THREE.Box3().setFromObject(turn), c = box.getCenter(new THREE.Vector3()), s = box.getSize(new THREE.Vector3());
+      var box = skinnedBox(THREE, turn), c = box.getCenter(new THREE.Vector3()), s = box.getSize(new THREE.Vector3());
       model.position.sub(c.applyAxisAngle(new THREE.Vector3(0, 1, 0), -turn.rotation.y));
       var len = f.upright ? s.y : s.x;
       var head = new THREE.Object3D(); pivot.add(head);   // 머리 자리 (이름표용, 크기 정한 뒤 옮김)
@@ -149,7 +209,7 @@
       }
       var a = new THREE.Vector3(), b = new THREE.Vector3(), v = new THREE.Vector3();
       function step(dt) {
-        t += dt * speed;
+        t += dt * speed; clock.value = t;
         parts.forEach(function (p) { if (p.mixer) p.mixer.update(dt * speed); if (p.hide) p.hide(); });
         solo.forEach(function (p) {
           lane(p, t, a); lane(p, t + 0.05, b);

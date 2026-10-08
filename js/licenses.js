@@ -6,7 +6,7 @@ window.LICENSES = [
   { owner: 'House Doctor ("Tropical Fish")', use: '물고기 3D 모델 (Blue Tang), 그림 형식을 바꿔 씀', kind: 'CC BY 4.0', url: 'https://skfb.ly/ooxXK' },
   { owner: 'kenchoo ("Seahorse Sf")', use: '물고기 3D 모델 (Seahorse), 그림 크기와 모양 데이터를 줄여 씀', kind: 'CC BY 4.0', url: 'https://skfb.ly/oRKNs' },
   { owner: 'Tesseract.js (naptha), Tesseract OCR (Google)', use: '영수증 글자 읽기, 한글 · 영문 글자 자료 (assets/ocr)', kind: 'Apache-2.0', url: 'https://github.com/naptha/tesseract.js' },
-  { owner: 'assetfactory ("Fish")', use: '물고기 3D 모델 (Discus), 그림 크기를 줄여 씀', kind: 'Sketchfab Standard (Free)', url: 'https://sketchfab.com/3d-models/fish-74e57a9de7a24975b02d236ea3be614f' },
+  { owner: 'Comitre ("Discus_Animated")', use: '물고기 3D 모델 (Discus), 그림 크기를 줄이고 형식을 바꿔 씀', kind: 'CC BY 4.0', url: 'https://skfb.ly/6A8tC' },
   { owner: 'DigitalLife3D ("Model 54A - Caribbean Reef Shark")', use: '물고기 3D 모델 (Caribbean Reef Shark), 그림 크기와 모양 데이터를 줄여 씀', kind: 'CC BY-NC 4.0', url: 'https://skfb.ly/6RnNA' },
   { owner: 'MaX3Dd ("Tennis Ball Low-poly PBR")', use: '아이템 3D 모델 (테니스 볼), 그림 크기와 모양 데이터를 줄여 씀', kind: 'Sketchfab Standard (Free)', url: 'https://sketchfab.com/MaX3Dd' },
   { owner: 'Isaiah Odhner (JS Paint)', use: '나의 어항 그림판 도구 그림', kind: 'MIT', url: 'https://github.com/1j01/jspaint' },
