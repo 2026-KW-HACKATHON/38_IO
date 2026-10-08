@@ -27,7 +27,43 @@
   body.paint #top{display:none}
   .pmenu{flex:none;height:19px;align-items:center;padding:0 0 0 1px;font-size:11px}
   .pmenu span{padding:2px 6px;cursor:default;line-height:13px}
-  .pmenu span:hover{background:#316ac5;color:#fff}
+  .pmenu span:hover,.pmenu span.on{background:#316ac5;color:#fff}
+  /* 펼친 메뉴 */
+  .pdrop{position:fixed;z-index:20;display:none;min-width:190px;padding:2px;background:#fff;border:1px solid #aca899;box-shadow:2px 2px 0 rgba(0,0,0,.3)}
+  .pdrop.open{display:block}
+  .pdrop button{display:flex;justify-content:space-between;gap:24px;width:100%;height:17px;padding:0 10px 0 18px;border:0;background:none;
+    font:inherit;color:#000;text-align:left;cursor:default;white-space:nowrap}
+  .pdrop button:hover:not(:disabled){background:#316ac5;color:#fff}
+  .pdrop button:disabled{color:#aca899}
+  .pdrop hr{border:0;border-top:1px solid #aca899;margin:3px 1px}
+  /* 물고기 특성 창: XP 대화 상자 */
+  .pdlg{position:fixed;inset:0;z-index:30;display:none;align-items:center;justify-content:center}
+  .pdlg.open{display:flex}
+  .pwin{width:min(300px,calc(100% - 12px));max-height:calc(100% - 8px);display:flex;flex-direction:column;background:#ece9d8;
+    border:1px solid #0831d9;border-top:0;border-radius:7px 7px 0 0;box-shadow:2px 3px 6px rgba(0,0,0,.45);overflow:hidden}
+  .pwin .tb{flex:none;height:24px;display:flex;align-items:center;gap:4px;padding:0 3px 0 7px;color:#fff;
+    font:bold 12px "Trebuchet MS",Tahoma,"굴림",Gulim,"Galmuri11",sans-serif;text-shadow:1px 1px #0f1089;
+    background:linear-gradient(180deg,#0997ff 0%,#0053ee 8%,#0050ee 40%,#0066ff 88%,#0066ff 93%,#005bff 95%,#003dd7 96%,#003dd7 100%)}
+  .pwin .tb span{flex:1;min-width:0;overflow:hidden;white-space:nowrap}
+  .pwin .tb button{flex:none;width:21px;height:21px;padding:0;border:0;background:url("assets/space/xp/close.svg") center/100% no-repeat;cursor:default}
+  .pwin .tb button:hover{background-image:url("assets/space/xp/close-hover.svg")}
+  .pwin .tb button:active{background-image:url("assets/space/xp/close-active.svg")}
+  .pwin .bd{flex:1;min-height:0;overflow:auto;padding:8px 9px 9px;display:flex;flex-direction:column;gap:6px}
+  .pwin fieldset{margin:0;padding:4px 7px 7px;border:1px solid #d0d0bf;border-radius:3px;display:flex;flex-direction:column;gap:4px}
+  .pwin legend{padding:0 3px;color:#0046d5}
+  .pwin .fl{display:flex;align-items:center;gap:6px}
+  .pwin .fl > span{flex:none;width:44px}
+  .pwin input,.pwin select{flex:1;min-width:0;height:21px;box-sizing:border-box;border:1px solid #7f9db9;border-radius:0;background:#fff;color:#000;
+    font:inherit;padding:2px 3px;outline:none;-webkit-user-select:text;user-select:text}
+  .pwin select:disabled{background:#ece9d8;color:#aca899;border-color:#c9c7ba}
+  .pwin .chip{flex:none;width:13px;height:13px;border:1px solid #808080}
+  .pwin .note{color:#5a5a5a}
+  .pwin .btns{display:flex;justify-content:flex-end;gap:6px;margin-top:2px}
+  .pwin .btns button{min-width:66px;height:23px;padding:0 8px;font:inherit;color:#000;border:1px solid #003c74;border-radius:3px;cursor:default;
+    background:linear-gradient(180deg,#fff 0%,#ecebe5 86%,#d8d0c4 100%)}
+  .pwin .btns button:hover{box-shadow:inset -1px 1px #fff0cf,inset 1px 2px #fdd889,inset -2px 2px #fbc761,inset 2px -2px #e5a01a}
+  .pwin .btns button:active{box-shadow:none;background:linear-gradient(180deg,#cdcac3 0%,#e3e3db 8%,#e5e5de 94%,#f2f2f1 100%)}
+  .pwin .btns .def{box-shadow:inset -1px 1px #cee7ff,inset 1px 2px #98b8ea,inset -2px 2px #bcd4f6,inset 1px -1px #89ade4,inset 2px -2px #89ade4}
   .pwork{flex:1;min-height:0;align-items:stretch}
   /* 도구 상자: 25px 칸 2줄 × 8칸, 그림은 JS Paint 도구 그림(16px) */
   .ptools{flex:none;width:56px;flex-direction:column;align-items:center;padding:3px 0 0;gap:4px;
@@ -51,9 +87,6 @@
   .hd.rt{right:-4px;top:-4px;background:#fff;outline:1px solid #000080;outline-offset:-1px}
   .hd.lb{left:-4px;bottom:-4px;background:#fff;outline:1px solid #000080;outline-offset:-1px}
   body.paint #stage{position:absolute;inset:0;background:#1EB6F0}
-  /* 그림판 그림처럼 굵은 픽셀로 (낮은 해상도로 그리고 늘려 보임) */
-  body.paint #stage canvas{image-rendering:pixelated;image-rendering:crisp-edges}
-  body.paint .bgfx{image-rendering:pixelated}
   /* 색 상자: 왼쪽 지금 색, 오른쪽 물고기마다 대표 색 (16px 칸, 2줄) */
   .pcolors{flex:none;height:44px;align-items:center;gap:2px;padding:0 2px;border-top:1px solid #fff}
   .pcur{position:relative;flex:none;width:30px;height:31px;border:1px solid;border-color:#a0a0a0 #fff #fff #a0a0a0;
@@ -84,6 +117,30 @@
   <div id="msg">물고기 떼를 불러오는 중…</div>
 </div>
 <div class="pcolors paint-only"><div class="pcur"><b class="fg" id="pfg"></b><b class="bg"></b></div><div class="pswatch" id="pswatch"></div></div>
+<!-- 이미지 메뉴, 물고기 특성 창 -->
+<div class="pdrop" id="pdrop">
+  <button type="button" disabled><span>대칭 이동/회전(<u>F</u>)...</span><span>Ctrl+R</span></button>
+  <button type="button" disabled><span>크기 조정/기울이기(<u>S</u>)...</span><span>Ctrl+W</span></button>
+  <hr>
+  <button type="button" id="pAttr"><span>물고기 특성(<u>A</u>)...</span><span>Ctrl+E</span></button>
+</div>
+<div class="pdlg" id="pdlg">
+  <div class="pwin" role="dialog" aria-labelledby="fdTitle">
+    <div class="tb"><span id="fdTitle">물고기 특성</span><button type="button" id="fdX" title="닫기" aria-label="닫기"></button></div>
+    <div class="bd">
+      <label class="fl"><span>물고기</span><i class="chip" id="fdChip"></i><select id="fdFish"></select></label>
+      <fieldset><legend>할 말 (3개까지)</legend>
+        <input type="text" maxlength="40" data-say="0"><input type="text" maxlength="40" data-say="1"><input type="text" maxlength="40" data-say="2">
+        <span class="note">비워 두면 기본 말을 합니다.</span>
+      </fieldset>
+      <fieldset><legend>꾸미기</legend>
+        <label class="fl"><span>이펙트</span><select id="fdFx"></select></label>
+        <label class="fl"><span>아이템</span><select id="fdItem"></select></label>
+      </fieldset>
+      <div class="btns"><button type="button" id="fdReset">기본값</button><button type="button" class="def" id="fdOk">확인</button><button type="button" id="fdNo">취소</button></div>
+    </div>
+  </div>
+</div>
 <div class="pstatus paint-only"><span class="msg" id="pmsg">도움말을 보려면 [도움말] 메뉴에서 [도움말 항목]을 클릭하십시오.</span><span class="xy" id="pxy"></span><span class="wh" id="pwh"></span><span class="grip"></span></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -101,9 +158,8 @@ var REEF_ID = document.body.getAttribute('data-reef');
 var kit = ReefKit(THREE);
 var stage = document.getElementById('stage'), msg = document.getElementById('msg');
 if (PAINT) document.getElementById('pcanvas').appendChild(stage);   // 그림판 캔버스 자리에 넣음
-// 그림판 모양에서는 반 해상도로 그리고 늘려서 굵은 픽셀로 보임
-var renderer = new THREE.WebGLRenderer({antialias:!PAINT, alpha:true});
-renderer.setPixelRatio(PAINT ? 0.5 : Math.min(window.devicePixelRatio || 1, 2));
+var renderer = new THREE.WebGLRenderer({antialias:true, alpha:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
 renderer.outputEncoding = THREE.sRGBEncoding;
 stage.insertBefore(renderer.domElement, document.getElementById('top'));
 var scene = new THREE.Scene();
@@ -111,14 +167,14 @@ var camera = new THREE.PerspectiveCamera(40, 1, 0.01, 1000);
 scene.add(new THREE.HemisphereLight(0xdff6ff, 0x1a3a5a, 1.1));
 var sun = new THREE.DirectionalLight(0xffffff, 1.2); sun.position.set(3, 6, 4); scene.add(sun);
 
-var fish = null, cfg = {}, listKey = '', size = 1, talk = null;
+var fish = null, cfg = {}, listKey = '', size = 1, talk = null, data = {};
 var cam = {theta:0.6, phi:1.25, radius:3}, zoomK = 1;
 
 // 설정 → 물고기들 (목록이 바뀔 때만 새로 불러옴)
 function build(d){
   var r = ReefModel.reef(d, REEF_ID) || ReefModel.reef(d);
   if (!r){ msg.style.display = ''; msg.textContent = 'reef-data.json에 모델 reef가 없어요'; return; }
-  cfg = r.config || {};
+  cfg = r.config || {}; data = d;
   document.title = cfg.title || r.name || 'Reef';
   kit.applyStyle(d.style);
   if (talk) talk.setStyle(d.style); else talk = kit.Talk(stage, camera, d.style);
@@ -128,7 +184,7 @@ function build(d){
   var key = JSON.stringify((cfg.fish || []).map(function(f){ return [f.id, f.model, f.swim, f.count, f.size, f.forward, f.upright]; }));
   if (key === listKey){
     // 이름이나 할 말만 바뀌었으면 글자만 바꿈
-    if (fish) fish.fish.forEach(function(p){ var f = (cfg.fish || []).filter(function(x){ return x.id === p.id; })[0]; if (f){ p.name = f.name || f.id; p.says = f.says || []; } });
+    applyTank();
     return;
   }
   listKey = key;
@@ -137,12 +193,49 @@ function build(d){
   var mine = key;
   ReefModel.load(THREE, cfg.fish).then(function(m){
     if (mine !== listKey) return;
-    fish = m; size = m.size; m.setSpeed(cfg.speed);
+    fish = m; size = m.size; m.setSpeed(cfg.speed); applyTank();
     scene.add(m.holder);
     cam.radius = size * (+cfg.zoom || 0.65) * zoomK;
     camera.near = size / 500; camera.far = size * 20; camera.updateProjectionMatrix();
     msg.style.display = 'none';
   }).catch(function(){ msg.textContent = '물고기 모델을 불러오지 못했어요'; });
+}
+
+/* ── 나의 어항 설정: 물고기마다 할 말(3개까지), 이펙트, 아이템 ──
+   나의 공간 창 안에서는 로그인한 사람의 profiles.tank에 저장, 서버에 못 쓰면 이 기기에만 저장
+   모양: { fish: { 물고기 id: { says: [..], effect: '', item: '' } } } */
+var tank = {fish:{}};
+function host(){ try { return window.parent !== window && window.parent.Core || null; } catch(e){ return null; } }
+function tankKey(){ var C = host(); return 'qrium.tank.' + ((C && C.state.user && C.state.user.id) || 'guest'); }
+function readTank(){
+  var C = host(), t = C && C.state.profile && C.state.profile.tank;
+  if (!t || !t.fish){ try { t = JSON.parse(localStorage.getItem(tankKey())); } catch(e){ t = null; } }
+  tank = t && t.fish ? JSON.parse(JSON.stringify(t)) : {fish:{}};
+  applyTank();
+}
+function mineOf(id){ return tank.fish[id] || {}; }
+// 내가 정한 말이 있으면 그 말, 없으면 기본 말
+function saysOf(f){
+  var mine = (mineOf(f.id).says || []).filter(function(x){ return String(x).trim(); });
+  return mine.length ? mine : (f.says || []);
+}
+function applyTank(){
+  if (!fish) return;
+  fish.fish.forEach(function(p){
+    var f = (cfg.fish || []).filter(function(x){ return x.id === p.id; })[0];
+    if (f){ p.name = f.name || f.id; p.says = saysOf(f); p.sayIdx = null; }
+  });
+}
+function saveTank(){
+  try { localStorage.setItem(tankKey(), JSON.stringify(tank)); } catch(e){}
+  var C = host();
+  if (!C || !C.sb || !C.state.user){ setMsg('이 컴퓨터에 저장했습니다.'); return; }
+  var copy = JSON.parse(JSON.stringify(tank));
+  C.sb.from('profiles').update({tank: copy}).eq('id', C.state.user.id).then(function(r){
+    if (r.error){ setMsg('서버에 저장하지 못해 이 컴퓨터에만 저장했습니다.'); return; }
+    if (C.state.profile) C.state.profile.tank = copy;
+    setMsg('저장했습니다.');
+  });
 }
 
 // 물고기가 말하기: 할 말을 차례대로, 없으면 이름 (말풍선은 머리 위)
@@ -210,16 +303,95 @@ function drawSwatches(){
   (cfg.fish || []).forEach(function(f){
     var b = document.createElement('button'); b.type = 'button'; b.title = f.name || f.id;
     b.style.background = f.color || '#888';
-    b.addEventListener('mouseenter', function(){ pmsg.textContent = f.name || f.id; });
+    b.addEventListener('mouseenter', function(){ pmsg.textContent = (f.name || f.id) + ' - 두 번 누르면 특성을 정합니다.'; });
     b.addEventListener('mouseleave', function(){ pmsg.textContent = HELP; });
     b.addEventListener('click', function(){
       box.querySelectorAll('button').forEach(function(x){ x.classList.toggle('on', x === b); });
       document.getElementById('pfg').style.background = f.color || '#000';
       speak(headOf(f.id));
     });
+    b.addEventListener('dblclick', function(){ openAttr(f.id); });
     box.appendChild(b);
   });
 }
+
+// 상태 줄에 잠깐 알림
+var msgT = 0;
+function setMsg(t){ pmsg.textContent = t; clearTimeout(msgT); msgT = setTimeout(function(){ pmsg.textContent = HELP; }, 2500); }
+
+// 이미지 메뉴 → 물고기 특성
+var drop = document.getElementById('pdrop'), imgMenu = document.querySelectorAll('.pmenu span')[3];
+function closeDrop(){ drop.classList.remove('open'); imgMenu.classList.remove('on'); }
+if (PAINT){
+  imgMenu.addEventListener('click', function(e){
+    e.stopPropagation();
+    if (drop.classList.contains('open')) return closeDrop();
+    var r = imgMenu.getBoundingClientRect();
+    drop.style.left = r.left + 'px'; drop.style.top = r.bottom + 'px';
+    drop.classList.add('open'); imgMenu.classList.add('on');
+  });
+  document.addEventListener('pointerdown', function(e){ if (!drop.contains(e.target) && e.target !== imgMenu) closeDrop(); });
+  document.getElementById('pAttr').addEventListener('click', function(){ closeDrop(); openAttr(); });
+  document.getElementById('pAttr').addEventListener('mouseenter', function(){ pmsg.textContent = '물고기가 할 말과 이펙트, 아이템을 정합니다.'; });
+  document.addEventListener('keydown', function(e){
+    if ((e.ctrlKey || e.metaKey) && (e.key === 'e' || e.key === 'E')){ e.preventDefault(); openAttr(); }
+    if (e.key === 'Escape'){ closeDrop(); closeAttr(); }
+  });
+}
+
+var dlg = document.getElementById('pdlg'), fdFish = document.getElementById('fdFish');
+var fdFx = document.getElementById('fdFx'), fdItem = document.getElementById('fdItem');
+var sayIns = [].slice.call(dlg.querySelectorAll('[data-say]'));
+var draft = null, curId = '';
+// 고를 것 목록: reef-data.json의 effects / items (없으면 '아직 없음'으로 막아 둠)
+function fillPick(sel, list, val){
+  sel.innerHTML = '';
+  var none = document.createElement('option'); none.value = ''; none.textContent = list.length ? '없음' : '아직 없음'; sel.appendChild(none);
+  list.forEach(function(x){
+    var o = document.createElement('option'); o.value = x.id; o.textContent = x.label || x.name || x.id; sel.appendChild(o);
+  });
+  sel.value = val || ''; sel.disabled = !list.length;
+}
+function keepForm(){
+  if (!curId) return;
+  var o = draft[curId] || (draft[curId] = {});
+  o.says = sayIns.map(function(i){ return i.value.trim(); }).filter(Boolean);
+  o.effect = fdFx.value; o.item = fdItem.value;
+}
+function showFish(id){
+  curId = id;
+  var f = (cfg.fish || []).filter(function(x){ return x.id === id; })[0] || {}, o = draft[id] || {};
+  document.getElementById('fdChip').style.background = f.color || '#888';
+  sayIns.forEach(function(inp, i){ inp.value = (o.says || [])[i] || ''; inp.placeholder = (f.says || [])[i] || ''; });
+  fillPick(fdFx, data.effects || [], o.effect);
+  fillPick(fdItem, data.items || [], o.item);
+}
+function openAttr(id){
+  if (!(cfg.fish || []).length) return;
+  draft = JSON.parse(JSON.stringify(tank.fish));
+  fdFish.innerHTML = '';
+  cfg.fish.forEach(function(f){ var o = document.createElement('option'); o.value = f.id; o.textContent = f.name || f.id; fdFish.appendChild(o); });
+  fdFish.value = id || curId || cfg.fish[0].id;
+  if (fdFish.selectedIndex < 0) fdFish.selectedIndex = 0;
+  curId = ''; showFish(fdFish.value);
+  dlg.classList.add('open'); sayIns[0].focus();
+}
+function closeAttr(){ dlg.classList.remove('open'); }
+fdFish.addEventListener('change', function(){ keepForm(); showFish(fdFish.value); });
+document.getElementById('fdOk').addEventListener('click', function(){
+  keepForm();
+  // 아무것도 안 정한 물고기는 뺌
+  Object.keys(draft).forEach(function(k){ var o = draft[k]; if (!(o.says || []).length && !o.effect && !o.item) delete draft[k]; });
+  tank = {fish: draft}; applyTank(); saveTank(); closeAttr();
+});
+document.getElementById('fdReset').addEventListener('click', function(){ delete draft[curId]; showFish(curId); });
+document.getElementById('fdNo').addEventListener('click', closeAttr);
+document.getElementById('fdX').addEventListener('click', closeAttr);
+dlg.addEventListener('keydown', function(e){ if (e.key === 'Enter' && e.target.tagName === 'INPUT') document.getElementById('fdOk').click(); });
+
+// 나의 공간 창 안이면 로그인 정보가 바뀔 때마다 설정을 다시 읽음
+var host0 = host();
+if (host0) host0.onChange(readTank); else readTank();
 
 // 손가락·마우스로 돌려보기, 휠·두 손가락으로 확대
 function applyCam(){
@@ -232,7 +404,7 @@ function applyCam(){
 var el = renderer.domElement, pts = {}, lastPinch = 0, idle = 0;
 el.addEventListener('pointerdown', function(e){ pts[e.pointerId] = {x:e.clientX, y:e.clientY, x0:e.clientX, y0:e.clientY, t0:performance.now()}; idle = 0; try{ el.setPointerCapture(e.pointerId); }catch(er){} });
 el.addEventListener('pointermove', function(e){
-  if (PAINT){ var rr = el.getBoundingClientRect(); document.getElementById('pxy').textContent = Math.round((e.clientX - rr.left) / 2) + ',' + Math.round((e.clientY - rr.top) / 2); }
+  if (PAINT){ var rr = el.getBoundingClientRect(); document.getElementById('pxy').textContent = Math.round(e.clientX - rr.left) + ',' + Math.round(e.clientY - rr.top); }
   var p = pts[e.pointerId]; if (!p) return;
   var ids = Object.keys(pts);
   if (ids.length === 1){ cam.theta -= (e.clientX - p.x) * 0.006; cam.phi -= (e.clientY - p.y) * 0.006; }
@@ -264,7 +436,7 @@ el.addEventListener('wheel', function(e){ e.preventDefault(); cam.radius *= Math
 
 function resize(){
   var w = stage.clientWidth || innerWidth, h = stage.clientHeight || innerHeight;
-  if (PAINT) document.getElementById('pwh').textContent = Math.round(w / 2) + 'x' + Math.round(h / 2);
+  if (PAINT) document.getElementById('pwh').textContent = Math.round(w) + 'x' + Math.round(h);
   renderer.setSize(w, h, false); camera.aspect = w / Math.max(1, h); camera.updateProjectionMatrix();
 }
 window.addEventListener('resize', resize); resize();

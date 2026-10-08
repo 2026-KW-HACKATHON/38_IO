@@ -17,6 +17,7 @@
   var stage = document.getElementById('stage');
   var video = document.getElementById('cam'), glc = document.getElementById('gl');
   var gate = document.getElementById('gate'), bottomBar = document.getElementById('bottom');
+  var backBtn = document.getElementById('bBack');
   var chipBox = document.getElementById('chips');
   var cCam = document.getElementById('cCam'), cGyro = document.getElementById('cGyro'), cLoc = document.getElementById('cLoc');
 
@@ -165,7 +166,7 @@
   function enterOrbit() {
     viewMode = 'orbit';
     video.classList.add('hidden');
-    gate.classList.add('hidden'); bottomBar.classList.remove('hidden');
+    gate.classList.add('hidden'); bottomBar.classList.remove('hidden'); backBtn.classList.remove('hidden');
     document.getElementById('bRecenter').classList.add('hidden');
     applyOrbit(); fitCamera();
   }
@@ -190,7 +191,8 @@
       .then(function () {
         cameraOn = true; viewMode = 'camera';
         video.classList.remove('hidden'); stage.style.background = '#000';
-        gate.classList.add('hidden'); bottomBar.classList.remove('hidden');
+        gate.classList.add('hidden'); bottomBar.classList.remove('hidden'); backBtn.classList.remove('hidden');
+        document.getElementById('bRecenter').classList.remove('hidden');
         setChip(cCam, 'CAM OK', true);
         fitCamera(); recenter();
         Core.log('ar_start', { camera: true, motion: !motionDenied });
@@ -206,6 +208,20 @@
   function startOrbit() { enterOrbit(); Core.log('ar_start', { camera: false, motion: false }); }
   document.getElementById('goOrbit').addEventListener('click', startOrbit);
   document.getElementById('gateClose').addEventListener('click', startOrbit);   // 창을 닫으면 카메라 없이 둘러보기
+
+  // 뒤로: 카메라를 끄고 처음 화면으로
+  function backToGate() {
+    var st = video.srcObject;
+    if (st) st.getTracks().forEach(function (t) { t.stop(); });
+    video.srcObject = null; video.classList.add('hidden');
+    cameraOn = false; viewMode = 'orbit'; stage.style.background = '';
+    haveOrientation = false; firstOrientation = true;
+    window.removeEventListener('deviceorientation', onOrientation, true);
+    chipBox.classList.add('hidden');
+    bottomBar.classList.add('hidden'); backBtn.classList.add('hidden'); gate.classList.remove('hidden');
+    applyOrbit(); fitCamera();
+  }
+  backBtn.addEventListener('click', backToGate);
 
   /* ── 로그인 영역 (위쪽 오른쪽) ── */
   var authBox = document.getElementById('auth');

@@ -1369,19 +1369,20 @@ function paneMotion(box, m){
   }));
 }
 
-function linesEditor(host, arr, onChange, placeholder){
+// max: 줄 수 한도 (없으면 제한 없음)
+function linesEditor(host, arr, onChange, placeholder, max){
   host.innerHTML = '';
   arr.forEach((line, i) => {
     const row = document.createElement('div'); row.className = 'row';
     const inp = document.createElement('input'); inp.type = 'text'; inp.value = line; inp.placeholder = placeholder || '';
     inp.addEventListener('input', () => onChange(a => { a[i] = inp.value; }));
     const rm = document.createElement('button'); rm.type = 'button'; rm.className = 'btn small'; rm.textContent = '×'; rm.title = '지우기';
-    rm.addEventListener('click', () => { onChange(a => { a.splice(i, 1); }, true); linesEditor(host, arr, onChange, placeholder); });
+    rm.addEventListener('click', () => { onChange(a => { a.splice(i, 1); }, true); linesEditor(host, arr, onChange, placeholder, max); });
     row.appendChild(inp); row.appendChild(rm); host.appendChild(row);
   });
   const add = document.createElement('button'); add.type = 'button'; add.className = 'btn small ghost'; add.textContent = '+ 한 줄';
-  add.addEventListener('click', () => { onChange(a => { a.push(''); }, true); linesEditor(host, arr, onChange, placeholder); const ins = $$('input', host); if (ins.length) ins[ins.length - 1].focus(); });
-  host.appendChild(add);
+  add.addEventListener('click', () => { onChange(a => { a.push(''); }, true); linesEditor(host, arr, onChange, placeholder, max); const ins = $$('input', host); if (ins.length) ins[ins.length - 1].focus(); });
+  if (!max || arr.length < max) host.appendChild(add);
 }
 
 // 물고기가 하는 말: 모든 reef에서 기본으로 씀 (reef 경로에 따로 적은 말이 있으면 그게 먼저)
@@ -2087,7 +2088,7 @@ function renderMFish(){
   $$('[data-f]', main).forEach(el => el.addEventListener('change', () => { edit(() => { f[el.dataset.f] = el.value.trim(); }, true); renderMFish(); }));
   $('#mfColor').addEventListener('input', e => edit(() => { f.color = e.target.value; }));
   f.says = f.says || [];
-  linesEditor($('#mfSays'), f.says, (fn, force) => edit(() => fn(f.says), force), '짧은 한마디');
+  linesEditor($('#mfSays'), f.says, (fn, force) => edit(() => fn(f.says), force), '짧은 한마디', 3);
   // 미리보기 창의 그 물고기가 말하게 함
   $('#mfSay').addEventListener('click', () => { try { $('#mfFrame').contentWindow.postMessage({ type: 'reef-say', id: f.id }, '*'); } catch(e){} });
 }
@@ -2244,14 +2245,14 @@ function cfgModel(box, r){
       <label class="f"><span>헤엄 방식</span><select data-fk="swim"><option value="school">떼 (파일 안 움직임)</option><option value="path">혼자 (고리 길)</option></select></label>
       <label class="f"><span>${fi.swim === 'path' ? '길이 (떼 물고기 한 마리 대비)' : '보일 마리 수'}</span><input type="number" step="${fi.swim === 'path' ? 0.01 : 1}" min="0" data-fk="${fi.swim === 'path' ? 'size' : 'count'}"></label>
       ${fi.swim === 'path' ? '<label class="f"><span>빠르기 배수</span><input type="number" step="0.1" min="0" data-fk="speed"></label>' : ''}</div>
-      <label class="f" style="margin-top:6px"><span>할 말 (한 줄에 하나, 누르면 차례대로)</span><textarea rows="3" data-says></textarea></label>`;
+      <label class="f" style="margin-top:6px"><span>할 말 (한 줄에 하나, 3줄까지, 누르면 차례대로)</span><textarea rows="3" data-says></textarea></label>`;
     $$('[data-fk]', d).forEach(el => {
       const k = el.dataset.fk;
       el.value = fi[k] != null ? fi[k] : (k === 'color' ? '#888888' : k === 'swim' ? 'school' : k === 'count' || k === 'speed' ? 1 : '');
       el.addEventListener('change', () => { edit(() => { fi[k] = el.type === 'number' ? numv(el.value, 1) : el.value.trim(); }, true); if (k === 'swim') renderReefs(); });
     });
     const ta = $('[data-says]', d); ta.value = (fi.says || []).join('\n');
-    ta.addEventListener('input', () => edit(() => { fi.says = ta.value.split('\n').map(x => x.trim()).filter(Boolean); }));
+    ta.addEventListener('input', () => edit(() => { fi.says = ta.value.split('\n').map(x => x.trim()).filter(Boolean).slice(0, 3); }));
     $('button', d).addEventListener('click', () => { edit(() => c.fish.splice(i, 1), true); renderReefs(); });
     fb.appendChild(d);
   });

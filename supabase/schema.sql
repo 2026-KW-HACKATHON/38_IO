@@ -12,6 +12,8 @@ create table if not exists public.profiles (
 );
 alter table public.profiles add column if not exists avatar jsonb not null default '{}'::jsonb;
 alter table public.profiles add column if not exists roles jsonb not null default '[]'::jsonb;
+-- 나의 어항 설정: 물고기마다 할 말, 이펙트, 아이템
+alter table public.profiles add column if not exists tank jsonb not null default '{}'::jsonb;
 
 -- 2) 활동 기록 표 (계정이 지워지면 함께 지워짐)
 create table if not exists public.activity_logs (
