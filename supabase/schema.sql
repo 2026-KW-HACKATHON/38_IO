@@ -538,7 +538,7 @@ grant execute on function public.gift_send(uuid, text, text) to authenticated;
 grant execute on function public.my_gifts() to authenticated;
 grant execute on function public.new_gifts() to authenticated;
 
--- 13) 매장 방문자 한 줄 리뷰 (로그인 없이 쓰고 누구나 봄)
+-- 15) 매장 방문자 한 줄 리뷰 (로그인 없이 쓰고 누구나 봄)
 --     쓰기는 아래 함수로만 가능: 매장 범위 + 50m 안에서 보낸 위치(gps)이거나, 영수증 인증(receipt)을 거친 경우만 받음
 --     같은 매장에서 직전 리뷰가 2분 안에 올라왔으면 같은 무리(grp)로 묶음
 --     proof가 receipt인 글의 영수증 정보(receipt)는 기기에서 읽은 값이라 서버가 확인하지 못함 (나중에 대조용)
@@ -554,7 +554,7 @@ create table if not exists public.wall_reviews (
   grp bigint not null,
   created_at timestamptz not null default now()
 );
--- 이미 만든 표에는 관리자 시험 글(admin)을 허용하도록 검사를 다시 검사
+-- 이미 만든 표에는 관리자 시험 글(admin)을 허용하도록 검사를 다시 함
 alter table public.wall_reviews drop constraint if exists wall_reviews_proof_check;
 alter table public.wall_reviews add constraint wall_reviews_proof_check check (proof in ('gps', 'receipt', 'admin'));
 create index if not exists wall_reviews_spot_time on public.wall_reviews (spot, created_at desc);
