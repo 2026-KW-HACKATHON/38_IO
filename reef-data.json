@@ -116,6 +116,147 @@
      }
     ]
    }
+  },
+  {
+   "id": "juana",
+   "name": "디저트카페 후아나",
+   "file": "juana-reef.html",
+   "kind": "model",
+   "config": {
+    "title": "디저트카페 후아나",
+    "speed": 1,
+    "zoom": 0.65,
+    "catch": true,
+    "fish": [
+     {
+      "id": "blue-betta",
+      "name": "블루 베타",
+      "model": "assets/models/betta.glb",
+      "color": "#1E9FB8",
+      "swim": "path",
+      "size": 1.2,
+      "forward": "+x",
+      "speed": 0.6,
+      "count": 3,
+      "says": []
+     },
+     {
+      "id": "neon-tetra",
+      "name": "네온 테트라",
+      "model": "assets/models/neon-tetra.glb",
+      "color": "#E0302A",
+      "swim": "path",
+      "size": 0.9,
+      "forward": "+z",
+      "speed": 1.0,
+      "count": 3,
+      "says": []
+     },
+     {
+      "id": "goldfish",
+      "name": "금붕어",
+      "model": "assets/models/ryukin-goldfish.glb",
+      "color": "#D9262B",
+      "swim": "path",
+      "size": 1.1,
+      "forward": "+x",
+      "speed": 0.5,
+      "count": 3,
+      "says": []
+     }
+    ]
+   }
+  },
+  {
+   "id": "cord",
+   "name": "CORD Jr.",
+   "file": "cord-reef.html",
+   "kind": "model",
+   "config": {
+    "title": "CORD Jr.",
+    "speed": 1,
+    "zoom": 0.65,
+    "catch": true,
+    "fish": [
+     {
+      "id": "manta-ray",
+      "name": "가오리",
+      "model": "assets/models/manta-ray.glb",
+      "carry": "back",
+      "color": "#3C4656",
+      "swim": "path",
+      "size": 1.6,
+      "forward": "+z",
+      "speed": 0.4,
+      "says": [],
+      "count": 2
+     },
+     {
+      "id": "sea-turtle",
+      "name": "바다거북",
+      "model": "assets/models/sea-turtle.glb",
+      "carry": "back",
+      "color": "#5E8C3A",
+      "swim": "path",
+      "size": 1.6,
+      "forward": "-x",
+      "speed": 0.4,
+      "says": [],
+      "pitch": 28,
+      "count": 2
+     },
+     {
+      "id": "reef-shark",
+      "name": "리프 상어",
+      "model": "assets/models/shark.glb",
+      "color": "#7D8B96",
+      "swim": "path",
+      "size": 4.85,
+      "forward": "+x",
+      "speed": 0.5,
+      "count": 2,
+      "says": []
+     }
+    ]
+   }
+  },
+  {
+   "id": "bima",
+   "name": "광운대학교 비마관",
+   "file": "bima-reef.html",
+   "kind": "model",
+   "config": {
+    "title": "광운대학교 비마관",
+    "speed": 1,
+    "zoom": 0.65,
+    "catch": false,
+    "fish": [
+     {
+      "id": "greenland-shark",
+      "name": "그린란드 상어",
+      "model": "assets/models/greenland-shark.glb",
+      "color": "#5A6068",
+      "swim": "path",
+      "size": 4.0,
+      "forward": "+x",
+      "speed": 0.3,
+      "count": 2,
+      "says": []
+     },
+     {
+      "id": "bobtail-squid",
+      "name": "짧은꼬리오징어",
+      "model": "assets/models/bobtail-squid.glb",
+      "color": "#8A5A6A",
+      "swim": "path",
+      "size": 1.3,
+      "forward": "+x",
+      "speed": 0.5,
+      "count": 1,
+      "says": []
+     }
+    ]
+   }
   }
  ]
 }

@@ -20,7 +20,7 @@ window.LICENSES = [
   { owner: 'Penny ("Bobtail Squid")', use: '3D 모델 (오징어), 그림 크기를 줄이고 모양을 단순하게 바꾸고 동작 데이터를 줄여 씀', kind: 'CC BY 4.0', url: 'https://skfb.ly/6BpJC' },
   { owner: 'Ragner1811 ("Smiling Pufferfish")', use: '물고기 3D 모델 (복어), 그림 크기를 줄이고 모양을 크게 단순하게 바꿔 씀, 바꾼 모델도 같은 조건(CC BY-SA 4.0)으로 공개', kind: 'CC BY-SA 4.0', url: 'https://skfb.ly/pGrDI' },
   { owner: 'n- ("Jellyfish_003")', use: '3D 모델 (해파리), 서 있도록 돌리고 그림 크기와 모양 데이터를 줄여 씀', kind: 'CC BY 4.0', url: 'https://skfb.ly/6VRXn' },
-  { owner: 'BlueMesh ("Paracheirodon Innesi / Tetra Neon")', use: '물고기 3D 모델 (송사리로 씀), 그림 크기와 모양 · 동작 데이터를 줄여 씀', kind: 'CC BY 4.0', url: 'https://skfb.ly/6SBqx' },
+  { owner: 'BlueMesh ("Paracheirodon Innesi / Tetra Neon")', use: '물고기 3D 모델 (송사리로 씀, 네온 테트라), 그림 크기와 모양 · 동작 데이터를 줄여 씀', kind: 'CC BY 4.0', url: 'https://skfb.ly/6SBqx' },
   { owner: 'Isaiah Odhner (JS Paint)', use: '나의 어항 그림판 도구 그림', kind: 'MIT', url: 'https://github.com/1j01/jspaint' },
   { owner: 'quiple (갈무리11)', use: '굴림이 없는 컴퓨터에서 XP 글씨 대신 쓰는 도트 글꼴', kind: 'SIL OFL 1.1', url: 'https://github.com/quiple/galmuri' },
   { owner: 'leedheo (도스샘물체)', use: '글꼴(폰트)로 도스샘물체(leedheo 제작)를 사용하였습니다. 물고기 말풍선 (한글 2350자만 남겨 씀)', kind: 'MIT', url: 'https://github.com/hurss/fonts' }

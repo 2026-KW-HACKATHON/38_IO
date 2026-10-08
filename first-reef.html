@@ -196,7 +196,7 @@ var cam = {theta:0.6, phi:1.25, radius:3}, zoomK = 1;
 function build(d){
   var r = ReefModel.reef(d, REEF_ID) || ReefModel.reef(d);
   if (!r){ msg.style.display = ''; msg.textContent = 'reef-data.json에 모델 reef가 없어요'; return; }
-  cfg = r.config || {}; data = d;
+  cfg = withCatch(d, r.config || {}); data = d;
   document.title = cfg.title || r.name || 'Reef';
   kit.applyStyle(d.style);
   if (talk) talk.setStyle(d.style); else talk = kit.Talk(stage, camera, d.style);
@@ -222,6 +222,36 @@ function build(d){
     camera.near = size / 500; camera.far = size * 20; camera.updateProjectionMatrix();
     msg.style.display = 'none';
   }).catch(function(){ msg.textContent = '물고기 모델을 불러오지 못했어요'; });
+}
+
+/* ── 낚시로 잡은 물고기: 내 재고(stock)에 있는 물고기 중 이 어항에 없는 것을 잡은 수만큼 더함 (한 종류 6마리까지) ──
+   물고기 설정은 reef-data.json에서 낚시가 되는 장소 reef(catch)의 것을 씀. 친구 어항 구경 때는 더하지 않음 */
+var stockFish = {}, stockKey = '';
+function withCatch(d, c){
+  if (REEF_ID !== 'first' || FRIEND) return c;
+  var have = {}, extra = [];
+  (c.fish || []).forEach(function(f){ have[f.id] = 1; });
+  (d.reefs || []).forEach(function(r){
+    if (r.kind !== 'model' || !r.config || !r.config.catch) return;
+    (r.config.fish || []).forEach(function(f){
+      var n = Math.min(6, stockFish[f.id] || 0);
+      if (have[f.id] || !n) return;
+      have[f.id] = 1;
+      for (var i = 0; i < n; i++) extra.push(Object.assign({}, f, {count: 1}));
+    });
+  });
+  return extra.length ? Object.assign({}, c, {fish: (c.fish || []).concat(extra)}) : c;
+}
+function loadCatch(){
+  var C = host();
+  if (FRIEND || !C || !C.sb || !C.state.user) return;
+  C.sb.rpc('my_stock').then(function(r){
+    if (r.error) return;
+    var o = {}; (r.data || []).forEach(function(x){ if (x.kind === 'fish') o[x.ref] = x.qty; });
+    var k = JSON.stringify(o); if (k === stockKey) return;
+    stockKey = k; stockFish = o;
+    if (data && data.reefs) build(data);
+  });
 }
 
 /* ── 나의 어항 설정: 물고기마다 할 말(3개까지), 이펙트, 아이템 ──
@@ -550,7 +580,7 @@ dlg.addEventListener('keydown', function(e){ if (e.key === 'Enter' && e.target.t
 
 // 나의 공간 창 안이면 로그인 정보가 바뀔 때마다 설정을 다시 읽음
 var host0 = host();
-if (host0) host0.onChange(readTank); else readTank();
+if (host0) host0.onChange(function(){ readTank(); loadCatch(); }); else readTank();
 
 // 손가락·마우스로 돌려보기, 휠·두 손가락으로 확대
 function applyCam(){

@@ -1,9 +1,23 @@
-/* 후아나 방문자 첫 화면: 위치(또는 영수증)로 방문을 확인하고, 물고기 · 아이템 · 한 줄 평을 남기면 어항에 풀어 줌
-   서버(submit_wall_review)가 위치를 다시 확인하고, 2분 안에 남긴 리뷰는 같은 무리로 묶음
-   관리자는 '관리자 모드'로 위치와 상관없이 남기고, 리뷰를 지울 수 있음 */
+/* 장소 어항 (reef.html?spot=juana | cord | bima, &mode=fish 이면 낚시)
+   - 후아나 · CORD Jr.: 리뷰마다 물고기 한 마리, 2분 안에 남긴 리뷰는 같은 무리. 어항(AR)은 그 장소 안에서만 보임
+   - 낚시: 영수증 인증 + 장소 안에서 물고기를 길게 누르면 금색으로 빛나며 사라지고 내 어항(재고)에 들어감
+   - 비마관: 그린란드 상어 · 오징어를 보기만 함 (잡을 수 없음)
+   관리자는 '관리자 모드'로 위치와 상관없이 보고, 남기고, 잡고, 리뷰를 지울 수 있음 */
 (function () {
   "use strict";
-  var SPOT = 'juana';
+  // 장소 · 모드: 주소 뒤 값 (카카오 로그인 후 돌아오면 값이 빠질 수 있어서 이 탭에 기억해 둔 값을 씀)
+  var Q = new URLSearchParams(location.search), memo = {};
+  try { memo = JSON.parse(sessionStorage.getItem('qrium.reef')) || {}; } catch (e) {}
+  var PLACES = { juana: '디저트카페 후아나', cord: 'CORD Jr.', bima: '광운대학교 비마관' };
+  var SPOT = Q.get('spot') || memo.spot || 'juana';
+  if (!PLACES[SPOT]) SPOT = 'juana';
+  var MODE = SPOT === 'bima' ? 'show' : (Q.get('spot') ? Q.get('mode') : memo.mode) === 'fish' ? 'fish' : 'review';
+  try { sessionStorage.setItem('qrium.reef', JSON.stringify({ spot: SPOT, mode: MODE })); } catch (e) {}
+  var PNAME = PLACES[SPOT];
+  // 처음 화면에서 인증한 이 장소 영수증 (낚시 · 영수증 리뷰에 씀)
+  var RECEIPT = null;
+  try { RECEIPT = JSON.parse(sessionStorage.getItem('qrium.receipt')); } catch (e) {}
+  if (!RECEIPT || RECEIPT.spot !== SPOT) RECEIPT = null;
   var MAX_FISH = 24;                  // 어항에 동시에 띄우는 물고기 수 (최근 것부터)
   var POLL = 15000;                   // 새 리뷰 확인 간격
   // 고를 수 있는 물고기: reef-data.json의 id → 화면에 보일 이름 (이 순서대로 보임)
@@ -15,7 +29,8 @@
     'betta': '베타', 'anchovy': '멸치', 'greenland-shark': '그린란드 상어', 'bobtail-squid': '오징어',
     'pufferfish': '복어', 'jellyfish': '해파리', 'medaka': '송사리'
   };
-  var SIZE = { 'shark': 0.6, 'sea-turtle': 0.45, 'manta-ray': 0.6, 'greenland-shark': 0.6 };   // 어항 속 물고기 길이 (없으면 0.32)
+  var SIZE = { 'shark': 0.6, 'sea-turtle': 0.45, 'manta-ray': 0.6, 'greenland-shark': 0.75, 'reef-shark': 0.6,
+               'blue-betta': 0.3, 'neon-tetra': 0.22, 'bobtail-squid': 0.35 };   // 어항 속 물고기 길이 (없으면 0.32)
   var kit = ReefKit(THREE);
   var $ = function (id) { return document.getElementById(id); };
   var sb = window.Core && Core.sb;
@@ -38,7 +53,7 @@
     form.classList.add('hidden');
     arAllowed(false);   // 확인이 풀리면 AR도 끔
   }
-  var KIND = { gps: '후아나에서 확인됐어요', admin: '관리자 모드 (위치 확인 없음)', receipt: '영수증으로 확인됐어요', remote: '후아나 밖에서 남기는 리뷰예요' };
+  var KIND = { gps: PNAME + '에서 확인됐어요', admin: '관리자 모드 (위치 확인 없음)', receipt: '영수증으로 확인됐어요', remote: PNAME + ' 밖이에요' };
   function verified(p, note, buttons) {
     proof = p;
     gstat.innerHTML = '';
@@ -46,27 +61,42 @@
     if (note) m.appendChild(el('small', '', ' · ' + note));
     gstat.appendChild(m);
     if (buttons && buttons.length) { var r = el('div', 'row'); buttons.forEach(function (b) { r.appendChild(b); }); gstat.appendChild(r); }
-    form.classList.remove('hidden');
-    arAllowed(p.kind === 'gps' || p.kind === 'admin');
-    if (p.kind === 'gps') arStart();   // 후아나 안에서는 바로 카메라 위에 물고기를 띄움
+    form.classList.toggle('hidden', MODE !== 'review');
+    setSite(p.kind === 'gps' || p.kind === 'admin');
+    arAllowed(site);
+    if (p.kind === 'gps') arStart();   // 장소 안에서는 바로 카메라 위에 물고기를 띄움
+    drawPanel();
+  }
+  // 어항(AR)은 그 장소 안에서만 보임 (관리자 모드는 어디서나)
+  var site = false;
+  function setSite(on) {
+    site = on;
+    if (typeof world !== 'undefined') world.visible = on;
+    var em = $('empty');
+    if (!on) { em.textContent = PNAME + ' 안에서만 어항을 볼 수 있어요'; em.classList.remove('hidden'); }
+    else if (fishes.length) em.classList.add('hidden');
+    else { em.textContent = MODE === 'review' ? '아직 물고기가 없어요. 첫 리뷰를 남겨 보세요!' : '물고기를 불러오는 중…'; em.classList.remove('hidden'); }
   }
   function receiptBtn() { return button('영수증으로 인증하기', 'vbtn', function () { $('rcpt').value = ''; $('rcpt').click(); }); }
   function retryBtn() { return button('위치 다시 확인', 'vbtn', checkGeo); }
 
   // 매장 밖 글: 바로 쓸 수 있고, 위치를 다시 확인하거나 영수증으로 방문을 인증할 수 있음 (위치를 알면 같이 보냄)
-  function remote(note, loc) { verified({ kind: 'remote', lat: loc && loc.lat, lng: loc && loc.lng }, note, [retryBtn(), receiptBtn()]); }
+  function remote(note, loc) {
+    if (RECEIPT && MODE === 'review') { verified({ kind: 'receipt', receipt: RECEIPT, lat: loc && loc.lat, lng: loc && loc.lng }, note, [retryBtn()]); return; }
+    verified({ kind: 'remote', lat: loc && loc.lat, lng: loc && loc.lng }, note, MODE === 'review' ? [retryBtn(), receiptBtn()] : [retryBtn()]);
+  }
   function checkGeo() {
     remote('위치를 확인하는 중…');
     if (!navigator.geolocation) { remote('위치를 쓸 수 없어요'); return; }
     navigator.geolocation.getCurrentPosition(function (p) {
-      if (adminMode || (proof && proof.kind === 'receipt')) return;
+      if (adminMode || (proof && proof.kind === 'receipt' && !RECEIPT)) return;
       var sp = spot(), lat = p.coords.latitude, lng = p.coords.longitude;
       if (!sp || !sp.box) { remote('매장 정보를 불러오지 못했어요', { lat: lat, lng: lng }); return; }
       var d = Math.round(window.spotDistance(sp, lat, lng));
       if (d <= window.SPOT_MARGIN_M) verified({ kind: 'gps', lat: lat, lng: lng });
-      else remote('후아나에서 ' + d + 'm', { lat: lat, lng: lng });
+      else remote(PNAME + '에서 ' + d + 'm', { lat: lat, lng: lng });
     }, function (e) {
-      if (adminMode || (proof && proof.kind === 'receipt')) return;
+      if (adminMode || (proof && proof.kind === 'receipt' && !RECEIPT)) return;
       remote(e && e.code === 1 ? '위치 권한이 꺼져 있어요' : '위치를 찾지 못했어요');
     }, { enableHighAccuracy: true, timeout: 12000, maximumAge: 20000 });
   }
@@ -86,7 +116,7 @@
           paid: v.at ? v.at.toISOString() : null, shop: r.info.spot.name } });
         return;
       }
-      var why = !isMine ? '후아나 영수증이 아니에요' : v.checks.filter(function (c) { return !c.ok; }).map(function (c) { return c.text; }).join(' · ');
+      var why = !isMine ? PNAME + ' 영수증이 아니에요' : v.checks.filter(function (c) { return !c.ok; }).map(function (c) { return c.text; }).join(' · ');
       remote('영수증 인증 실패: ' + why);
     }, function () { remote('영수증을 읽지 못했어요'); });
   });
@@ -161,7 +191,8 @@
         fishes.push(f); byId[r.id] = f;
         wear(f);
         while (fishes.length > MAX_FISH) dropFish(fishes[0]);
-        $('empty').classList.add('hidden');
+        if (site) $('empty').classList.add('hidden');
+        if (MODE === 'fish') drawPanel();   // 남은 물고기 수를 고침
         if (r.fresh) say(f, 5);
       }).catch(function () { delete byId[r.id]; }).then(function () {
         return new Promise(function (ok) { setTimeout(ok, 40); });   // 한 마리 넣고 쉬어서 화면이 멈추지 않게
@@ -171,6 +202,7 @@
   function dropFish(f) {
     world.remove(f.m.holder);
     if (f.worn) world.remove(f.worn.obj);
+    if (f.halo) world.remove(f.halo);
     fishes.splice(fishes.indexOf(f), 1); delete byId[f.r.id];
   }
 
@@ -256,10 +288,22 @@
     try { cv.setPointerCapture(e.pointerId); } catch (er) {}
     down = Object.keys(pts).length === 1 ? { x: e.clientX, y: e.clientY, t: performance.now() } : null;
     pinch = null; view.idle = 0;
+    // 낚시: 물고기를 길게 누르면 잡음
+    clearTimeout(holdT);
+    if (MODE === 'fish' && down) {
+      var hx = e.clientX, hy = e.clientY;
+      holdT = setTimeout(function () {
+        var f = nearest(hx, hy);
+        if (f && f.r.catchable && !f.caught) { down = null; tryCatch(f); }
+      }, 650);
+    }
   });
+  var holdT = 0;
+  cv.addEventListener('contextmenu', function (e) { e.preventDefault(); });   // 길게 누를 때 뜨는 메뉴 막기
   cv.addEventListener('pointermove', function (e) {
     var p = pts[e.pointerId]; if (!p) return;
     var dx = e.clientX - p.x, dy = e.clientY - p.y;
+    if (!down || Math.hypot(e.clientX - down.x, e.clientY - down.y) > 14) clearTimeout(holdT);
     p.x = e.clientX; p.y = e.clientY; view.idle = 0;
     var t = two();
     if (t) {
@@ -278,7 +322,7 @@
   function lift(e) {
     if (e.type === 'pointerup' && down && Object.keys(pts).length === 1 &&
         Math.hypot(e.clientX - down.x, e.clientY - down.y) < 14 && performance.now() - down.t < 600) say(nearest(e.clientX, e.clientY), 4);
-    delete pts[e.pointerId]; down = null; pinch = null;
+    delete pts[e.pointerId]; down = null; pinch = null; clearTimeout(holdT);
   }
   cv.addEventListener('pointerup', lift); cv.addEventListener('pointercancel', lift);
   cv.addEventListener('wheel', function (e) {
@@ -287,6 +331,101 @@
   }, { passive: false });
   // 가만히 있어도 가끔 물고기가 한마디씩 함
   setInterval(function () { if (fishes.length && !document.hidden) say(fishes[Math.floor(Math.random() * fishes.length)]); }, 3600);
+
+  /* ══ 낚시: 길게 누른 물고기를 서버에 보내 내 재고에 넣고, 금색으로 빛나며 사라지게 함 ══ */
+  var GOLD = new THREE.Color(0xffc93c), caughtN = 0;
+  function tryCatch(f) {
+    if (!Core.state.user) { askLogin(); return; }
+    if (!site) { toast(PNAME + ' 안에서만 잡을 수 있어요'); return; }
+    if (!RECEIPT && !adminMode) { toast('처음 화면에서 영수증 인증을 먼저 해 주세요'); return; }
+    if (!sb) return;
+    f.caught = { t: 0, ok: null, base: f.m.holder.scale.x };
+    goldOn(f);
+    sb.rpc('catch_fish', { spot_id: SPOT, fish_id: f.r.fish, lat: proof && proof.lat != null ? proof.lat : null,
+                           lng: proof && proof.lng != null ? proof.lng : null, receipt: RECEIPT }).then(function (res) {
+      if (res.error) { goldOff(f); f.caught = null; toast(res.error.message || '잡지 못했어요'); return; }
+      f.caught.ok = true; caughtN++;
+      toast(f.r.name + '을(를) 내 어항에 넣었어요');
+      Core.log('catch', { spot: SPOT, fish: f.r.fish });
+      drawPanel();
+    }, function () { goldOff(f); f.caught = null; toast('인터넷 연결을 확인해 주세요'); });
+  }
+  // 금빛: 재질을 이 물고기 것만 따로 복사해서 바꿈 (같은 종류 물고기는 재질을 같이 씀)
+  function goldOn(f) {
+    f.m.holder.traverse(function (o) {
+      if (!o.isMesh || Array.isArray(o.material)) return;
+      if (!o.userData.mat0) { o.userData.mat0 = o.material; o.material = o.material.clone(); }
+      if (o.material.emissive) o.material.emissive.copy(GOLD);
+    });
+    f.halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: halo(), color: GOLD, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+    world.add(f.halo);
+  }
+  function goldOff(f) {
+    f.m.holder.traverse(function (o) { if (o.isMesh && o.userData.mat0) { o.material = o.userData.mat0; delete o.userData.mat0; } });
+    if (f.halo) { world.remove(f.halo); f.halo = null; }
+    f.m.holder.scale.setScalar(f.caught ? f.caught.base : f.m.holder.scale.x);
+  }
+  // 매 프레임: 서버 답을 기다리는 동안 반짝이고, 잡히면 커졌다가 작아지며 사라짐
+  function catchTick(dt) {
+    fishes.slice().forEach(function (f) {
+      var c = f.caught; if (!c) return;
+      c.t += dt;
+      var glow = 0.6 + 0.4 * Math.sin(c.t * 14), s = 1;
+      if (c.ok) { c.u = (c.u || 0) + dt; s = c.u < 0.25 ? 1 + c.u * 1.2 : Math.max(0, 1.3 - (c.u - 0.25) * 2.6); glow = 1.4; }
+      f.m.holder.traverse(function (o) { if (o.isMesh && o.userData.mat0 && o.material.emissive) o.material.emissiveIntensity = glow; });
+      f.m.holder.scale.setScalar(c.base * s);
+      if (f.halo) {
+        f.p.heads[0].getWorldPosition(f.halo.position);
+        f.halo.scale.setScalar(f.len * 3.2 * Math.max(0.2, s)); f.halo.material.opacity = Math.min(1, glow * 0.7);
+      }
+      if (c.ok && s <= 0) dropFish(f);
+    });
+  }
+
+  // 로그인 안내: 비스타 대화 상자
+  function dialog(title, main, text, btns) {
+    var d = $('dlg'); d.querySelector('.dttl').textContent = title;
+    var b = d.querySelector('.dbody'); b.innerHTML = '';
+    b.appendChild(el('p', 'mi', main)); if (text) b.appendChild(el('p', '', text));
+    var foot = el('div', 'foot');
+    btns.forEach(function (x) { foot.appendChild(button(x[0], 'vbtn' + (x[2] ? ' def' : ''), function () { d.classList.add('hidden'); if (x[1]) x[1](); })); });
+    b.appendChild(foot); d.classList.remove('hidden');
+  }
+  function askLogin() {
+    dialog('로그인', '카카오로 로그인하면 잡은 물고기가 내 어항에 들어가요',
+      '로그인한 뒤 이 화면으로 돌아오면 다시 길게 눌러 잡아 주세요.', [['카카오 로그인', function () { Core.login(); }, true], ['취소']]);
+  }
+
+  // 낚시 · 비마관 안내판 (글쓰기 칸 자리)
+  function line(ok, text) { var r = el('div', 'msg ok' + (ok ? '' : ' info'), text); return r; }
+  function drawPanel() {
+    var box = $('panel'); if (!box || MODE === 'review') return;
+    box.innerHTML = '';
+    if (MODE === 'show') {
+      box.appendChild(el('p', 'mi', '그린란드 상어와 짧은꼬리오징어가 사는 비마관 심해예요'));
+      box.appendChild(el('p', '', '이 물고기들은 잡을 수 없어요. 물고기를 누르면 이름이 보여요.'));
+    } else {
+      box.appendChild(el('p', 'mi', '물고기를 길게 누르면 잡혀요'));
+      box.appendChild(line(!!RECEIPT || adminMode, RECEIPT ? '영수증 인증됨 (' + (RECEIPT.shop || PNAME) + ')' : adminMode ? '관리자 시험 (영수증 없음)' : '영수증 인증이 필요해요 (처음 화면 → 영수증 인증)'));
+      var u = Core.state && Core.state.user;
+      box.appendChild(line(!!u, u ? '로그인됨 · 잡은 물고기는 내 어항으로' : '카카오 로그인이 필요해요'));
+      var left = fishes.filter(function (f) { return f.r.catchable && !f.caught; }).length;
+      box.appendChild(el('p', '', '남은 물고기 ' + left + '마리' + (caughtN ? ' · 이번에 잡은 물고기 ' + caughtN + '마리' : '')));
+    }
+    var foot = el('div', 'foot');
+    if (MODE === 'fish') foot.appendChild(button('리뷰 쓰러 가기', 'vbtn', function () { location.href = 'reef.html?spot=' + SPOT; }));
+    foot.appendChild(button('처음 화면', 'vbtn def', function () { location.href = 'index.html'; }));
+    box.appendChild(foot);
+  }
+  // 이 장소의 물고기 (낚시 · 비마관): reef-data.json의 장소 reef, count 만큼
+  function spawnPlace(pl) {
+    var n = 0, can = MODE === 'fish' && !!pl.config.catch;
+    (pl.config.fish || []).forEach(function (f) {
+      var c = Math.max(1, Math.round(+f.count || 1));
+      for (var i = 0; i < c; i++) addFish({ id: 'p' + (n++), fish: f.id, grp: 'g-' + f.id, name: f.name || f.id,
+        body: (f.name || f.id) + (can ? ' · 길게 눌러 잡기' : ''), catchable: can });
+    });
+  }
 
   /* ══ AR: 후아나 안에서는 어항 칸이 카메라 화면이 되고, 물고기 무리가 폰 앞 공간에 떠 있음 ══
      폰 방향 센서로 보는 방향을 바꾸고, 센서가 없으면 손가락으로 끌어서 둘러봄. 두 손가락은 거리(확대) */
@@ -356,7 +495,7 @@
     requestAnimationFrame(frame);
     var dt = Math.min(clock.getDelta(), 0.05);
     fishes.forEach(function (f) { f.m.update(dt); });
-    wearTick(clock.elapsedTime);
+    wearTick(clock.elapsedTime); catchTick(dt);
     // 화면이 좁으면 뒤로 물러나 무리가 다 보이게. 손대지 않은 지 4초가 지나면 천천히 흔들림
     camT += dt; view.idle += dt;
     var dist = Math.max(2.3, 0.9 / (Math.tan(20 * Math.PI / 180) * camera.aspect)) * view.zoom;
@@ -570,7 +709,7 @@
         if (!reviews.length) $('empty').classList.remove('hidden');
       });
   }
-  setInterval(function () { if (!document.hidden) fetchReviews(); }, POLL);
+  setInterval(function () { if (!document.hidden && MODE === 'review') fetchReviews(); }, POLL);
 
   function showTab(list) {
     $('pWrite').classList.toggle('hidden', list); $('pList').classList.toggle('hidden', !list);
@@ -606,20 +745,32 @@
     if (!Core.ready) b.classList.add('hidden');
     $('bAdmin').classList.toggle('hidden', !Core.isAdmin());
     if (adminMode && !Core.isAdmin()) setAdmin(false);
+    drawPanel();
   });
   Core.start();
 
   /* ══ 시작 ══ */
   var spotsReady = window.loadSpots ? window.loadSpots(sb) : Promise.resolve();
+  // 제목 · 주소 줄 · 탭: 장소와 모드에 맞춤
+  document.title = PNAME + ' · 월계 아쿠아';
+  document.querySelector('.attl').textContent = PNAME + ' - 월계 아쿠아';
+  document.querySelector('.crumb').textContent = '« ' + PNAME + ' ▸ ' + (MODE === 'fish' ? '낚시' : MODE === 'show' ? '심해' : '어항');
+  if (MODE !== 'review') { $('tList').classList.add('hidden'); $('tWrite').textContent = MODE === 'fish' ? '낚시' : '안내'; }
+  setSite(false);
+
   kit.loadData().then(function (d) {
-    var r = ReefModel.reef(d);
+    var r = ReefModel.reef(d), place = ReefModel.reef(d, SPOT);
+    if (place && place.id !== SPOT) place = null;
     ((r && r.config.fish) || []).forEach(function (f) { speciesCfg[f.id] = f; });
+    if (MODE !== 'review') ((place && place.config.fish) || []).forEach(function (f) { speciesCfg[f.id] = f; });
     var order = Object.keys(NAMES).filter(function (id) { return speciesCfg[id]; });
     Object.keys(speciesCfg).forEach(function (id) { if (order.indexOf(id) < 0) order.push(id); });
     speciesIds = order; itemsCfg = (d.items || []).filter(function (x) { return x && x.id; });
     chosen = speciesIds[Math.floor(Math.random() * speciesIds.length)] || '';
     kit.applyStyle(d.style); talk = kit.Talk(tank, camera, d.style);
-    drawPicks(); drawItems(); loadThumbs(); fetchReviews();
+    if (MODE === 'review') { drawPicks(); drawItems(); loadThumbs(); fetchReviews(); }
+    else if (place) spawnPlace(place);
+    drawPanel();
   }).catch(function () { toast('물고기 정보를 읽지 못했어요'); });
   spotsReady.then(checkGeo);
 })();
