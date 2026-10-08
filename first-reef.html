@@ -14,16 +14,7 @@
   #top{position:absolute;left:12px;top:calc(10px + env(safe-area-inset-top,0px));z-index:5;display:flex;gap:8px;align-items:center}
   #top a,#top span{font-size:13px;color:#fff;background:rgba(16,12,30,.45);border-radius:999px;padding:6px 12px;text-decoration:none}
   #msg{position:absolute;inset:0;z-index:4;display:flex;align-items:center;justify-content:center;font-size:14px;pointer-events:none}
-  /* 물고기 말풍선: DOS샘물 글꼴 + 도트 테두리 (모서리가 깎인 픽셀 모양) */
-  @font-face{font-family:"DOSSaemmul";src:url("assets/fonts/DOSSaemmul.woff2") format("woff2");font-display:swap}
-  .say{position:absolute;z-index:6;white-space:nowrap;pointer-events:none;
-    font-family:"DOSSaemmul",monospace;font-size:16px;line-height:16px;color:#000;background:#fff;padding:4px 6px;
-    box-shadow:0 -2px 0 0 #000,0 2px 0 0 #000,-2px 0 0 0 #000,2px 0 0 0 #000;
-    -webkit-font-smoothing:none;font-smooth:never;text-rendering:optimizeSpeed}
-  /* 꼬리: 2px 칸 계단 */
-  .say::after{content:"";position:absolute;left:var(--tail,10px);bottom:-6px;width:4px;height:4px;background:#fff;
-    box-shadow:-2px 0 0 #000,2px 0 0 #000,0 2px 0 #000,0 4px 0 -0px transparent}
-  .say::before{content:"";position:absolute;left:calc(var(--tail,10px) + 2px);bottom:-8px;width:2px;height:2px;background:#000}
+  /* 물고기 말풍선 모양은 reef-data.json의 말풍선·글꼴 설정(reef-kit)을 따름 */
   /* 나의 어항 창 안 (?embed): 위 안내 숨김 */
   body.embed #top{display:none}
   .paint-only{display:none}
@@ -88,7 +79,7 @@
 </div>
 <div id="stage">
   <img class="bgfx" src="assets/reef/water-tank.webp" alt="">
-  <div id="top"><a href="index.html">← 처음으로</a><span>끌어서 돌려보기 · 물고기를 누르면 이름</span></div>
+  <div id="top"><a href="index.html">← 처음으로</a><span>끌어서 돌려보기 · 물고기를 두 번 누르면 말해요</span></div>
   <div id="msg">물고기 떼를 불러오는 중…</div>
 </div>
 <div class="pcolors paint-only"><div class="pcur"><b class="fg" id="pfg"></b><b class="bg"></b></div><div class="pswatch" id="pswatch"></div></div>
@@ -119,7 +110,7 @@ var camera = new THREE.PerspectiveCamera(40, 1, 0.01, 1000);
 scene.add(new THREE.HemisphereLight(0xdff6ff, 0x1a3a5a, 1.1));
 var sun = new THREE.DirectionalLight(0xffffff, 1.2); sun.position.set(3, 6, 4); scene.add(sun);
 
-var fish = null, cfg = {}, listKey = '', size = 1;
+var fish = null, cfg = {}, listKey = '', size = 1, talk = null;
 var cam = {theta:0.6, phi:1.25, radius:3}, zoomK = 1;
 
 // 설정 → 물고기들 (목록이 바뀔 때만 새로 불러옴)
@@ -128,6 +119,8 @@ function build(d){
   if (!r){ msg.style.display = ''; msg.textContent = 'reef-data.json에 모델 reef가 없어요'; return; }
   cfg = r.config || {};
   document.title = cfg.title || r.name || 'Reef';
+  kit.applyStyle(d.style);
+  if (talk) talk.setStyle(d.style); else talk = kit.Talk(stage, camera, d.style);
   if (fish) fish.setSpeed(cfg.speed);
   cam.radius = size * (+cfg.zoom || 0.65) * zoomK;
   drawSwatches();
@@ -151,33 +144,25 @@ function build(d){
   }).catch(function(){ msg.textContent = '물고기 모델을 불러오지 못했어요'; });
 }
 
-// 누른 물고기 머리 위에 말풍선 (할 말을 차례대로, 없으면 이름). 한 물고기에 하나만
-var tags = [];
-function showTag(hit){
+// 물고기가 말하기: 할 말을 차례대로, 없으면 이름 (말풍선은 머리 위)
+function speak(hit){
+  if (!talk || !hit) return;
   var p = hit.fish, lines = (p.says || []).filter(function(x){ return String(x).trim(); });
   var text = lines.length ? lines[(p.sayIdx = ((p.sayIdx == null ? -1 : p.sayIdx) + 1) % lines.length)] : p.name;
-  tags = tags.filter(function(t){ if (t.fish === p){ t.el.remove(); return false; } return true; });
-  var el = document.createElement('div'); el.className = 'say'; el.textContent = text;
-  stage.appendChild(el);
-  tags.push({ el: el, fish: p, bone: hit.bone, left: 3.2 });
+  hit.bone.userData.halfH = -1.5;   // 말풍선 자리 = 머리 바로 위 (reef-kit 말풍선은 halfH + 1.5만큼 위)
+  talk.say(hit.bone, text);
 }
-var tv = new THREE.Vector3();
-function updateTags(dt){
+// 그 물고기 머리 (화면 가운데에서 가장 가까운 한 마리)
+function headOf(id){
+  if (!fish) return null;
   var w = stage.clientWidth, h = stage.clientHeight;
-  tags = tags.filter(function(t){
-    t.left -= dt;
-    if (t.left <= 0){ t.el.remove(); return false; }
-    t.bone.getWorldPosition(tv).project(camera);
-    // 칸이 흐려지지 않게 정수 픽셀로, 화면 밖으로는 안 나가게
-    var bw = t.el.offsetWidth, bh = t.el.offsetHeight;
-    var x = Math.round((tv.x + 1) / 2 * w), y = Math.round((1 - tv.y) / 2 * h) - 14;
-    var left = Math.max(2, Math.min(w - bw - 2, x - 12)), top = Math.max(2, y - bh);
-    t.el.style.left = left + 'px'; t.el.style.top = top + 'px';
-    t.el.style.setProperty('--tail', (Math.max(4, Math.min(bw - 8, x - left)) & ~1) + 'px');
-    t.el.style.visibility = t.left < 0.25 && (Math.floor(t.left * 16) % 2) ? 'hidden' : 'visible';   // 사라질 때 깜빡
-    return true;
-  });
+  return fish.nearest(camera, w / 2, h / 2, w, h, 1e6, id);
 }
+// All Reefs의 '말해보기'
+window.addEventListener('message', function(e){
+  var m = e.data;
+  if (m && m.type === 'reef-say') speak(headOf(m.id));
+});
 
 /* ── 그림판 부분: 도구 상자, 물고기 대표 색 상자, 상태 줄 ── */
 var pmsg = document.getElementById('pmsg'), HELP = pmsg.textContent;
@@ -229,10 +214,7 @@ function drawSwatches(){
     b.addEventListener('click', function(){
       box.querySelectorAll('button').forEach(function(x){ x.classList.toggle('on', x === b); });
       document.getElementById('pfg').style.background = f.color || '#000';
-      if (!fish) return;
-      var w = stage.clientWidth, h = stage.clientHeight;
-      var hit = fish.nearest(camera, w / 2, h / 2, w, h, 1e6, f.id);
-      if (hit) showTag(hit);
+      speak(headOf(f.id));
     });
     box.appendChild(b);
   });
@@ -262,13 +244,17 @@ el.addEventListener('pointermove', function(e){
   idle = 0;
 });
 el.addEventListener('pointerleave', function(){ if (PAINT) document.getElementById('pxy').textContent = ''; });
+// 두 번 누르면(더블클릭·더블탭) 그 자리 물고기가 말함
+var lastTap = 0, lastXY = null;
 function up(e){
   var p = pts[e.pointerId];
-  // 거의 안 움직이고 뗐으면 물고기를 누른 것 → 이름표
   if (p && fish && Object.keys(pts).length === 1 && Math.hypot(e.clientX - p.x0, e.clientY - p.y0) < 8 && performance.now() - p.t0 < 450){
-    var r = el.getBoundingClientRect();
-    var hit = fish.nearest(camera, e.clientX - r.left, e.clientY - r.top, r.width, r.height, 60);
-    if (hit) showTag(hit);
+    var now = performance.now();
+    if (now - lastTap < 400 && lastXY && Math.hypot(e.clientX - lastXY[0], e.clientY - lastXY[1]) < 40){
+      lastTap = 0;
+      var r = el.getBoundingClientRect();
+      speak(fish.nearest(camera, e.clientX - r.left, e.clientY - r.top, r.width, r.height, 70));
+    } else { lastTap = now; lastXY = [e.clientX, e.clientY]; }
   }
   delete pts[e.pointerId]; lastPinch = 0;
 }
@@ -292,7 +278,7 @@ var clock = new THREE.Clock();
   if (fish) fish.update(dt);
   applyCam();
   renderer.render(scene, camera);
-  updateTags(dt);
+  if (talk) talk.update();
 })();
 
 // 데이터 읽기 → 바뀌면 다시 (All Reefs 미리보기 창에서는 고치는 중인 값을 바로 받음)

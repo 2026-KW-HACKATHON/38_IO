@@ -1,22 +1,19 @@
 {
  "v": 1,
- "updated": "2026-10-08T03:59:12.000Z",
+ "updated": "2026-10-08T04:08:02.000Z",
  "style": {
   "font": {
-   "family": "\"Galmuri11\", \"DotGothic16\", \"Jua\", sans-serif",
-   "google": [
-    "DotGothic16",
-    "Jua"
-   ],
-   "cssUrl": "https://cdn.jsdelivr.net/npm/galmuri@2.40.3/dist/galmuri.css"
+   "family": "\"DOSSaemmul\", monospace",
+   "google": [],
+   "cssUrl": "assets/fonts/dossaemmul.css"
   },
   "bubble": {
-   "bg": "#FFFDF8",
-   "ink": "#3B3350",
-   "border": "#3B3350",
-   "px": 1,
-   "size": 14,
-   "pad": 8,
+   "bg": "#FFF1C1",
+   "ink": "#2B2233",
+   "border": "#2B2233",
+   "px": 2,
+   "size": 16,
+   "pad": 6,
    "maxWidth": 190,
    "tail": true,
    "pixel": true,
