@@ -65,7 +65,7 @@ button,input{font:inherit;color:inherit}
 /* ── 어항 ── */
 #tank{flex:1;min-height:170px;position:relative;overflow:hidden;background:#1EB6F0}
 .bgfx{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.5;pointer-events:none}
-#gl{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:manipulation}
+#gl{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
 #empty{position:absolute;left:0;right:0;top:50%;margin:0;text-align:center;color:#fff;font-size:13px;text-shadow:0 1px 4px rgba(0,40,80,.7);pointer-events:none}
 .reef-layer{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:4}
 
@@ -134,6 +134,12 @@ button,input{font:inherit;color:inherit}
 #list .tag{display:inline-block;margin-left:5px;color:#1e5aa8}
 #list .del{min-width:0}
 #list .none{text-align:center;color:var(--dim);padding:24px 0}
+
+/* 폰 키보드가 올라왔을 때: 주소 줄을 숨기고 어항을 줄여서 글 칸과 단추가 보이게 */
+body.kb .cmd{display:none}
+body.kb #tank{flex:none;height:18%;min-height:56px}
+body.kb #sheet{flex:1;min-height:0;max-height:none}
+body.kb .foot{padding-bottom:16px}
 
 /* 손가락으로 누르는 화면: 누르기 쉽게 조금 키움 (글 칸 16px는 아이폰 확대 방지) */
 @media (pointer:coarse){
