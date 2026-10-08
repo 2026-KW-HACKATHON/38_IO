@@ -49,10 +49,10 @@
   {
    "id": "cake",
    "name": "조각 케이크",
-   "model": "assets/models/cheesecake.glb",
+   "model": "assets/models/raspberry-cheesecake.glb",
    "starter": true,
    "wear": "body",
-   "size": 2
+   "size": 1.4
   }
  ],
  "effects": [],
