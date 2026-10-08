@@ -44,13 +44,12 @@
           <div id="pWrite">
             <div id="gstat"></div>
             <div id="form" class="hidden">
-              <div class="lbl">물고기 고르기</div>
-              <div id="picks" class="picks"></div>
-              <div class="lbl">아이템 (선택)</div>
-              <div id="items" class="chips"></div>
-              <label class="fld"><span>닉네임 (선택)</span><input id="nick" type="text" maxlength="12" autocomplete="off" placeholder="비워도 돼요"></label>
-              <label class="fld"><span>한 줄 평</span><input id="body" type="text" maxlength="60" autocomplete="off" placeholder="단어나 이모지도 좋아요 😊"></label>
-              <div class="foot"><button id="send" class="vbtn def big" type="button">물고기 풀어주기</button></div>
+              <p class="mi">물고기를 고르고 한 줄 평을 남겨 주세요</p>
+              <fieldset class="grp"><legend>물고기</legend><div id="picks" class="lv"></div></fieldset>
+              <fieldset class="grp"><legend>아이템 (선택)</legend><div id="items" class="radios"></div></fieldset>
+              <div class="frow"><label for="nick">닉네임 (선택):</label><input id="nick" class="tb" type="text" maxlength="12" autocomplete="off" placeholder="비워도 돼요"></div>
+              <div class="frow"><label for="body">한 줄 평:</label><input id="body" class="tb" type="text" maxlength="60" autocomplete="off" placeholder="단어나 이모지도 좋아요 😊"></div>
+              <div class="foot"><button id="send" class="vbtn def" type="button">물고기 풀어주기</button></div>
             </div>
           </div>
           <div id="pList" class="hidden"><div id="list"></div></div>

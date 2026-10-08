@@ -1,29 +1,42 @@
-/* 후아나 방문자 첫 화면: 윈도우 비스타(에어로 유리) 모양. 위 제목줄, 가운데 어항, 아래 탭 + 흰 판 + 회색 단추 줄 */
+/* 후아나 방문자 첫 화면: 윈도우 비스타(에어로 유리) 모양
+   위 제목줄 · 주소 줄, 가운데 어항, 아래 탭 + 흰 판(묶음 상자 · 아이콘 목록 · 동그라미 단추 · 글 칸) + 회색 단추 줄 */
 @import url("https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@400;700&display=swap");
 :root{ --vfont:"Segoe UI","맑은 고딕","Malgun Gothic","Nanum Gothic","Apple SD Gothic Neo",sans-serif;
-  --ink:#1b2c3f; --dim:#5c6f84; --line:#8d9db0; --blue:#3c7fb1; --ok:#1e7a3a; --bad:#b0281a; }
+  --mi:#003399; --dim:#6d6d6d; --blue:#3c7fb1; --ok:#1e7a3a; --bad:#b0281a; }
 *{box-sizing:border-box}
-html,body{height:100%;margin:0;color:var(--ink);font-family:var(--vfont);-webkit-tap-highlight-color:transparent;
+html,body{height:100%;margin:0;color:#000;font:12px/1.4 var(--vfont);-webkit-tap-highlight-color:transparent;
   background:#2a6aa0 url("../assets/start/bg.jpg") center/cover no-repeat}
 .hidden{display:none!important}
 button,input{font:inherit;color:inherit}
-#app{position:fixed;inset:0;padding:calc(8px + env(safe-area-inset-top,0px)) 8px calc(8px + env(safe-area-inset-bottom,0px))}
+#app{position:fixed;inset:0;display:flex;justify-content:center;padding:calc(8px + env(safe-area-inset-top,0px)) 8px calc(8px + env(safe-area-inset-bottom,0px))}
 
-/* 유리 창 */
-.win{height:100%;display:flex;flex-direction:column;padding:0 7px 7px;border-radius:7px;border:1px solid rgba(30,45,70,.75);
+/* ── 비스타 스크롤 막대 ── */
+.pane,.lv{scrollbar-width:auto;scrollbar-color:#c2c2c2 #f0f0f0}
+.pane::-webkit-scrollbar,.lv::-webkit-scrollbar{width:17px;height:17px}
+.pane::-webkit-scrollbar-track,.lv::-webkit-scrollbar-track{background:linear-gradient(90deg,#e5e5e5,#f7f7f7 40%,#f0f0f0);border-left:1px solid #e3e3e3}
+.pane::-webkit-scrollbar-thumb,.lv::-webkit-scrollbar-thumb{border:1px solid #9b9b9b;border-radius:3px;
+  background:linear-gradient(90deg,#f3f3f3 0%,#e8e8e8 45%,#d6d6d6 50%,#d9d9d9 100%);box-shadow:inset 0 0 0 1px #fff}
+.pane::-webkit-scrollbar-thumb:hover,.lv::-webkit-scrollbar-thumb:hover{border-color:#3c7fb1;background:linear-gradient(90deg,#e3f4fc 0%,#d6eef9 45%,#a9dbf6 50%,#b6e0f7 100%)}
+.pane::-webkit-scrollbar-button:single-button,.lv::-webkit-scrollbar-button:single-button{display:block;height:17px;width:17px;background:#f0f0f0 center no-repeat}
+.pane::-webkit-scrollbar-button:vertical:decrement,.lv::-webkit-scrollbar-button:vertical:decrement{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='7' height='4'%3E%3Cpath d='M0 4h7L3.5 0z' fill='%23444'/%3E%3C/svg%3E")}
+.pane::-webkit-scrollbar-button:vertical:increment,.lv::-webkit-scrollbar-button:vertical:increment{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='7' height='4'%3E%3Cpath d='M0 0h7L3.5 4z' fill='%23444'/%3E%3C/svg%3E")}
+
+/* ── 유리 창 (넓은 화면에서도 창 크기로) ── */
+.win{width:100%;max-width:520px;height:100%;display:flex;flex-direction:column;padding:0 7px 7px;border-radius:7px;border:1px solid rgba(30,45,70,.75);
   background:linear-gradient(115deg,rgba(255,255,255,0) 28%,rgba(255,255,255,.35) 36%,rgba(255,255,255,0) 46%),
     linear-gradient(180deg,rgba(255,255,255,.62) 0%,rgba(200,222,243,.5) 40%,rgba(170,200,232,.55) 100%);
   backdrop-filter:blur(7px) saturate(1.5);-webkit-backdrop-filter:blur(7px) saturate(1.5);
   box-shadow:inset 0 0 0 1px rgba(255,255,255,.7),0 8px 24px rgba(0,0,0,.45)}
-.cap{position:relative;flex:none;height:30px;display:flex;align-items:center;gap:6px;padding-left:4px;padding-right:96px}
+@media (min-height:900px) and (min-width:700px){ .win{max-height:860px;margin:auto 0} }
+.cap{position:relative;flex:none;height:30px;display:flex;align-items:center;gap:6px;padding-left:4px;padding-right:100px}
 .cap .ico{width:16px;height:16px;object-fit:contain}
-.attl{font-size:13px;color:#000;text-shadow:0 0 8px #fff,0 0 4px #fff,0 0 2px #fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.attl{font-size:12px;color:#000;text-shadow:0 0 8px #fff,0 0 4px #fff,0 0 2px #fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 /* 오른쪽 위에 매달린 창 단추 모양 (꾸밈) */
 .cbtns{position:absolute;top:-1px;right:-1px;display:flex;pointer-events:none}
 .cbtns i{display:block;height:19px;border:1px solid #3f4d5e;border-top:0;background:linear-gradient(180deg,#dfe8f2 0%,#b7c8dc 45%,#8fa6c1 50%,#a9bdd4 100%);
   box-shadow:inset 0 0 0 1px rgba(255,255,255,.55);position:relative}
-.cbtns .cmin{width:28px;border-radius:0 0 0 4px}.cbtns .cmax{width:26px;border-left:0}
-.cbtns .cx{width:42px;border-left:0;border-radius:0 0 4px 0;border-color:#4a1209;
+.cbtns .cmin{width:27px;border-radius:0 0 0 4px}.cbtns .cmax{width:26px;border-left:0}
+.cbtns .cx{width:44px;border-left:0;border-radius:0 0 4px 0;border-color:#4a1209;
   background:linear-gradient(180deg,#e9a99a 0%,#d47a64 42%,#b8381c 50%,#c4482a 75%,#de7c5a 100%)}
 .cbtns i::after{content:"";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);color:#fff}
 .cbtns .cmin::after{width:9px;height:3px;background:#fff;border:1px solid #2a3a4c;margin-top:3px}
@@ -31,87 +44,108 @@ button,input{font:inherit;color:inherit}
 .cbtns .cx::after{content:"✕";font-size:12px;font-weight:700;text-shadow:0 0 2px #2a1008}
 
 /* 주소 줄 */
-.cmd{flex:none;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:5px 8px;border:1px solid rgba(40,60,90,.55);border-bottom:0;
+.cmd{flex:none;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 6px;border:1px solid rgba(40,60,90,.55);border-bottom:0;
   background:linear-gradient(180deg,#f9fbfe 0%,#e8eff7 49%,#dce6f2 50%,#e9f0f8 100%);border-radius:3px 3px 0 0}
-.crumb{font-size:12.5px;color:#334;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
-.links{display:flex;gap:5px;flex:none}
+.crumb{color:#1e395b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.links{display:flex;gap:4px;flex:none}
 
-/* 비스타 단추: 위쪽은 밝고 아래쪽은 조금 어두운 회색, 올리면 하늘색 */
-.vbtn{appearance:none;display:inline-block;text-decoration:none;font-size:12.5px;line-height:1.2;color:#000;padding:4px 11px;cursor:pointer;
+/* ── 비스타 단추: 위 절반 밝은 회색, 아래 절반 조금 어두움, 올리면 하늘색, 누르면 진한 하늘색 ── */
+.vbtn{appearance:none;display:inline-block;min-width:75px;height:23px;padding:0 10px;text-align:center;text-decoration:none;font-size:12px;line-height:21px;color:#000;cursor:pointer;
   border:1px solid #707070;border-radius:3px;background:linear-gradient(180deg,#f2f2f2 0%,#ebebeb 49%,#ddd 50%,#cfcfcf 100%);
-  box-shadow:inset 0 0 0 1px rgba(255,255,255,.75),0 1px 2px rgba(0,0,0,.18)}
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.75)}
+.links .vbtn{min-width:0}
 .vbtn:hover{border-color:var(--blue);background:linear-gradient(180deg,#eaf6fd 0%,#d9f0fc 49%,#bee6fd 50%,#a7d9f5 100%)}
 .vbtn:active,.vbtn.on{border-color:#2c628b;background:linear-gradient(180deg,#e5f4fc 0%,#c4e5f6 49%,#98d1ef 50%,#68b3db 100%);box-shadow:inset 1px 1px 2px rgba(0,0,0,.28)}
-.vbtn.def{border-color:var(--blue);box-shadow:inset 0 0 0 1px #48d1f5,inset 0 0 0 2px rgba(255,255,255,.6),0 1px 2px rgba(0,0,0,.18)}
-.vbtn:disabled{opacity:.55}
-.vbtn.big{min-width:62%;padding:10px 16px;font-size:16px;font-weight:600}
+.vbtn.def{border-color:var(--blue);box-shadow:inset 0 0 0 1px #48d1f5,inset 0 0 0 2px rgba(255,255,255,.6)}
+.vbtn:focus-visible{outline:1px dotted #000;outline-offset:-4px}
+.vbtn:disabled{color:#838383;border-color:#adb2b5;background:#f4f4f4;box-shadow:none}
 
 .client{flex:1;min-height:0;display:flex;flex-direction:column;border:1px solid rgba(40,60,90,.55);background:#fff}
 
-/* 어항 */
+/* ── 어항 ── */
 #tank{flex:1;min-height:170px;position:relative;overflow:hidden;background:#1EB6F0}
 .bgfx{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.5;pointer-events:none}
 #gl{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:manipulation}
-#empty{position:absolute;left:0;right:0;top:50%;margin:0;text-align:center;color:#fff;font-size:14px;text-shadow:0 1px 4px rgba(0,40,80,.7);pointer-events:none}
+#empty{position:absolute;left:0;right:0;top:50%;margin:0;text-align:center;color:#fff;font-size:13px;text-shadow:0 1px 4px rgba(0,40,80,.7);pointer-events:none}
 .reef-layer{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:4}
 
-/* 아래 판: 탭 + 흰 판 */
-#sheet{flex:none;max-height:64%;display:flex;flex-direction:column;background:linear-gradient(180deg,#e9eff7,#dbe5f1);border-top:1px solid #697a8f}
-.tabs{flex:none;display:flex;gap:2px;padding:6px 6px 0}
-.tabs button{appearance:none;border:1px solid #8d9db0;border-bottom:0;border-radius:4px 4px 0 0;padding:5px 16px 4px;font-size:13px;color:#33475b;cursor:pointer;
-  background:linear-gradient(180deg,#f6f9fc,#dfe8f2)}
-.tabs button.on{color:#000;background:#fff;font-weight:600;position:relative;top:1px;padding-bottom:6px}
-.tabs b{font-weight:400;color:var(--dim)}
-.pane{flex:1;min-height:0;overflow-y:auto;background:#fff;border-top:1px solid #8d9db0;-webkit-overflow-scrolling:touch}
-#pWrite,#pList{padding:10px 14px 0}
-#pList{padding-bottom:10px}
+/* ── 아래 판: 비스타 탭 ── */
+#sheet{flex:none;max-height:62%;display:flex;flex-direction:column;background:#f0f0f0;border-top:1px solid #898c95}
+.tabs{flex:none;display:flex;padding:5px 6px 0;position:relative;z-index:1}
+.tabs button{appearance:none;margin-right:-1px;border:1px solid #898c95;border-bottom:0;border-radius:2px 2px 0 0;padding:3px 12px;font-size:12px;color:#000;cursor:pointer;
+  background:linear-gradient(180deg,#fcfcfc 0%,#f2f2f2 49%,#e9e9e9 50%,#e2e2e2 100%)}
+.tabs button:hover{border-color:var(--blue);background:linear-gradient(180deg,#eaf6fd 0%,#d9f0fc 49%,#bee6fd 50%,#a7d9f5 100%)}
+.tabs button.on{background:#fff;border-color:#898c95;padding:4px 12px 5px;margin-top:-2px;position:relative;top:1px}
+.tabs b{font-weight:400}
+.pane{flex:1;min-height:0;overflow-y:auto;background:#fff;border-top:1px solid #898c95;-webkit-overflow-scrolling:touch}
+#pWrite{padding:10px 12px 0}
 
-/* 위치 확인 안내 */
-#gstat{font-size:13.5px;line-height:1.5}
-#gstat .msg{margin:2px 0 10px;padding:10px 12px;border:1px solid #a9bdd4;border-radius:3px;background:linear-gradient(180deg,#f7fbff,#e6f0fa);text-align:center}
-#gstat .msg b{display:block;font-size:15px;font-weight:600;margin-bottom:1px}
-#gstat .msg.ok{border-color:#8fc79d;background:linear-gradient(180deg,#f2fcf4,#dff3e3);color:var(--ok);padding:5px 10px;margin-bottom:8px}
-#gstat .msg.bad b{color:var(--bad)}
-#gstat .row{display:flex;gap:6px;margin-bottom:10px}
-#gstat .row .vbtn{flex:1;padding:8px 6px}
-.bar{height:14px;border:1px solid #686868;border-radius:3px;background:#fff;padding:1px;margin:6px 0;overflow:hidden}
-.bar i{display:block;height:100%;width:0;transition:width .2s;background:repeating-linear-gradient(90deg,#2ed330 0 8px,transparent 8px 10px)}
+/* 위치 확인 안내: 비스타 대화 상자처럼 파란 큰 글(주 안내) + 보통 글 */
+#gstat .msg{margin:2px 0 10px}
+#gstat .msg b{display:block;font-size:15px;font-weight:400;color:var(--mi);margin-bottom:4px}
+#gstat .msg.ok{display:flex;align-items:center;gap:6px;margin:0 0 6px}
+#gstat .msg.ok::before{content:"";flex:none;width:16px;height:16px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#a6ef8e,#3ea623 60%,#2b7d16);box-shadow:inset 0 0 0 1px rgba(0,60,0,.35)}
+#gstat .row{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end;margin:0 0 12px}
+.bar{height:15px;border:1px solid #bcbcbc;border-radius:3px;background:linear-gradient(180deg,#f3f3f3,#e5e5e5);padding:1px;margin:6px 0;overflow:hidden}
+.bar i{display:block;height:100%;width:0;transition:width .2s;border-radius:2px;
+  background:linear-gradient(180deg,#d6f4c9 0%,#5ed33b 45%,#38b51b 50%,#64d33f 100%)}
 
 /* 글 쓰기 칸 */
-.lbl{font-size:12.5px;color:var(--blue);margin:2px 0 5px}
-.fld{display:block;margin:8px 0}
-.fld span{display:block;font-size:12.5px;color:var(--dim);margin:0 0 3px}
-.fld input{width:100%;height:40px;padding:0 10px;font-size:16px;border:1px solid #7f9db9;border-radius:2px;background:#fff;outline:none;box-shadow:inset 0 1px 2px rgba(0,0,0,.12)}
-.fld input:focus{border-color:#3d9bd8;box-shadow:inset 0 1px 2px rgba(0,0,0,.12),0 0 0 2px rgba(72,209,245,.45)}
+.mi{margin:0 0 8px;font-size:15px;color:var(--mi)}
+.grp{margin:0 0 9px;padding:4px 8px 8px;border:1px solid #d5dfe5;border-radius:3px}
+.grp legend{padding:0 3px;color:#1e395b}
+.frow{display:flex;align-items:center;gap:8px;margin:0 0 7px}
+.frow label{flex:none;width:92px}
+.tb{flex:1;min-width:0;height:23px;padding:0 4px;font-size:12px;border:1px solid;border-color:#abadb3 #dbdfe6 #e3e9ef #e2e3ea;border-radius:2px;background:#fff;outline:none}
+.tb:hover{border-color:#5794bf #b7d5ea #c7e2f1 #c5daed}
+.tb:focus{border-color:#3d7bad #a4c9e3 #b7d9ed #b5cfe7}
+.tb::placeholder{color:#8d8d8d;font-style:italic}
 /* 아래 회색 단추 줄 */
-.foot{margin:12px -14px 0;padding:10px 14px;background:#f0f0f0;border-top:1px solid #dfdfdf;text-align:right}
+.foot{margin:10px -12px 0;padding:9px 12px;background:#f0f0f0;border-top:1px solid #dfdfdf;text-align:right}
 
-/* 물고기 고르기: 광택 나는 둥근 사각 타일 */
-.picks{display:flex;gap:7px;overflow-x:auto;padding:3px 2px 8px;-webkit-overflow-scrolling:touch}
-.pick{flex:none;width:72px;appearance:none;border:1px solid #b8c4d2;border-radius:5px;padding:4px 2px 4px;text-align:center;cursor:pointer;
-  background:linear-gradient(180deg,#fff 0%,#eef6fc 48%,#d3e6f6 50%,#e4f1fb 100%);box-shadow:inset 0 0 0 1px rgba(255,255,255,.85),0 1px 2px rgba(0,0,0,.15)}
-.pick img,.pick .ph{display:block;width:58px;height:58px;margin:0 auto;object-fit:contain}
-.pick .ph{border-radius:50%;opacity:.4;transform:scale(.55)}
-.pick span{display:block;font-size:11.5px;margin-top:1px}
-.pick:hover{border-color:var(--blue);background:linear-gradient(180deg,#f4fbff 0%,#dcf1fd 48%,#bde4fb 50%,#d2edfb 100%)}
-.pick.on{border-color:#4a95d6;background:linear-gradient(180deg,#e3f2ff 0%,#c4e2fa 48%,#a2d1f4 50%,#c2e3fa 100%);box-shadow:inset 0 0 0 1px #fff,0 0 0 2px rgba(72,170,245,.5)}
-/* 아이템 고르기 */
-.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px}
-.chips .vbtn{padding:5px 12px}
+/* 물고기 고르기: 비스타 아이콘 목록 (흰 칸 안에 아이콘 + 이름, 고르면 하늘색 둥근 칸) */
+.lv{display:grid;grid-template-columns:repeat(auto-fill,minmax(76px,1fr));gap:2px;max-height:172px;overflow-y:auto;padding:3px;
+  background:#fff;border:1px solid #828790}
+.pick{appearance:none;border:1px solid transparent;border-radius:3px;background:none;padding:3px 2px 4px;text-align:center;cursor:pointer;min-width:0}
+.pick img,.pick .ph{display:block;width:48px;height:48px;margin:0 auto 2px;object-fit:contain}
+.pick .ph{border-radius:50%;opacity:.35;transform:scale(.5)}
+.pick span{display:block;font-size:11.5px;line-height:1.25;word-break:keep-all;overflow-wrap:anywhere}
+.pick:hover{border-color:#b8d6fb;background:linear-gradient(180deg,#fafbfd,#ebf3fd)}
+.pick.on{border-color:#7da2ce;background:linear-gradient(180deg,#dcebfc,#c1dbfc);box-shadow:inset 0 0 0 1px rgba(255,255,255,.6)}
+.pick:focus-visible{outline:1px dotted #000;outline-offset:-3px}
 
-/* 리뷰 목록 */
-#list .it{display:flex;gap:10px;align-items:center;padding:8px 4px;border-bottom:1px solid #e6ecf3}
-#list .it:hover{background:#eef7fe}
-#list img{flex:none;width:42px;height:42px;object-fit:contain;border:1px solid #c6d3e1;border-radius:4px;background:#e3f4fc}
+/* 아이템: 비스타 동그라미 단추 */
+.radios{display:flex;flex-wrap:wrap;gap:4px 14px;padding-top:2px}
+.rb{display:inline-flex;align-items:center;gap:5px;cursor:pointer}
+.rb input{appearance:none;-webkit-appearance:none;margin:0;width:13px;height:13px;border-radius:50%;border:1px solid #8e8f8f;cursor:pointer;
+  background:linear-gradient(135deg,#dcdcdc,#fbfbfb);box-shadow:inset 0 0 0 1px #f4f4f4;position:relative}
+.rb:hover input{border-color:#3c7fb1;background:linear-gradient(135deg,#b1dff7,#eaf6fd)}
+.rb input:checked::after{content:"";position:absolute;inset:2px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#a6e0ff,#2b8ad7 55%,#155a9c)}
+.rb input:focus-visible{outline:1px dotted #000;outline-offset:2px}
+
+/* 리뷰 목록: 비스타 자세히 보기 */
+#list .it{display:flex;gap:8px;align-items:center;margin:1px 3px;padding:4px 5px;border:1px solid transparent;border-radius:3px;cursor:default}
+#list .it:hover{border-color:#b8d6fb;background:linear-gradient(180deg,#fafbfd,#ebf3fd)}
+#list img{flex:none;width:32px;height:32px;object-fit:contain}
 #list .tx{min-width:0;flex:1}
-#list .tx b{display:block;font-size:14.5px;font-weight:600;word-break:break-all}
-#list .tx small{display:block;font-size:11.5px;color:var(--dim)}
-#list .tag{display:inline-block;margin-left:4px;padding:0 6px;border:1px solid #b8d4ee;border-radius:3px;background:#eaf4fd;color:#1b5e9a;font-size:11px}
-#list .del{flex:none;padding:4px 9px}
+#list .tx b{display:block;font-weight:400;word-break:break-all}
+#list .tx small{display:block;font-size:11px;color:var(--dim)}
+#list .tag{display:inline-block;margin-left:5px;color:#1e5aa8}
+#list .del{min-width:0}
 #list .none{text-align:center;color:var(--dim);padding:24px 0}
+
+/* 손가락으로 누르는 화면: 누르기 쉽게 조금 키움 (글 칸 16px는 아이폰 확대 방지) */
+@media (pointer:coarse){
+  .vbtn{height:30px;line-height:28px}
+  .tb{height:30px;font-size:16px}
+  .tabs button{padding:6px 14px}
+  .tabs button.on{padding:7px 14px 8px}
+  .rb input{width:16px;height:16px}
+}
 
 /* 안내 글: 비스타 풍선 도움말 */
 #toast{position:fixed;left:50%;top:calc(52px + env(safe-area-inset-top,0px));transform:translate(-50%,-8px);opacity:0;z-index:50;max-width:88vw;
-  padding:7px 14px;font-size:13px;text-align:center;color:#575757;pointer-events:none;transition:.2s;
+  padding:6px 12px;font-size:12px;text-align:center;color:#575757;pointer-events:none;transition:.2s;
   background:linear-gradient(180deg,#fff 0%,#e4e5f0 100%);border:1px solid #767676;border-radius:3px;box-shadow:1px 2px 4px rgba(0,0,0,.3)}
 #toast.show{opacity:1;transform:translate(-50%,0)}
