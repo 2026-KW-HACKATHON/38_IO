@@ -299,7 +299,7 @@ function applyItems(){
     }).catch(function(){});
   });
 }
-/* 몸에 끼우기 (wear 'body'): 몸통은 아이템 안, 머리와 꼬리는 밖으로 나오게 크기를 맞춤
+/* 몸에 끼우기 (wear 'body'): 몸통은 아이템 안, 머리와 꼬리는 밖으로 나오게 길이를 맞춤
    아이템 모델의 +x(넓은 쪽)가 머리 쪽, 서서 헤엄치는 물고기는 아이템이 선 채로 몸 가운데를 감쌈
    물고기 설정에 carry: 'back'이면 (가오리 · 거북이) 등 위에 얹음. 가장 가까운 뼈에 붙여서 몸을 따라 움직임
    vol: 아이템 size = 부피 배수 (가로 · 세로 · 높이를 똑같이 세제곱근 배로 키움) */
@@ -307,15 +307,13 @@ function wearBody(w, p, sz, vol){
   var bd = ReefModel.body(THREE, p);
   if (!bd) return false;
   var back = fishOf(p.id).carry === 'back', up = !!p.upright && !back, X, Y, Z, at;
-  var k = Math.cbrt(vol);
-  if (back){
-    var u = bd.len * 0.36 * k / sz.x; X = sz.x * u; Y = sz.y * u; Z = sz.z * u;
-    at = bd.top.clone().addScaledVector(bd.a, Y * 0.42);   // 바닥이 등에 살짝 묻힘
-  } else if (up){
-    Y = bd.len * 0.42 * k; X = bd.ha * 1.5 * k; Z = Math.min(bd.wb * 3.3, bd.ha * 1.5 * 1.3) * k; at = bd.center;
-  } else {
-    X = bd.len * 0.5 * k; Y = bd.ha * 1.2 * k; Z = Math.min(Math.max(bd.wb * 3.3, bd.len * 0.3), bd.len * 0.65) * k; at = bd.center;
-  }
+  // 모양은 그대로 (가로 · 세로 · 높이 같은 배율): 몸 높이를 거의 덮을 만큼 키우되, 머리와 꼬리가 나오게 물고기 길이의 80%까지만
+  var k = Math.cbrt(vol), u;
+  if (back) u = bd.len * 0.36 * k / sz.x;
+  else if (up) u = bd.len * 0.3 * k / sz.y;
+  else u = Math.min(Math.max(bd.len * 0.6 / sz.x, bd.ha * 0.85 / sz.y) * k, bd.len * 0.8 / sz.x);
+  X = sz.x * u; Y = sz.y * u; Z = sz.z * u; at = bd.center;
+  if (back) at = bd.top.clone().addScaledVector(bd.a, Y * 0.42);   // 바닥이 등에 살짝 묻힘
   var xd = up ? bd.a : bd.axis, yd = up ? bd.axis : bd.a, zd = new THREE.Vector3().crossVectors(xd, yd);
   var m = new THREE.Matrix4().makeBasis(xd.clone().multiplyScalar(X / sz.x), yd.clone().multiplyScalar(Y / sz.y), zd.multiplyScalar(Z / sz.z)).setPosition(at);
   w.obj.matrixAutoUpdate = false;
