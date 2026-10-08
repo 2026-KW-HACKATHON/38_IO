@@ -9,7 +9,8 @@
        size(혼자 헤엄치는 물고기 길이, 떼 물고기 한 마리 길이 대비), speed(혼자 헤엄치는 빠르기 배수), says(할 말), forward(머리 방향 '+x' '-z' 등), upright(해마처럼 서서 헤엄), clip(동작 이름, 여러 개일 때), pitch(머리를 숙이는 각도, 도),
        thrust(꼬리 밀기, 아래 참고),
        flutter(지느러미 떨림, 아래 참고), skin(같은 모델에 입힐 다른 무늬 그림),
-       pick(떼 파일 안에서 몇 번째 물고기부터 보일지, 기본 1), delay(떼 헤엄을 몇 초 지난 자리에서 시작할지) }
+       pick(떼 파일 안에서 몇 번째 물고기부터 보일지, 기본 1), delay(떼 헤엄을 몇 초 지난 자리에서 시작할지),
+       carry('back'이면 몸에 끼우는 아이템을 등에 얹음) }
      school: 같은 떼에서 나눈 파일이라 자리와 헤엄이 파일 안에 들어 있음
      path:   혼자 있는 모델이라 여기서 고리 모양 길을 따라 헤엄치게 함
 */
@@ -72,6 +73,30 @@
     });
   }
 
+  // 꼭짓점 하나를 지금 자세의 월드 자리로 (뼈로 움직이면 뼈마다 움직인 자리를 무게만큼 더함)
+  var sk = { base: null, part: null, mat: null };
+  function vertexAt(THREE, o, i, out) {
+    if (!sk.base) { sk.base = new THREE.Vector3(); sk.part = new THREE.Vector3(); sk.mat = new THREE.Matrix4(); }
+    var g = o.geometry.attributes;
+    sk.base.set(raw(g.position, i, 0), raw(g.position, i, 1), raw(g.position, i, 2));
+    if (!o.isSkinnedMesh) return out.copy(sk.base).applyMatrix4(o.matrixWorld);
+    sk.base.applyMatrix4(o.bindMatrix);
+    out.set(0, 0, 0);
+    for (var k = 0; k < 4; k++) {
+      var w = raw(g.skinWeight, i, k); if (!w) continue;
+      var b = g.skinIndex[GET[k]](i);
+      sk.mat.multiplyMatrices(o.skeleton.bones[b].matrixWorld, o.skeleton.boneInverses[b]);
+      out.addScaledVector(sk.part.copy(sk.base).applyMatrix4(sk.mat), w);
+    }
+    return out.applyMatrix4(o.bindMatrixInverse).applyMatrix4(o.matrixWorld);
+  }
+  // 가장 많이 따르는 뼈
+  function mainBone(o, i) {
+    var g = o.geometry.attributes, best = -1, bw = 0;
+    for (var k = 0; k < 4; k++) { var w = raw(g.skinWeight, i, k); if (w > bw) { bw = w; best = g.skinIndex[GET[k]](i); } }
+    return best < 0 ? null : o.skeleton.bones[best];
+  }
+
   // 뼈로 움직이는 모델은 뼈를 적용한 모양으로 크기를 잼 (파일의 기본 모양과 크기가 다를 수 있음)
   function skinnedBox(THREE, root) {
     root.updateMatrixWorld(true);
@@ -80,22 +105,79 @@
       if (!o.isSkinnedMesh) return;
       skinned = true;
       o.skeleton.update();
-      var g = o.geometry.attributes, n = g.position.count, step = Math.max(1, Math.floor(n / 600));
-      var base = new THREE.Vector3(), part = new THREE.Vector3(), mat = new THREE.Matrix4(), bones = o.skeleton.bones;
-      for (var i = 0; i < n; i += step) {
-        // 압축된 값도 풀어서: 기본 자리 → 뼈마다 움직인 자리를 무게만큼 더함
-        base.set(raw(g.position, i, 0), raw(g.position, i, 1), raw(g.position, i, 2)).applyMatrix4(o.bindMatrix);
-        v.set(0, 0, 0);
-        for (var k = 0; k < 4; k++) {
-          var w = raw(g.skinWeight, i, k); if (!w) continue;
-          var b = g.skinIndex[GET[k]](i);
-          mat.multiplyMatrices(bones[b].matrixWorld, o.skeleton.boneInverses[b]);
-          v.addScaledVector(part.copy(base).applyMatrix4(mat), w);
-        }
-        box.expandByPoint(v.applyMatrix4(o.bindMatrixInverse).applyMatrix4(o.matrixWorld));
-      }
+      var n = o.geometry.attributes.position.count, step = Math.max(1, Math.floor(n / 600));
+      for (var i = 0; i < n; i += step) box.expandByPoint(vertexAt(THREE, o, i, v));
     });
     return skinned ? box : new THREE.Box3().setFromObject(root);
+  }
+
+  /* ── 물고기 한 마리 몸 재기: 아이템을 몸에 끼우거나 등에 얹을 때 씀 (지금 자세 기준)
+     axis: 몸이 뻗은 방향 (보통 머리 쪽, 서서 헤엄치면 위쪽), a: axis와 직각인 위쪽 (서서 헤엄치면 앞쪽), b: 옆쪽
+     len: axis 방향 길이, ha · wb: 몸 가운데 부분의 a · b 방향 두께 (지느러미 끝은 뺌)
+     center: 몸 가운데, top: 몸 가운데의 등 꼭대기, bone: center에 가장 가까운 뼈 (없으면 물고기 전체) ── */
+  function body(THREE, p) {
+    var obj = p.obj, key = p.kind === 'school' && p.heads[0] ? who(p.heads[0].name) : '';
+    var root = obj; while (root.parent) root = root.parent;
+    root.updateMatrixWorld(true);
+    var pts = [], all = [], v = new THREE.Vector3();
+    obj.traverse(function (o) {
+      if (o.isBone && (!key || who(o.name) === key)) all.push(o);
+      if (!o.isMesh) return;
+      if (o.isSkinnedMesh) o.skeleton.update();
+      var n = o.geometry.attributes.position.count, step = Math.max(1, Math.floor(n / 1500));
+      for (var i = 0; i < n; i += step) {
+        if (key && o.isSkinnedMesh) { var mb = mainBone(o, i); if (!mb || who(mb.name) !== key) continue; }
+        pts.push(vertexAt(THREE, o, i, new THREE.Vector3()));
+      }
+    });
+    if (!pts.length) return null;
+    // 뿌리 뼈는 떼 가운데에 있어서 뺌
+    var bones = all.filter(function (bn) { return !/root/i.test(bn.name); });
+    // 붙일 뼈: 등뼈 → (혼자 헤엄치면) 몸 뿌리 뼈 → 지느러미 · 눈 · 턱 · 꼬리가 아닌 뼈 → 아무 뼈
+    var good = all.filter(function (bn) { return /spine|body/i.test(bn.name) && !/ctrl/i.test(bn.name); });
+    if (!good.length && p.kind === 'path') good = all.filter(function (bn) { return /root/i.test(bn.name) && !/rootjoint/i.test(bn.name); });
+    if (!good.length) good = bones.filter(function (bn) { return !/fin|flipper|hind|eye|jaw|tail|sail|ctrl|head|end/i.test(bn.name); });
+    if (!good.length) good = bones;
+    var axis, a, b;
+    if (p.kind === 'path') {
+      var e = obj.matrixWorld.elements;
+      var fx = new THREE.Vector3(e[0], e[1], e[2]).normalize(), fy = new THREE.Vector3(e[4], e[5], e[6]).normalize();
+      axis = p.upright ? fy : fx; a = p.upright ? fx : fy;
+    } else {
+      // 머리 뼈에서 가장 먼 등뼈가 꼬리 쪽 (지느러미 끝은 등뼈가 아니라서 헷갈리지 않음)
+      var hp = p.heads[0].getWorldPosition(new THREE.Vector3()), far = hp, fd = 0;
+      var spine = good.filter(function (bn) { return !/root/i.test(bn.name); });
+      (spine.length > 1 ? spine : bones.length > 1 ? bones : []).map(function (bn) { return bn.getWorldPosition(new THREE.Vector3()); })
+        .concat(spine.length > 1 || bones.length > 1 ? [] : pts)
+        .forEach(function (q) { var d = q.distanceToSquared(hp); if (d > fd) { fd = d; far = q; } });
+      axis = hp.clone().sub(far);
+      // 떼 물고기는 거의 수평으로 헤엄침: 뼈 줄이 비스듬한 모델도 있어서 앞뒤 방향을 수평으로 맞춤
+      if (Math.hypot(axis.x, axis.z) > axis.length() * 0.1) axis.y = 0;
+      axis.normalize();
+      a = new THREE.Vector3(0, 1, 0).addScaledVector(axis, -axis.y);
+      if (a.lengthSq() < 1e-6) a.set(1, 0, 0);
+      a.normalize();
+    }
+    b = new THREE.Vector3().crossVectors(axis, a).normalize();
+    var o0 = pts[0], A = [], H = [], W = [];
+    pts.forEach(function (q) { var d = q.clone().sub(o0); A.push(d.dot(axis)); H.push(d.dot(a)); W.push(d.dot(b)); });
+    var amin = Math.min.apply(null, A), amax = Math.max.apply(null, A), len = amax - amin, amid = (amin + amax) / 2;
+    function pct(list, q) { var s = list.slice().sort(function (x, y) { return x - y; }); return s[Math.min(s.length - 1, Math.max(0, Math.round(q * (s.length - 1))))]; }
+    var mh = [], mw = [];
+    A.forEach(function (x, i) { if (Math.abs(x - amid) < len * 0.2) { mh.push(H[i]); mw.push(W[i]); } });
+    if (!mh.length) { mh = H; mw = W; }
+    // 지느러미 끝처럼 드문 점은 빼고 잼 (위아래 · 양옆 10%씩)
+    var w0 = pct(mw, 0.1), w1 = pct(mw, 0.9), wc = (w0 + w1) / 2;
+    var h0 = pct(mh, 0.1), h1 = pct(mh, 0.9), hc = (h0 + h1) / 2;
+    // 등 꼭대기: 몸 가운데 좁은 띠의 높은 쪽 (날개 끝 · 지느러미 끝은 뺌)
+    var tw = Math.max((w1 - w0) * 0.08, 1e-6), th = [];
+    A.forEach(function (x, i) { if (Math.abs(x - amid) < len * 0.15 && Math.abs(W[i] - wc) < tw) th.push(H[i]); });
+    var top = th.length > 4 ? pct(th, 0.9) : h1;
+    var center = o0.clone().addScaledVector(axis, amid).addScaledVector(a, hc).addScaledVector(b, wc);
+    var bone = null, bd = Infinity;
+    good.forEach(function (bn) { var d = bn.getWorldPosition(v).distanceToSquared(center); if (d < bd) { bd = d; bone = bn; } });
+    return { axis: axis, a: a, b: b, len: len, ha: h1 - h0, wb: w1 - w0, center: center,
+             top: center.clone().addScaledVector(a, top - hc), bone: bone || obj };
   }
 
   /* ── 꼬리 밀기: 뼈 몇 개를 박자에 맞춰 한 방향으로 확 굽혔다가 천천히 폄 ──
@@ -294,5 +376,5 @@
     });
   }
 
-  root.ReefModel = { reef: reef, load: load };
+  root.ReefModel = { reef: reef, load: load, body: body };
 })(window);

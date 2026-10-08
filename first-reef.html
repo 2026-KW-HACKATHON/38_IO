@@ -245,7 +245,7 @@ function applyTank(){
 }
 
 /* ── 착용 아이템: 3D 모델 아이템을 물고기 머리 위에 띄움
-   wear 'bounce' 통통 튐, 'glow' 똑바로 서서 불이 켜졌다 꺼짐, 'float' 천천히 둥실 ── */
+   wear 'bounce' 통통 튐, 'glow' 똑바로 서서 불이 켜졌다 꺼짐, 'body' 몸에 끼움 ── */
 var worn = [], wearTok = 0, itemScenes = {}, haloTex = null;
 // 불빛 둘레에 번지는 동그란 빛
 function halo(){
@@ -291,6 +291,7 @@ function applyItems(){
           wrap.add(w.halo);
         }
       }
+      if (it.wear === 'body'){ if (wearBody(w, p, sz)) worn.push(w); return; }
       w.d = ref * (+it.size || 0.4);
       wrap.scale.setScalar(w.d / (Math.max(sz.x, sz.y, sz.z) || 1));
       holder.add(wrap);
@@ -298,10 +299,35 @@ function applyItems(){
     }).catch(function(){});
   });
 }
+/* 몸에 끼우기 (wear 'body'): 몸통은 아이템 안, 머리와 꼬리는 밖으로 나오게 크기를 맞춤
+   아이템 모델의 +x(넓은 쪽)가 머리 쪽, 서서 헤엄치는 물고기는 아이템이 선 채로 몸 가운데를 감쌈
+   물고기 설정에 carry: 'back'이면 (가오리 · 거북이) 등 위에 얹음. 가장 가까운 뼈에 붙여서 몸을 따라 움직임 */
+function wearBody(w, p, sz){
+  var bd = ReefModel.body(THREE, p);
+  if (!bd) return false;
+  var back = fishOf(p.id).carry === 'back', up = !!p.upright && !back, X, Y, Z, at;
+  if (back){
+    var k = bd.len * 0.36 / sz.x; X = sz.x * k; Y = sz.y * k; Z = sz.z * k;
+    at = bd.top.clone().addScaledVector(bd.a, Y * 0.42);   // 바닥이 등에 살짝 묻힘
+  } else if (up){
+    Y = bd.len * 0.42; X = bd.ha * 1.5; Z = Math.min(bd.wb * 3.3, X * 1.3); at = bd.center;
+  } else {
+    X = bd.len * 0.5; Y = bd.ha * 1.2; Z = Math.min(Math.max(bd.wb * 3.3, X * 0.6), X * 1.3); at = bd.center;
+  }
+  var xd = up ? bd.a : bd.axis, yd = up ? bd.axis : bd.a, zd = new THREE.Vector3().crossVectors(xd, yd);
+  var m = new THREE.Matrix4().makeBasis(xd.clone().multiplyScalar(X / sz.x), yd.clone().multiplyScalar(Y / sz.y), zd.multiplyScalar(Z / sz.z)).setPosition(at);
+  w.obj.matrixAutoUpdate = false;
+  w.obj.matrix.copy(bd.bone.matrixWorld).invert().multiply(m);
+  w.obj.traverse(function(o){ if (o.isMesh) o.frustumCulled = false; });
+  bd.bone.add(w.obj);
+  w.fixed = true;
+  return true;
+}
 // 매 프레임: 머리 자리를 따라가며 움직임 (튈 때는 바닥에서 빠르고 꼭대기에서 느리게)
 var wv = new THREE.Vector3();
 function wearTick(t){
   worn.forEach(function(w){
+    if (w.fixed) return;
     w.obj.visible = w.p.obj.visible;
     w.p.heads[0].getWorldPosition(wv); w.obj.parent.worldToLocal(wv);
     var hop = 0, a = t + w.ph;
@@ -313,7 +339,6 @@ function wearTick(t){
       w.lit.forEach(function(m){ m.emissiveIntensity = on * 1.6; });
       if (w.halo) w.halo.material.opacity = on * 0.7;
     }
-    else if (w.wear === 'float'){ hop = (Math.sin(a * 1.6) + 1) * w.d * 0.15; w.obj.rotation.set(Math.sin(a * 1.1) * 0.12, a * 0.6, 0); }
     else w.obj.rotation.y = a * 1.5;
     w.obj.position.set(wv.x, wv.y + w.d * 0.9 + hop, wv.z);
   });
