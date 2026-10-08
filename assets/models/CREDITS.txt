@@ -125,3 +125,12 @@ medaka.glb
   Creative Commons Attribution 4.0 (http://creativecommons.org/licenses/by/4.0/).
   Changes: textures resized to 512px and converted to WebP, vertex data
   quantized, animation resampled. Shown as a medaka.
+
+Low-poly rebuild (all fish except seahorse.glb, sea-turtle.glb, manta-ray.glb, jellyfish.glb)
+  Each model above was rebuilt from its original: textures blurred and baked
+  into vertex colors, mesh simplified to about 1,500 faces, split into body
+  parts (head, body, tail, dorsal, anal and pectoral fins) and given a new
+  swimming animation. Fish from "School Of Fish" were cut down to a single fish.
+  clownfish-tomato.glb, clownfish-percula.glb, clownfish-domino.glb and
+  clownfish-snowflake.glb are colored from the matching skins/ textures.
+  medaka.glb and pufferfish.glb were recolored. The same licenses apply as listed above.

@@ -328,7 +328,8 @@
       });
     }
     parts.forEach(function (p) { if (p.mixer) { p.mixer.setTime(p.delay || 0); p.hide(); } });
-    if (box.isEmpty()) return { center: new THREE.Vector3(), size: 1, ref: 0.15 };
+    // 떼 물고기가 없으면 어항 지름 1에 한 마리 길이 0.045로 맞춤
+    if (box.isEmpty()) return { center: new THREE.Vector3(), size: 1, ref: 0.045 };
     var S = box.getSize(new THREE.Vector3()).length() || 1;
     return { center: box.getCenter(new THREE.Vector3()), size: S, ref: ref || S * 0.15 };
   }
