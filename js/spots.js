@@ -23,3 +23,19 @@ window.spotDistance = function (spot, lat, lng) {
 window.inSpot = function (spot, lat, lng) {
   return window.spotDistance(spot, lat, lng) <= (window.SPOT_MARGIN_M || 0);
 };
+
+/* 서버(spots 표)에서 장소 목록을 읽어 위 목록을 바꿈. 못 읽으면 위 목록 그대로
+   읽은 뒤 window.SPOTS 안의 내용만 바꿔서, 이 목록을 미리 잡아 둔 곳도 새 값을 봄 */
+window.loadSpots = function (sb) {
+  if (!sb) return Promise.resolve(window.SPOTS);
+  return sb.from('spots').select('*').order('sort').order('name').then(function (r) {
+    if (r.error || !r.data || !r.data.length) return window.SPOTS;
+    var list = r.data.map(function (o) {
+      return { id: o.id, name: o.name, addr: o.addr || '', phone: o.phone || '', hours: o.hours || '', about: o.about || '',
+               alias: o.alias || [], biz: o.biz || '', icon: o.icon || '', box: o.box || null, sort: o.sort || 0 };
+    });
+    window.SPOTS.length = 0;
+    Array.prototype.push.apply(window.SPOTS, list);
+    return window.SPOTS;
+  }, function () { return window.SPOTS; });
+};

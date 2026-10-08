@@ -177,6 +177,25 @@ body.locked .dk:not(.free) .ic{opacity:.45;filter:grayscale(.6)}   /* 막힌 창
   #lic{bottom:calc(var(--gap,0px) + 6px);right:6px;width:240px}
   #lic .lbody{height:84px}
 }
+/* 매장 정보 창: 이름표 + 값, 매장 별 리뷰 글자 단추 */
+.sinfo{grid-template-columns:auto 1fr;margin:0 0 4px;white-space:normal;text-align:left}
+.xlink{appearance:none;border:0;background:none;padding:0;font:inherit;color:#0000ee;text-decoration:underline;cursor:pointer}
+.xlink:hover{color:#e66a00}
+.spotadd{position:absolute;left:6px;top:34px;z-index:1;min-width:0}
+/* 매장 정보 고치기 창 */
+.win.msg.wide .body{width:min(360px,calc(100vw - 30px))}
+.sform{display:grid;grid-template-columns:auto 1fr;gap:5px 8px;align-items:center;text-align:left;white-space:normal}
+.sform label{color:#000}
+.sform textarea.gin{height:48px;resize:vertical}
+.sform .xsel{height:23px}
+.sform .spos{grid-column:2;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.sform .spos .xbtn{min-width:0;padding:0 8px}
+.win.msg.picking{display:none}   /* 지도에서 자리를 고르는 동안 숨김 */
+/* 리뷰 관리 창 위의 매장 QR */
+.qrrow{display:flex;gap:10px;align-items:flex-start}
+.qrimg{flex:none;width:132px;height:132px;padding:4px;background:#fff;border:1px solid #7f9db9}
+.qrimg img,.qrimg canvas{display:block;width:132px!important;height:132px!important}
+.qrurl{font-size:11px;word-break:break-all;color:#444;-webkit-user-select:text;user-select:text}
 /* QR 위치 확인 알림 창 */
 .win.msg .body{width:min(300px,calc(100vw - 40px));background:var(--surface);padding:14px 14px 12px;box-sizing:border-box}
 .win.msg .mtx{margin:0 0 12px;line-height:1.6;white-space:pre-line}
@@ -197,7 +216,24 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
 
 .win.fish .body{width:min(340px,calc(100vw - 40px));height:250px}
 .win.w-fish .body{width:min(520px,calc(100vw - 40px));height:min(430px,calc(100vh - 120px))}   /* 나의 어항: 그림판처럼 크게 */
-.win.friends .body{width:min(300px,calc(100vw - 40px));height:170px;padding:10px 12px;box-sizing:border-box;line-height:1.7;color:#000}
+.win.w-ftank .body{width:min(520px,calc(100vw - 40px));height:min(430px,calc(100vh - 120px))}   /* 친구 어항: 나의 어항과 같은 크기 */
+/* 친구 관리: 나의 계정처럼 XP 속성 창 */
+.win.friends .body{width:min(400px,calc(100vw - 40px));height:min(460px,calc(100vh - 110px));background:var(--surface);
+  display:flex;flex-direction:column;padding:8px;box-sizing:border-box}
+.flist{height:170px;overflow-y:auto;background:#fff;border:1px solid #7f9db9}
+.frow{display:flex;align-items:center;gap:8px;padding:3px 5px;cursor:default}
+.frow.on{background:#316ac5;color:#fff}
+.frow.on .fsub{color:#dfe8f7}
+.fpic{width:32px;height:32px;object-fit:cover;border:1px solid #7f9db9;background:#fff;flex:none}
+.fpic.big{width:48px;height:48px}
+.fname{display:flex;flex-direction:column;min-width:0}
+.fname b{font-weight:400;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fsub{font-size:11px;color:#6f6f6f}
+.fcode{font:700 18px/1.4 "Lucida Console",monospace;letter-spacing:.12em;padding:4px 6px;background:#fff;border:1px solid #7f9db9;
+  display:inline-block;-webkit-user-select:all;user-select:all}
+/* 나의 계정 프로필 사진 */
+.phrow{display:flex;gap:10px;align-items:center}
+.phpic{width:64px;height:64px;object-fit:cover;border:1px solid #7f9db9;background:#fff;flex:none}
 .win.gift .body{width:min(300px,calc(100vw - 40px));height:104px;background:var(--surface);box-sizing:border-box;padding:10px 12px;
   display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:6px}
 .glabel{align-self:flex-start;font-size:12px}
@@ -294,6 +330,7 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
 <script src="js/spots.js"></script>
 <script src="js/licenses.js?v=7"></script>
 <script src="js/receipt.js"></script>
+<script src="js/friends.js"></script>
 <script>
 /* 나의 공간: 끌어서 옮기는 가짜 창들, 두 번 누르면 맨 앞으로, 지도의 별 */
 (function () {
@@ -383,7 +420,9 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
     } else if (def.kind === 'receipt') {
       buildReceipt(entry);
     } else if (def.kind === 'friends') {
-      body.innerHTML = def.text || '친구 목록이 비어 있습니다.<br>친구 관리 기능은 준비 중입니다.';
+      entry.close = function () { closeWin(entry); };
+      entry.isOpen = function () { return isOpen(entry); };
+      XPFriends.build(entry, XPUI);
     } else if (def.kind === 'map') {
       buildMap(body);
     }
@@ -471,14 +510,28 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
         map.addControl(new kakao.maps.ZoomControl(), kakao.maps.ControlPosition.RIGHT);   // 확대 · 축소 버튼
         maps.push(map);
         watchMe(map, body);
-        showSpots(map);
+        spotsReady.then(function () { showSpots(map, true); });
+        // 관리자만: 매장 추가 단추
+        var add = button('매장 추가', function () { editSpot(null); }); add.classList.add('spotadd'); body.appendChild(add);
+        function showAdd() { add.hidden = !(window.Core && Core.isAdmin()); }
+        if (window.Core) Core.onChange(showAdd); showAdd();
       });
     };
     document.head.appendChild(sc);
   }
 
-  /* ── 장소 아이콘: 범위가 있으면 한가운데, 없으면 주소로 찾아서 놓고, 모두 보이게 화면을 맞춤 ── */
-  function showSpots(map) {
+  /* ── 매장 목록: 서버(spots 표)에서 읽음, 못 읽으면 js/spots.js 목록 ── */
+  var spotsReady = window.loadSpots ? window.loadSpots(window.Core && Core.sb) : Promise.resolve();
+  var spotLayers = [];   // 지도마다 그려 둔 매장 아이콘 · 범위 (다시 그릴 때 지움)
+  function redrawSpots() {
+    return window.loadSpots(window.Core && Core.sb).then(function () { spotLayers.forEach(function (l) { showSpots(l.map, false); }); });
+  }
+
+  /* ── 장소 아이콘: 범위가 있으면 한가운데, 없으면 주소로 찾아서 놓고, fit이면 모두 보이게 화면을 맞춤 ── */
+  function showSpots(map, fit) {
+    var layer = spotLayers.filter(function (l) { return l.map === map; })[0];
+    if (!layer) { layer = { map: map, items: [] }; spotLayers.push(layer); }
+    layer.items.forEach(function (o) { o.setMap(null); }); layer.items = [];
     var list = window.SPOTS || [], geo = new kakao.maps.services.Geocoder();
     var bounds = new kakao.maps.LatLngBounds(), found = 0, done = 0;
     function put(spot, lat, lng) {
@@ -487,25 +540,18 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
       var wrap = document.createElement('div'); wrap.className = 'me';
       var h = document.createElement('img'); h.className = 'heart'; h.src = spot.icon || "assets/space/xp/heart.png"; h.alt = spot.name;
       h.draggable = false; wrap.appendChild(h);
-      var timer = null;
-      // 하트를 누르면 장소 이름 말풍선
-      h.addEventListener('click', function () {
-        var old = wrap.querySelector('.pbubble'); if (old) old.remove();
-        clearTimeout(timer);
-        var b = document.createElement('div'); b.className = 'pbubble'; b.textContent = spot.name;
-        wrap.appendChild(b);
-        timer = setTimeout(function () { b.remove(); }, 2600);
-      });
-      new kakao.maps.CustomOverlay({ map: map, content: wrap, position: pos, xAnchor: 0, yAnchor: 0, zIndex: 2 });
+      // 아이콘을 누르면 매장 정보 창
+      h.addEventListener('click', function () { spotInfo(spot); });
+      layer.items.push(new kakao.maps.CustomOverlay({ map: map, content: wrap, position: pos, xAnchor: 0, yAnchor: 0, zIndex: 2 }));
       bounds.extend(pos); found++;
     }
-    function step() { if (++done === list.length && found > 1) map.setBounds(bounds, 40, 40, 40, 40); }
+    function step() { if (++done === list.length && fit && found > 1) map.setBounds(bounds, 40, 40, 40, 40); }
     list.forEach(function (spot) {
       if (spot.box) {
         var b = spot.box;
         // 장소 범위를 옅은 네모로 같이 그림
-        new kakao.maps.Rectangle({ map: map, bounds: new kakao.maps.LatLngBounds(new kakao.maps.LatLng(b.s, b.w), new kakao.maps.LatLng(b.n, b.e)),
-          strokeWeight: 1, strokeColor: '#e0461c', strokeOpacity: 0.8, fillColor: '#ff7a59', fillOpacity: 0.15 });
+        layer.items.push(new kakao.maps.Rectangle({ map: map, bounds: new kakao.maps.LatLngBounds(new kakao.maps.LatLng(b.s, b.w), new kakao.maps.LatLng(b.n, b.e)),
+          strokeWeight: 1, strokeColor: '#e0461c', strokeOpacity: 0.8, fillColor: '#ff7a59', fillOpacity: 0.15 }));
         put(spot, (b.n + b.s) / 2, (b.w + b.e) / 2); step(); return;
       }
       if (spot.lat && spot.lng) { put(spot, spot.lat, spot.lng); step(); return; }
@@ -515,6 +561,139 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
         step();
       });
     });
+  }
+
+  /* ── 매장 정보 창: 주소 · 전화 · 영업시간 · 소개, 매장 별 리뷰, 관리자는 수정 · 삭제 ── */
+  function spotInfo(spot) {
+    var box = msgBox(spot.name, 'heart.png'), close = function () { box.el.remove(); };
+    var dl = el('dl', 'kv sinfo');
+    [['주소', spot.addr], ['전화', spot.phone], ['영업시간', spot.hours], ['소개', spot.about]].forEach(function (r) {
+      if (!r[1]) return;
+      dl.appendChild(el('dt', '', r[0])); dl.appendChild(el('dd', '', r[1]));
+    });
+    dl.appendChild(el('dt', '', '리뷰'));
+    var dd = el('dd'), go = el('button', 'xlink', '매장 별 리뷰'); go.type = 'button';
+    go.addEventListener('click', function () { close(); reviewQR(spot); });
+    dd.appendChild(go); dl.appendChild(dd);
+    var btns = [['닫기', close]];
+    if (window.Core && Core.isAdmin()) btns.unshift(['수정', function () { close(); editSpot(spot); }], ['삭제', function () { close(); dropSpot(spot); }]);
+    box.say('', btns); box.put(dl);
+  }
+  function dropSpot(spot) {
+    var box = msgBox('매장 삭제', 'icon-info.png'), close = function () { box.el.remove(); };
+    box.say('‘' + spot.name + '’ 매장을 지도에서 지우시겠습니까?', [['삭제', function () {
+      Core.sb.from('spots').delete().eq('id', spot.id).then(function (r) {
+        close();
+        if (r.error) { Core.toast(errText(r.error)); return; }
+        Core.toast('매장을 지웠습니다.'); redrawSpots();
+      });
+    }], ['취소', close]]);
+  }
+  // 매장 추가 · 수정 (관리자): 위치는 주소로 찾거나 지도에서 누름
+  var PINS = [['assets/space/xp/heart.png', '하트'], ['assets/space/xp/pin-bima.png', '비마관'],
+              ['assets/space/xp/pin-cord.png', 'CORD Jr.'], ['assets/space/xp/pin-juana.png', '후아나']];
+  function editSpot(spot) {
+    var cur = spot || {}, box = msgBox(spot ? '매장 정보 수정' : '매장 추가', 'icon-map.png');
+    box.el.classList.add('wide');
+    var close = function () { box.el.remove(); };
+    var f = el('div', 'sform'), ins = {};
+    function field(key, label, opt) {
+      var id = 'sf-' + key;
+      var lab = el('label', '', label); lab.htmlFor = id; f.appendChild(lab);
+      var inp = el(opt && opt.area ? 'textarea' : 'input', 'gin'); inp.id = id;
+      if (!opt || !opt.area) inp.type = 'text';
+      inp.maxLength = (opt && opt.max) || 40;
+      inp.value = key === 'alias' ? (cur.alias || []).join(', ') : (cur[key] || '');
+      f.appendChild(inp); ins[key] = inp;
+    }
+    field('name', '이름'); field('addr', '주소', { max: 100 }); field('phone', '전화', { max: 30 });
+    field('hours', '영업시간', { max: 100 }); field('about', '소개', { area: true, max: 300 });
+    field('alias', '다른 이름', { max: 200 }); field('biz', '사업자번호', { max: 12 });
+    ins.alias.placeholder = '영수증에 적히는 이름, 쉼표로 구분';
+    var lab = el('label', '', '아이콘'); f.appendChild(lab);
+    var icon = el('select', 'xsel');
+    PINS.concat(cur.icon && !PINS.some(function (p) { return p[0] === cur.icon; }) ? [[cur.icon, '지금 아이콘']] : []).forEach(function (p) {
+      var o = el('option', '', p[1]); o.value = p[0]; icon.appendChild(o);
+    });
+    icon.value = cur.icon || PINS[0][0]; f.appendChild(icon);
+    // 위치: 범위 가운데 좌표를 보여 주고, 주소로 찾기 · 지도에서 고르기
+    var box0 = cur.box ? Object.assign({}, cur.box) : null;
+    f.appendChild(el('label', '', '위치'));
+    var where = el('span', 'note'); f.appendChild(where);
+    function showWhere() {
+      where.textContent = box0 ? ((box0.n + box0.s) / 2).toFixed(5) + ', ' + ((box0.w + box0.e) / 2).toFixed(5) : '정하지 않음 (주소로 자동)';
+    }
+    // 가운데를 옮김 (범위 크기는 그대로, 처음이면 약 20m 네모)
+    function moveTo(lat, lng) {
+      var dy = box0 ? (box0.n - box0.s) / 2 : 0.00009, dx = box0 ? (box0.e - box0.w) / 2 : 0.00011;
+      box0 = { n: lat + dy, s: lat - dy, w: lng - dx, e: lng + dx }; showWhere();
+    }
+    var pos = el('div', 'spos');
+    pos.appendChild(button('주소로 찾기', function () {
+      if (!window.kakao || !kakao.maps || !kakao.maps.services) { Core.toast('지도를 먼저 열어 주십시오.'); return; }
+      new kakao.maps.services.Geocoder().addressSearch(ins.addr.value.trim(), function (res, st) {
+        if (st === kakao.maps.services.Status.OK) moveTo(+res[0].y, +res[0].x); else Core.toast('주소를 찾지 못했습니다.');
+      });
+    }));
+    pos.appendChild(button('지도에서 고르기', function () {
+      var mapWin = wins.filter(function (o) { return o.def.id === 'map'; })[0], map = maps[0];
+      if (!map) { Core.toast('지도를 먼저 열어 주십시오.'); return; }
+      openWin(mapWin); bringFront(mapWin);
+      box.el.classList.add('picking'); Core.toast('지도에서 매장 자리를 누르십시오.');
+      function pick(e) {
+        kakao.maps.event.removeListener(map, 'click', pick);
+        moveTo(e.latLng.getLat(), e.latLng.getLng());
+        box.el.classList.remove('picking');
+      }
+      kakao.maps.event.addListener(map, 'click', pick);
+    }));
+    f.appendChild(pos);
+    showWhere();
+    box.say('', [['저장', save], ['취소', close]]); box.put(f);
+    ins.name.focus();
+
+    function save() {
+      var name = ins.name.value.trim();
+      if (!name) { Core.toast('이름을 넣어 주십시오.'); return; }
+      var row = {
+        id: cur.id || ('s' + Date.now().toString(36)),
+        name: name, addr: ins.addr.value.trim(), phone: ins.phone.value.trim(), hours: ins.hours.value.trim(), about: ins.about.value.trim(),
+        alias: ins.alias.value.split(',').map(function (x) { return x.trim(); }).filter(Boolean), biz: ins.biz.value.replace(/\D/g, ''),
+        icon: icon.value, box: box0,
+        sort: cur.sort || (window.SPOTS || []).reduce(function (m, o) { return Math.max(m, o.sort || 0); }, 0) + 1,
+        updated_at: new Date().toISOString()
+      };
+      Core.sb.from('spots').upsert(row).then(function (r) {
+        if (r.error) { Core.toast(errText(r.error)); return; }
+        close(); Core.toast('매장 정보를 저장했습니다.'); redrawSpots();
+      });
+    }
+  }
+
+  // 매장 별 리뷰: 리뷰 관리 창을 열고 맨 위에 그 매장 QR
+  function reviewQR(spot) {
+    var e = wins.filter(function (o) { return o.def.id === 'review'; })[0];
+    e.qrSpot = spot;
+    openWin(e); bringCenter(e);
+    if (e.redraw) e.redraw();
+  }
+  var qrReady = null;
+  function spotQR(entry) {
+    var spot = entry.qrSpot, g = group('매장 QR · ' + spot.name);
+    var url = location.origin + location.pathname + '?spot=' + encodeURIComponent(spot.id);
+    var row = el('div', 'qrrow'), img = el('div', 'qrimg'), side = el('div');
+    row.appendChild(img); row.appendChild(side); g.appendChild(row);
+    side.appendChild(el('p', 'qrurl', url));
+    side.appendChild(el('p', 'note', '리뷰용 QR은 아직 만드는 중입니다. 지금은 찍으면 매장 도착 확인이 열립니다.'));
+    var r = el('div', 'prow');
+    r.appendChild(button('주소 복사', function () { copyText(url).then(function (ok) { Core.toast(ok ? '주소를 복사했습니다.' : '복사하지 못했습니다.'); }); }));
+    r.appendChild(button('닫기', function () { entry.qrSpot = null; entry.redraw(); }));
+    side.appendChild(r);
+    if (!qrReady) qrReady = window.QRCode ? Promise.resolve() : loadScript('https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js');
+    qrReady.then(function () {
+      new QRCode(img, { text: url, width: 264, height: 264, correctLevel: QRCode.CorrectLevel.M });
+    }, function () { qrReady = null; img.textContent = 'QR을 만들지 못했습니다.'; });
+    return g;
   }
 
   /* ── 그림 지도 ── */
@@ -656,6 +835,7 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
 
     function draw() {
       panel.innerHTML = ''; prog = null;
+      if (entry.qrSpot) panel.appendChild(spotQR(entry));   // 지도의 '매장 별 리뷰'로 열었을 때
       var st = window.Core ? Core.state : {};
       if (!window.Core || !Core.ready) { panel.appendChild(el('p', 'empty', '서버 설정 전이라 쓸 수 없습니다.')); return; }
       if (!st.user) {
@@ -749,6 +929,7 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
     }
 
     if (window.Core) Core.onChange(function () { if (isOpen(entry) && !(now && now.busy)) draw(); });
+    entry.redraw = function () { if (!(now && now.busy)) draw(); };
     draw();
   }
 
@@ -762,7 +943,7 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
     }
     var p = st.profile || {}, me = kakaoInfo(st);
     var top = el('div', 'kakao-who');
-    var pic = el('img', 'kpic'); pic.alt = ''; pic.src = p.avatar_url || 'assets/space/xp/icon-account.png';
+    var pic = el('img', 'kpic'); pic.alt = ''; pic.src = p.photo || p.avatar_url || 'assets/space/xp/icon-account.png';
     var kv = el('dl', 'kv');
     function line(k, v) { kv.appendChild(el('dt', '', k)); var d = el('dd', '', v); kv.appendChild(d); return d; }
     line('닉네임', p.nickname || '카카오 사용자');
@@ -781,6 +962,29 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
     row.appendChild(button('계정 변경', function () { Core.login(true); }));   // 카카오 로그인 화면을 다시 띄움
     g.appendChild(row);
     panel.appendChild(g);
+
+    // 프로필 사진: 물고기 아바타와 따로, 친구 목록에 보임 (없으면 카카오 사진)
+    var ph = group('프로필 사진'), prow = el('div', 'phrow'), ppic = el('img', 'phpic'), pside = el('div');
+    ppic.alt = ''; ppic.src = p.photo || p.avatar_url || 'assets/space/xp/icon-account.png';
+    prow.appendChild(ppic); prow.appendChild(pside); ph.appendChild(prow);
+    pside.appendChild(el('p', 'note', '친구에게 보이는 사진입니다. 고르지 않으면 카카오 프로필 사진이 보입니다.'));
+    var pf = el('input'); pf.type = 'file'; pf.accept = 'image/*'; pf.hidden = true; ph.appendChild(pf);
+    var pr = el('div', 'prow');
+    pr.appendChild(button('사진 고르기', function () { pf.value = ''; pf.click(); }));
+    var pclr = button('카카오 사진으로', function () { savePhoto(null); });
+    pclr.disabled = !p.photo; pr.appendChild(pclr);
+    pside.appendChild(pr);
+    pf.addEventListener('change', function () {
+      var file = pf.files && pf.files[0]; if (!file) return;
+      squarePhoto(file, 128).then(savePhoto, function () { Core.toast('사진을 읽지 못했습니다.'); });
+    });
+    function savePhoto(v) {
+      Core.sb.from('profiles').update({ photo: v }).eq('id', st.user.id).then(function (r) {
+        if (r.error) { Core.toast(errText(r.error)); return; }
+        Core.toast(v ? '프로필 사진을 바꿨습니다.' : '카카오 사진으로 바꿨습니다.'); Core.reload();
+      });
+    }
+    panel.appendChild(ph);
 
     // 관리자 문의: 카카오톡 채널 추가 · 1:1 채팅 (머리말을 복사해 두고 채팅으로 이동)
     var q = group('관리자 문의');
@@ -804,6 +1008,22 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
     });
     var r2 = el('div', 'prow'); r2.appendChild(del); d.appendChild(r2);
     panel.appendChild(d);
+  }
+
+  // 사진을 가운데 정사각형으로 잘라 작게 줄임 (서버에 글자로 저장)
+  function squarePhoto(file, size) {
+    return new Promise(function (ok, no) {
+      var url = URL.createObjectURL(file), im = new Image();
+      im.onload = function () {
+        var s = Math.min(im.naturalWidth, im.naturalHeight), cv = document.createElement('canvas');
+        cv.width = cv.height = size;
+        var c = cv.getContext('2d'); c.imageSmoothingQuality = 'high';
+        c.drawImage(im, (im.naturalWidth - s) / 2, (im.naturalHeight - s) / 2, s, s, 0, 0, size, size);
+        URL.revokeObjectURL(url); ok(cv.toDataURL('image/jpeg', 0.85));
+      };
+      im.onerror = function () { URL.revokeObjectURL(url); no(); };
+      im.src = url;
+    });
   }
 
   // 카카오 정보: 고유 번호(숫자)와, 동의한 경우의 이메일
@@ -1057,6 +1277,19 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
     panel.appendChild(el('p', 'note', '선물 코드 창에 받은 코드를 넣으면 권한 · 신분 · 활동이 자동으로 추가됩니다. 점주 권한을 바꾸려면 지금 권한을 삭제한 뒤 새 코드를 넣어 주십시오.'));
   }
 
+  /* ── 친구 어항 구경: 창 하나를 같이 쓰고 열 때마다 친구를 바꿈 ── */
+  var tankWin = null;
+  function openTankOf(f) {
+    var title = (f.alias || f.nickname || '친구') + '의 어항';
+    var page = 'first-reef.html?paint&friend=' + encodeURIComponent(f.id);
+    if (!tankWin) tankWin = makeWindow({ id: 'ftank', title: title, kind: 'reef', page: page, icon: "assets/space/xp/icon-fish.png", at: [0.08, 0.2] });
+    tankWin.def.title = title; tankWin.def.page = page;
+    tankWin.bar.querySelector('.ttl').textContent = title;
+    if (isOpen(tankWin)) { tankWin.frame.src = page; bringCenter(tankWin); } else openWin(tankWin);
+  }
+  // 친구 관리(js/friends.js)가 쓰는 창 도구
+  var XPUI = { el: el, button: button, group: group, msgBox: msgBox, errText: errText, copyText: copyText, loadScript: loadScript, openTank: openTankOf };
+
   /* ── 맨 앞으로 ── */
   function bringFront(entry) {
     entry.el.style.zIndex = ++zTop;
@@ -1176,6 +1409,7 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
   var logged = false;
   if (window.Core) {
     Core.onChange(function (s) { if (s.user && !logged) { logged = true; Core.log('my_space'); } });
+    if (window.XPFriends) XPFriends.checkInvite(XPUI);   // 친구 초대 링크로 들어온 경우
     Core.start();
   }
 
@@ -1286,8 +1520,7 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
 
   /* ── QR로 들어온 경우 (주소 끝 ?spot=장소): 지금 위치가 그 장소 범위 안인지 확인 ── */
   var spotId = new URLSearchParams(location.search).get('spot');
-  var spot = spotId && (window.SPOTS || []).filter(function (o) { return o.id === spotId; })[0];
-  if (spotId) checkSpot(spot);
+  if (spotId) spotsReady.then(function () { checkSpot((window.SPOTS || []).filter(function (o) { return o.id === spotId; })[0]); });
 
   // XP 알림 창 하나 띄우기 (가운데, 맨 앞)
   function msgBox(title, icon) {
@@ -1313,6 +1546,10 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
           e.addEventListener('click', b[1]); bt.appendChild(e);
         });
         center();
+      },
+      // 글 자리에 다른 내용(목록 · 입력 칸)을 넣음
+      put: function (node) {
+        var m = w.querySelector('.mtx'); m.textContent = ''; m.appendChild(node); center();
       }
     };
   }
