@@ -87,6 +87,11 @@
   .hd.rt{right:-4px;top:-4px;background:#fff;outline:1px solid #000080;outline-offset:-1px}
   .hd.lb{left:-4px;bottom:-4px;background:#fff;outline:1px solid #000080;outline-offset:-1px}
   body.paint #stage{position:absolute;inset:0;background:#1EB6F0}
+  /* 좁은 화면(모바일): 회색 여백과 크기 손잡이를 없애고 어항이 작업 공간을 꽉 채움 */
+  @media (max-width:480px){
+    .pcanvas{left:0;top:0;right:0;bottom:0}
+    .hd{display:none}
+  }
   /* 색 상자: 왼쪽 지금 색, 오른쪽 물고기마다 대표 색 (16px 칸, 2줄) */
   .pcolors{flex:none;height:44px;align-items:center;gap:2px;padding:0 2px;border-top:1px solid #fff}
   .pcur{position:relative;flex:none;width:30px;height:31px;border:1px solid;border-color:#a0a0a0 #fff #fff #a0a0a0;
@@ -113,7 +118,7 @@
 </div>
 <div id="stage">
   <img class="bgfx" src="assets/reef/water-tank.webp" alt="">
-  <div id="top"><a href="index.html">← 처음으로</a><span>끌어서 돌려보기 · 물고기를 두 번 누르면 말해요</span></div>
+  <div id="top"><a href="index.html">← 처음으로</a><span>끌어서 돌려보기 · 물고기를 누르면 말해요</span></div>
   <div id="msg">물고기 떼를 불러오는 중…</div>
 </div>
 <div class="pcolors paint-only"><div class="pcur"><b class="fg" id="pfg"></b><b class="bg"></b></div><div class="pswatch" id="pswatch"></div></div>
@@ -481,19 +486,20 @@ el.addEventListener('pointermove', function(e){
   idle = 0;
 });
 el.addEventListener('pointerleave', function(){ if (PAINT) document.getElementById('pxy').textContent = ''; });
-// 두 번 누르면(더블클릭·더블탭) 그 자리 물고기가 말함
-var lastTap = 0, lastXY = null;
+// 한 번 누르면 그 자리 물고기가 말함 (손가락은 조금 움직여도 누른 것으로 봄, 끌면 돌려보기)
 function up(e){
-  var p = pts[e.pointerId];
-  if (p && fish && Object.keys(pts).length === 1 && Math.hypot(e.clientX - p.x0, e.clientY - p.y0) < 8 && performance.now() - p.t0 < 450){
-    var now = performance.now();
-    if (now - lastTap < 400 && lastXY && Math.hypot(e.clientX - lastXY[0], e.clientY - lastXY[1]) < 40){
-      lastTap = 0;
-      var r = el.getBoundingClientRect();
-      speak(fish.nearest(camera, e.clientX - r.left, e.clientY - r.top, r.width, r.height, 70));
-    } else { lastTap = now; lastXY = [e.clientX, e.clientY]; }
+  var p = pts[e.pointerId], slop = e.pointerType === 'touch' ? 14 : 8;
+  if (e.type === 'pointerup' && p && fish && Object.keys(pts).length === 1 && Math.hypot(e.clientX - p.x0, e.clientY - p.y0) < slop && performance.now() - p.t0 < 600){
+    var r = el.getBoundingClientRect();
+    tapFish(fish.nearest(camera, e.clientX - r.left, e.clientY - r.top, r.width, r.height, 70));
   }
   delete pts[e.pointerId]; lastPinch = 0;
+}
+// 누른 물고기: 그림판 상태 줄에 이름을 보여 주고 말하게 함
+function tapFish(hit){
+  if (!hit) return;
+  if (PAINT) setMsg(hit.fish.name || '');
+  speak(hit);
 }
 el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
 el.addEventListener('wheel', function(e){ e.preventDefault(); cam.radius *= Math.exp(e.deltaY * 0.0012); }, {passive:false});
