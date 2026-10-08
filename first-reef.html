@@ -299,20 +299,27 @@ function applyItems(){
     }).catch(function(){});
   });
 }
-/* 몸에 끼우기 (wear 'body'): 몸통은 아이템 안, 머리와 꼬리는 밖으로 나오게 길이를 맞춤
-   아이템 모델의 +x(넓은 쪽)가 머리 쪽, 서서 헤엄치는 물고기는 아이템이 선 채로 몸 가운데를 감쌈
-   물고기 설정에 carry: 'back'이면 (가오리 · 거북이) 등 위에 얹음. 가장 가까운 뼈에 붙여서 몸을 따라 움직임
-   vol: 아이템 size = 부피 배수 (가로 · 세로 · 높이를 똑같이 세제곱근 배로 키움) */
+/* 몸에 끼우기 (wear 'body'): 아이템 모양은 그대로 (가로 · 세로 · 높이 같은 배율), 가장 가까운 뼈에 붙여서 몸을 따라 움직임
+   보통: 물고기가 조각 케이크의 두 잘린 면을 가로로 뚫고 지나감 (뾰족한 끝에서 60% 자리). 높이는 몸 높이만큼, 머리와 꼬리는 잘린 면 밖
+   서서 헤엄치면: 아이템이 선 채로 몸 가운데를 감쌈. 물고기 설정에 carry: 'back'이면 (가오리 · 거북이) 등 위에 얹음
+   vol: 아이템 size = 부피 배수 (가로 · 세로 · 높이를 똑같이 세제곱근 배로 키움)
+   아이템 모델: +x가 뾰족한 끝 → 둥근 뒤쪽, 끝 각도 약 35도 */
 function wearBody(w, p, sz, vol){
   var bd = ReefModel.body(THREE, p);
   if (!bd) return false;
-  var back = fishOf(p.id).carry === 'back', up = !!p.upright && !back, X, Y, Z, at;
-  // 모양은 그대로 (가로 · 세로 · 높이 같은 배율): 길이는 물고기 길이의 절반 (등에 얹으면 36%, 서서 헤엄치면 높이가 30%)
-  var k = Math.cbrt(vol), u = (back ? bd.len * 0.36 / sz.x : up ? bd.len * 0.3 / sz.y : bd.len * 0.5 / sz.x) * k;
-  X = sz.x * u; Y = sz.y * u; Z = sz.z * u; at = bd.center;
-  if (back) at = bd.top.clone().addScaledVector(bd.a, Y * 0.42);   // 바닥이 등에 살짝 묻힘
-  var xd = up ? bd.a : bd.axis, yd = up ? bd.axis : bd.a, zd = new THREE.Vector3().crossVectors(xd, yd);
-  var m = new THREE.Matrix4().makeBasis(xd.clone().multiplyScalar(X / sz.x), yd.clone().multiplyScalar(Y / sz.y), zd.multiplyScalar(Z / sz.z)).setPosition(at);
+  var back = fishOf(p.id).carry === 'back', up = !!p.upright && !back, k = Math.cbrt(vol), u, xd, yd, at;
+  if (back){
+    u = bd.len * 0.36 * k / sz.x; xd = bd.axis; yd = bd.a;
+    at = bd.top.clone().addScaledVector(bd.a, sz.y * u * 0.42);   // 바닥이 등에 살짝 묻힘
+  } else if (up){
+    u = bd.len * 0.3 * k / sz.y; xd = bd.a; yd = bd.axis; at = bd.center;
+  } else {
+    // 옆에서 보면 둥근 뒤쪽 폭(길이의 0.62배)만큼 가려지므로, 그 폭이 물고기 길이의 55%를 넘지 않게 (머리 · 꼬리가 보이게)
+    u = Math.min(bd.ha * k / sz.y, bd.len * 0.55 / (0.62 * sz.x));
+    xd = bd.b; yd = bd.a; at = bd.center.clone().addScaledVector(bd.b, -0.1 * sz.x * u);
+  }
+  var zd = new THREE.Vector3().crossVectors(xd, yd);
+  var m = new THREE.Matrix4().makeBasis(xd.clone().multiplyScalar(u), yd.clone().multiplyScalar(u), zd.multiplyScalar(u)).setPosition(at);
   w.obj.matrixAutoUpdate = false;
   w.obj.matrix.copy(bd.bone.matrixWorld).invert().multiply(m);
   w.obj.traverse(function(o){ if (o.isMesh) o.frustumCulled = false; });
