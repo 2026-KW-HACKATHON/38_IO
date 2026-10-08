@@ -239,8 +239,18 @@ function applyTank(){
   applyItems();
 }
 
-/* ── 착용 아이템: 3D 모델 아이템을 물고기 머리 위에 띄움 (wear 'bounce'면 통통 튐) ── */
-var worn = [], wearTok = 0, itemScenes = {};
+/* ── 착용 아이템: 3D 모델 아이템을 물고기 머리 위에 띄움
+   wear 'bounce' 통통 튐, 'glow' 똑바로 서서 불이 켜졌다 꺼짐, 'float' 천천히 둥실 ── */
+var worn = [], wearTok = 0, itemScenes = {}, haloTex = null;
+// 불빛 둘레에 번지는 동그란 빛
+function halo(){
+  if (haloTex) return haloTex;
+  var c = document.createElement('canvas'); c.width = c.height = 64;
+  var g = c.getContext('2d'), r = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+  r.addColorStop(0, 'rgba(255,236,160,1)'); r.addColorStop(0.4, 'rgba(255,214,110,0.45)'); r.addColorStop(1, 'rgba(255,200,80,0)');
+  g.fillStyle = r; g.fillRect(0, 0, 64, 64);
+  return (haloTex = new THREE.CanvasTexture(c));
+}
 function itemScene(url){
   return itemScenes[url] || (itemScenes[url] = new Promise(function(ok, no){ new THREE.GLTFLoader().load(url, function(g){ ok(g.scene); }, null, no); }));
 }
@@ -258,22 +268,49 @@ function applyItems(){
       var o = sc.clone(true), wrap = new THREE.Group();
       var box = new THREE.Box3().setFromObject(o), c = box.getCenter(new THREE.Vector3()), sz = box.getSize(new THREE.Vector3());
       o.position.sub(c); wrap.add(o);
-      var d = ref * (+it.size || 0.4);
-      wrap.scale.setScalar(d / (Math.max(sz.x, sz.y, sz.z) || 1));
+      var w = {p: p, obj: wrap, wear: it.wear, ph: Math.random() * 6, lit: []};
+      // 불빛: 비치는 유리 부분만 빛나게 하고 그 자리에 빛 번짐을 붙임 (크기를 바꾸기 전에 자리를 잼)
+      if (it.wear === 'glow'){
+        var gb = new THREE.Box3();
+        wrap.updateMatrixWorld(true);
+        o.traverse(function(m){
+          if (!m.isMesh || !m.material.transparent) return;
+          m.material = m.material.clone(); m.material.emissive = new THREE.Color(0xffd36a);
+          w.lit.push(m.material); gb.expandByObject(m);
+        });
+        if (w.lit.length){
+          var gs = gb.getSize(new THREE.Vector3());
+          w.halo = new THREE.Sprite(new THREE.SpriteMaterial({map: halo(), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending}));
+          gb.getCenter(w.halo.position);
+          w.halo.scale.setScalar(Math.max(gs.x, gs.y, gs.z) * 2);
+          wrap.add(w.halo);
+        }
+      }
+      w.d = ref * (+it.size || 0.4);
+      wrap.scale.setScalar(w.d / (Math.max(sz.x, sz.y, sz.z) || 1));
       holder.add(wrap);
-      worn.push({p: p, obj: wrap, d: d, bounce: it.wear === 'bounce', ph: Math.random() * 6});
+      worn.push(w);
     }).catch(function(){});
   });
 }
-// 매 프레임: 머리 자리를 따라가며 위아래로 튐 (바닥에서 빠르고 꼭대기에서 느리게)
+// 매 프레임: 머리 자리를 따라가며 움직임 (튈 때는 바닥에서 빠르고 꼭대기에서 느리게)
 var wv = new THREE.Vector3();
 function wearTick(t){
   worn.forEach(function(w){
     w.obj.visible = w.p.obj.visible;
     w.p.heads[0].getWorldPosition(wv); w.obj.parent.worldToLocal(wv);
-    var hop = w.bounce ? Math.abs(Math.sin(t * 3.2 + w.ph)) * w.d * 1.2 : 0;
+    var hop = 0, a = t + w.ph;
+    if (w.wear === 'bounce'){ hop = Math.abs(Math.sin(a * 3.2)) * w.d * 1.2; w.obj.rotation.y = a * 1.5; }
+    else if (w.wear === 'glow'){
+      // 살짝 흔들리며 몇 초마다 불이 들어옴
+      hop = Math.sin(a * 1.4) * w.d * 0.08; w.obj.rotation.set(0, a * 0.4, Math.sin(a * 1.3) * 0.15);
+      var k = Math.max(0, Math.sin(a * 1.8)), on = k * k;
+      w.lit.forEach(function(m){ m.emissiveIntensity = on * 1.6; });
+      if (w.halo) w.halo.material.opacity = on * 0.7;
+    }
+    else if (w.wear === 'float'){ hop = (Math.sin(a * 1.6) + 1) * w.d * 0.15; w.obj.rotation.set(Math.sin(a * 1.1) * 0.12, a * 0.6, 0); }
+    else w.obj.rotation.y = a * 1.5;
     w.obj.position.set(wv.x, wv.y + w.d * 0.9 + hop, wv.z);
-    w.obj.rotation.y = t * 1.5 + w.ph;
   });
 }
 function saveTank(){

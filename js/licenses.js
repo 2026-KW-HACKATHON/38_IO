@@ -9,6 +9,8 @@ window.LICENSES = [
   { owner: 'Comitre ("Discus_Animated")', use: '물고기 3D 모델 (Discus), 그림 크기를 줄이고 형식을 바꿔 씀', kind: 'CC BY 4.0', url: 'https://skfb.ly/6A8tC' },
   { owner: 'DigitalLife3D ("Model 54A - Caribbean Reef Shark")', use: '물고기 3D 모델 (Caribbean Reef Shark), 그림 크기와 모양 데이터를 줄여 씀', kind: 'CC BY-NC 4.0', url: 'https://skfb.ly/6RnNA' },
   { owner: 'MaX3Dd ("Tennis Ball Low-poly PBR")', use: '아이템 3D 모델 (테니스 볼), 그림 크기와 모양 데이터를 줄여 씀', kind: 'Sketchfab Standard (Free)', url: 'https://sketchfab.com/MaX3Dd' },
+  { owner: 'Miguel Adão ("A Simple Lightbulb")', use: '아이템 3D 모델 (전구), 그림 크기와 모양 데이터를 줄여 씀', kind: 'CC BY 4.0', url: 'https://sketchfab.com/3d-models/a-simple-lightbulb-b63f65374f0640f69b3fe7a95e2cbc8b' },
+  { owner: 'kny1010 ("Piece of Cake")', use: '아이템 3D 모델 (조각 케이크), 그림 크기와 모양 데이터를 줄여 씀', kind: 'CC BY 4.0', url: 'https://sketchfab.com/3d-models/piece-of-cake-8bad4ac75423461ba8101c53c934a585' },
   { owner: 'bukharig0300 ("Fishe")', use: '물고기 3D 모델 (Emperor Angelfish), 그림 크기와 모양 · 동작 데이터를 줄여 씀', kind: 'CC BY 4.0', url: 'https://skfb.ly/oNX6A' },
   { owner: 'somitsu ("Ryukin goldfish")', use: '물고기 3D 모델 (Ryukin Goldfish), 그림 크기와 모양 · 동작 데이터를 줄여 씀', kind: 'CC BY 4.0', url: 'https://skfb.ly/6TMC9' },
   { owner: 'yaniu03 ("Turtle")', use: '3D 모델 (Sea Turtle), 그림 크기와 모양 · 동작 데이터를 줄여 씀', kind: 'CC BY 4.0', url: 'https://skfb.ly/oITRq' },
