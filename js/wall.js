@@ -456,10 +456,17 @@
           var p = m.fish[0], v = new THREE.Vector3();
           m.update(0.4);
           if (p.kind === 'path') {
-            p.obj.position.set(0, 0, 0); p.obj.rotation.set(0, -0.5, 0);
+            // 옆모습, 머리는 오른쪽
+            p.obj.position.set(0, 0, 0); p.obj.rotation.set(0, 0, 0);
             m.holder.scale.setScalar(1.5 / (p.sizeK * m.ref));
-          } else {   // 떼 물고기: 머리가 가운데 오게 옮김
+          } else {
+            // 떼 물고기: 몸 가운데에서 머리 쪽 방향을 재서, 옆모습으로 머리가 오른쪽을 보게 돌림
             m.holder.scale.setScalar(2.2 / m.ref); m.holder.updateMatrixWorld(true);
+            var mid = new THREE.Vector3(), hd = p.heads[0].getWorldPosition(new THREE.Vector3());
+            p.bones.forEach(function (b) { mid.add(b.getWorldPosition(v)); });
+            mid.divideScalar(Math.max(1, p.bones.length));
+            m.holder.rotation.y = Math.atan2(hd.z - mid.z, hd.x - mid.x);
+            m.holder.updateMatrixWorld(true);
             p.heads[0].getWorldPosition(v); m.holder.position.sub(v);
           }
           sc.add(m.holder);
