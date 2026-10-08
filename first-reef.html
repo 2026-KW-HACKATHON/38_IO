@@ -291,7 +291,7 @@ function applyItems(){
           wrap.add(w.halo);
         }
       }
-      if (it.wear === 'body'){ if (wearBody(w, p, sz)) worn.push(w); return; }
+      if (it.wear === 'body'){ if (wearBody(w, p, sz, +it.size || 1)) worn.push(w); return; }
       w.d = ref * (+it.size || 0.4);
       wrap.scale.setScalar(w.d / (Math.max(sz.x, sz.y, sz.z) || 1));
       holder.add(wrap);
@@ -301,18 +301,20 @@ function applyItems(){
 }
 /* 몸에 끼우기 (wear 'body'): 몸통은 아이템 안, 머리와 꼬리는 밖으로 나오게 크기를 맞춤
    아이템 모델의 +x(넓은 쪽)가 머리 쪽, 서서 헤엄치는 물고기는 아이템이 선 채로 몸 가운데를 감쌈
-   물고기 설정에 carry: 'back'이면 (가오리 · 거북이) 등 위에 얹음. 가장 가까운 뼈에 붙여서 몸을 따라 움직임 */
-function wearBody(w, p, sz){
+   물고기 설정에 carry: 'back'이면 (가오리 · 거북이) 등 위에 얹음. 가장 가까운 뼈에 붙여서 몸을 따라 움직임
+   k: 아이템 size 배수. 높이 · 폭만 k배로 키우고 길이는 머리와 꼬리가 밖에 남을 만큼만 (지느러미는 묻혀도 됨) */
+function wearBody(w, p, sz, k){
   var bd = ReefModel.body(THREE, p);
   if (!bd) return false;
   var back = fishOf(p.id).carry === 'back', up = !!p.upright && !back, X, Y, Z, at;
+  var L = bd.len * Math.min(0.5 * k, 0.62);
   if (back){
-    var k = bd.len * 0.36 / sz.x; X = sz.x * k; Y = sz.y * k; Z = sz.z * k;
+    var u = bd.len * 0.36 * k / sz.x; X = sz.x * u; Y = sz.y * u; Z = sz.z * u;
     at = bd.top.clone().addScaledVector(bd.a, Y * 0.42);   // 바닥이 등에 살짝 묻힘
   } else if (up){
-    Y = bd.len * 0.42; X = bd.ha * 1.5; Z = Math.min(bd.wb * 3.3, X * 1.3); at = bd.center;
+    Y = L * 0.84; X = bd.ha * 1.5 * k; Z = Math.min(bd.wb * 3.3, bd.ha * 1.5 * 1.3) * k; at = bd.center;
   } else {
-    X = bd.len * 0.5; Y = bd.ha * 1.2; Z = Math.min(Math.max(bd.wb * 3.3, X * 0.6), X * 1.3); at = bd.center;
+    X = L; Y = bd.ha * 1.2 * k; Z = Math.min(Math.max(bd.wb * 3.3, bd.len * 0.3), bd.len * 0.65) * k; at = bd.center;
   }
   var xd = up ? bd.a : bd.axis, yd = up ? bd.axis : bd.a, zd = new THREE.Vector3().crossVectors(xd, yd);
   var m = new THREE.Matrix4().makeBasis(xd.clone().multiplyScalar(X / sz.x), yd.clone().multiplyScalar(Y / sz.y), zd.multiplyScalar(Z / sz.z)).setPosition(at);

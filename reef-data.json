@@ -49,9 +49,10 @@
   {
    "id": "cake",
    "name": "조각 케이크",
-   "model": "assets/models/cake.glb",
+   "model": "assets/models/cheesecake.glb",
    "starter": true,
-   "wear": "body"
+   "wear": "body",
+   "size": 2
   }
  ],
  "effects": [],
