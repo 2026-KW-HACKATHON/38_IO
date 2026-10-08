@@ -461,9 +461,9 @@ function showFish(id){
   document.getElementById('fdChip').style.background = f.color || '#888';
   sayIns.forEach(function(inp, i){ inp.value = says[i] || ''; });
   fillPick(fdFx, data.effects || [], o.effect);
-  fillPick(fdItem, (data.items || []).filter(function(x){ return !owned || owned[x.id] || x.id === o.item; }), o.item);
+  fillPick(fdItem, (data.items || []).filter(function(x){ return !owned || x.starter || owned[x.id] || x.id === o.item; }), o.item);
 }
-// 나의 공간에서는 재고에 있는 아이템만 고를 수 있음 (null이면 모두)
+// 나의 공간에서는 재고에 있는 아이템만 고를 수 있음 (null이면 모두, starter 아이템은 누구나)
 var owned = null;
 function loadOwned(){
   var C = host();

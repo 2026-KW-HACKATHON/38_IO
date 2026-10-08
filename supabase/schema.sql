@@ -441,7 +441,7 @@ create table if not exists public.starter_given (
 alter table public.starter_given enable row level security;
 
 -- 시작 재고: 재고가 한 번도 없던 사람에게 물고기를 한 마리씩 (First Reef 물고기)
--- 아이템은 모든 사람에게 하나씩 한 번만 (새 아이템을 목록에 넣으면 이미 가입한 사람도 받음)
+-- 아이템은 모든 사람에게 하나씩 한 번만 (새 아이템을 목록에 넣으면 이미 가입한 사람도 받음, reef-data.json의 starter 아이템과 같게)
 create or replace function public.give_starter(uid uuid) returns void
 language plpgsql security definer set search_path = public as $$
 begin
