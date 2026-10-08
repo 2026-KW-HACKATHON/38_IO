@@ -664,8 +664,8 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
         return;
       }
       var g = group('영수증 인증');
-      g.appendChild(el('p', 'note', '결제한 지 ' + Receipt.DAYS + '일 안의 영수증을 밝은 곳에서 평평하게 펴고 화면에 꽉 차게 찍어 주십시오. ' +
-        '글자는 이 기기 안에서 읽고, 사진은 서버에 올리지 않습니다.'));
+      g.appendChild(el('p', 'note', '결제 후 ' + Receipt.MINS + '분 안에 영수증을 밝은 곳에서 평평하게 펴고 화면에 꽉 차게 찍어 주십시오. ' +
+        '같은 영수증을 함께 온 사람도 찍으면 동행으로 인증됩니다. 글자는 이 기기 안에서 읽고, 사진은 서버에 올리지 않습니다.'));
       var row = el('div', 'prow');
       var shot = button(now && !now.busy ? '다시 찍기' : '영수증 찍기', function () { pick.value = ''; pick.click(); });
       shot.disabled = !!(now && now.busy);
@@ -691,14 +691,14 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
         var dd = el('dd'); dd.appendChild(el('span', 'chk ' + (c.ok ? 'ok' : 'no'), (c.ok ? '✔ ' : '✖ ') + c.text)); kv.appendChild(dd);
       });
       out.appendChild(kv);
-      if (now.saved) out.appendChild(el('p', 'rdone', '인증되었습니다.'));
+      if (now.saved) out.appendChild(el('p', 'rdone', now.saved.lead ? '인증되었습니다.' : '동행으로 인증되었습니다.' + partyText(now.saved)));
       else if (now.v.ok) {
         var r = el('div', 'prow'), go = button('인증하기', function () {
           go.disabled = true;
           Receipt.submit(now.info).then(function (res) {
             if (res.error) { go.disabled = false; Core.toast(errText(res.error)); return; }
-            now.saved = true;
-            Core.log('receipt_ok', { spot: now.info.spot.id });
+            now.saved = res.data || { lead: true };
+            Core.log('receipt_ok', { spot: now.info.spot ? now.info.spot.id : now.info.shop, with: !now.saved.lead });
             draw();
           });
         });
@@ -718,11 +718,14 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
         if (!prog) return;
         prog.fill.style.width = Math.round(p * 100) + '%'; prog.txt.textContent = msg;
       }).then(function (r) {
-        now = { text: r.text, info: r.info, v: Receipt.judge(r.info) }; draw();
+        now = { text: r.text, info: r.info, v: Receipt.judge(r.info, Core.can('tester')) }; draw();
       }, function () {
         now = { err: '영수증을 읽지 못했습니다. 인터넷 연결을 확인하고 다시 해 주십시오.' }; draw();
       });
     });
+
+    // 같은 영수증으로 인증한 사람 수 (혼자면 빈칸)
+    function partyText(p) { return p.party > 1 ? ' (일행 ' + p.party + '명)' : ''; }
 
     // 내 인증 기록: 최근 20개
     function drawMine(g) {
@@ -734,9 +737,12 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
         r.data.forEach(function (it) {
           var sp = (window.SPOTS || []).filter(function (o) { return o.id === it.spot; })[0];
           var line = el('div', 'role'), t = el('span', 'rtxt');
-          t.appendChild(el('b', '', sp ? sp.name : it.spot));
-          t.appendChild(el('span', '', new Date(it.paid_at).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', dateStyle: 'medium', timeStyle: 'short' })));
+          t.appendChild(el('b', '', sp ? sp.name : it.shop || '이름 없는 가게'));
+          var fmt = { timeZone: 'Asia/Seoul', dateStyle: 'medium' }; if (it.timed) fmt.timeStyle = 'short';
+          t.appendChild(el('span', '', new Date(it.paid_at).toLocaleString('ko-KR', fmt)));
           if (it.amount) t.appendChild(el('span', '', it.amount.toLocaleString('ko-KR') + '원'));
+          if (!it.lead) t.appendChild(el('span', 'badge', '동행'));
+          if (it.party > 1) t.appendChild(el('span', '', partyText(it).trim()));
           line.appendChild(t); g.appendChild(line);
         });
       });

@@ -4,7 +4,8 @@
   "use strict";
   var LIB = 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
   var LANG = 'assets/ocr';   // 한글 · 영문 글자 자료 (사이트에 같이 올려 둠)
-  var DAYS = 30;             // 결제한 지 며칠 안의 영수증만 받음 (supabase/schema.sql 11번과 같게)
+  var MINS = 15;             // 결제 시각이 적힌 영수증은 결제 후 몇 분 안에만 받음 (supabase/schema.sql 11번과 같게)
+  var DAYS = 30;             // 시각 없이 날짜만 적힌 영수증은 며칠 안에만 받음 (위와 같음)
   var SIDE = 2000;           // 사진의 긴 쪽을 이 크기까지 줄여서 읽음
 
   /* ── 글자 읽는 도구: 처음 쓸 때 한 번만 불러옴 ── */
@@ -83,7 +84,7 @@
 
   function parse(text) {
     var lines = fixNum(text).split(/\n/).map(function (s) { return s.trim(); }).filter(Boolean);
-    return { spot: findSpot(lines), paidAt: findTime(lines), approval: findApproval(lines), biz: findBiz(lines), amount: findAmount(lines) };
+    return { spot: findSpot(lines), shop: findShop(lines), paidAt: findTime(lines), approval: findApproval(lines), biz: findBiz(lines), amount: findAmount(lines) };
   }
 
   // 결제 시각: 날짜가 적힌 줄(날짜 머리말이 있는 줄 먼저) + 같은 줄이나 다음 줄의 시각
@@ -180,16 +181,33 @@
     return best ? best.spot : null;
   }
 
-  /* ── 판정: 가게 · 결제 시각 · 기한 · 결제 정보 네 가지를 확인 ── */
+  // 지도에 없는 가게용 이름: '상호 · 가맹점명' 같은 머리말 뒤의 글, 없으면 맨 위 몇 줄 중 글자가 있는 첫 줄
+  var SHOP_KEY = /^(?:상호명?|가맹점명?|매장명|점포명|업체명|가게명?)\s*[:：]?\s*/;
+  var NOT_SHOP = /영수증|전표|신용|카드|receipt|사업자|대표|주소|tel|전화|\d{2,}[-./]\d/i;
+  function findShop(lines) {
+    var name = '';
+    lines.some(function (ln) { var m = SHOP_KEY.exec(ln); if (m && ln.length > m[0].length) { name = ln.slice(m[0].length); return true; } });
+    if (!name) lines.slice(0, 4).some(function (ln) {
+      if (NOT_SHOP.test(ln) || SUM_KEY.test(squash(ln)) || DATE_KEY.test(squash(ln)) || /승인|\d,\d{3}/.test(ln) || (ln.match(/[가-힣a-zA-Z]/g) || []).length < 2) return false;
+      name = ln; return true;
+    });
+    return name.replace(/사업자.*$/, '').replace(/[\[\]()<>*=_~|]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 40);
+  }
+
+  /* ── 판정: 가게 · 결제 시각 · 기한 · 결제 정보 네 가지를 확인 (free가 참이면 기한을 보지 않음: 베타테스터) ── */
   function when(t) { return t ? new Date(Date.UTC(t.y, t.mo - 1, t.d, t.h - 9, t.mi, t.s)) : null; }   // 영수증 시각은 한국 시간
-  function judge(info) {
-    var at = when(info.paidAt), now = Date.now();
-    var age = at ? (now - at.getTime()) / 86400000 : null;
+  function judge(info, free) {
+    var at = when(info.paidAt), timed = !!(info.paidAt && !info.paidAt.noTime);
+    var mins = at ? (Date.now() - at.getTime()) / 60000 : null, limit = timed ? MINS : DAYS * 1440;
+    var shop = info.spot ? info.spot.name : info.shop ? info.shop + ' (지도에 없는 가게)' : info.biz ? '사업자번호 ' + info.biz + ' (지도에 없는 가게)' : '';
     var checks = [
-      { key: 'spot', ok: !!info.spot, text: info.spot ? info.spot.name : '등록된 가게를 찾지 못함' },
+      { key: 'spot', ok: !!shop, text: shop || '가게 이름을 찾지 못함' },
       { key: 'time', ok: !!at, text: at ? show(info.paidAt) : '결제 날짜를 찾지 못함' },
-      { key: 'age', ok: age != null && age > -0.01 && age <= DAYS,
-        text: age == null ? '-' : age < -0.01 ? '앞으로의 날짜라 받을 수 없음' : age > DAYS ? '결제한 지 ' + DAYS + '일이 지남' : Math.floor(age) + '일 전 결제' },
+      { key: 'age', ok: mins != null && mins >= -10 && (free || mins <= limit),
+        text: mins == null ? '-' : mins < -10 ? '앞으로의 날짜라 받을 수 없음'
+          : free ? '시간 제한 없음 (베타테스터)'
+          : mins > limit ? '결제한 지 ' + (timed ? MINS + '분' : DAYS + '일') + '이 지남'
+          : timed ? Math.max(0, Math.floor(mins)) + '분 전 결제' : Math.floor(mins / 1440) + '일 전 결제 (시각 없음)' },
       { key: 'pay', ok: !!(info.approval || info.biz || info.amount),
         text: [info.approval && '승인 ' + info.approval, info.amount && info.amount.toLocaleString('ko-KR') + '원'].filter(Boolean).join(' · ') || (info.biz ? '사업자번호 ' + info.biz : '승인번호 · 금액을 찾지 못함') }
     ];
@@ -200,17 +218,15 @@
     return t.y + '.' + pad(t.mo) + '.' + pad(t.d) + (t.noTime ? '' : ' ' + pad(t.h) + ':' + pad(t.mi));
   }
 
-  /* ── 서버에 남기기: 같은 영수증이면 서버가 거절함 ── */
+  /* ── 서버에 남기기: 같은 영수증을 먼저 올린 사람이 있으면 동행으로 묶임 (같은 사람이 두 번은 안 됨) ── */
   function submit(info) {
-    var at = when(info.paidAt);
     return Core.sb.rpc('submit_receipt', {
-      shop: info.spot.id, paid: at.toISOString(), approval_no: info.approval || null, total: info.amount || null, biz_no: info.biz || null
+      shop_id: info.spot ? info.spot.id : null, shop_name: info.spot ? info.spot.name : info.shop || null,
+      paid: when(info.paidAt).toISOString(), has_time: !info.paidAt.noTime,
+      approval_no: info.approval || null, total: info.amount || null, biz_no: info.biz || null
     });
   }
-  function mine() {
-    return Core.sb.from('receipts').select('id, spot, paid_at, approval, amount, created_at')
-      .eq('user_id', Core.state.user.id).order('created_at', { ascending: false }).limit(20);
-  }
+  function mine() { return Core.sb.rpc('my_receipts'); }
 
-  window.Receipt = { read: read, parse: parse, judge: judge, submit: submit, mine: mine, DAYS: DAYS };
+  window.Receipt = { read: read, parse: parse, judge: judge, submit: submit, mine: mine, MINS: MINS, DAYS: DAYS };
 })();
