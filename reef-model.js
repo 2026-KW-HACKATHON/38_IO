@@ -16,6 +16,7 @@
 (function (root) {
   "use strict";
   var LOADER_URL = 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js';
+  var SKEL_URL = 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/utils/SkeletonUtils.js';   // 뼈 있는 모델 복사 도구
   var loaderReady = null;
 
   function script(src) {
@@ -23,9 +24,11 @@
       var s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = no; document.head.appendChild(s);
     });
   }
+  // 복사 도구는 못 받아도 됨 (그때는 매번 파일을 새로 읽음)
   function needLoader(THREE) {
-    if (THREE.GLTFLoader) return Promise.resolve();
-    if (!loaderReady) loaderReady = script(LOADER_URL);
+    if (THREE.GLTFLoader && THREE.SkeletonUtils) return Promise.resolve();
+    if (!loaderReady) loaderReady = Promise.all([THREE.GLTFLoader ? null : script(LOADER_URL),
+                                                 THREE.SkeletonUtils ? null : script(SKEL_URL).catch(function () {})]);
     return loaderReady;
   }
 
@@ -121,7 +124,14 @@
     };
   }
 
-  function gltf(THREE, url) { return new Promise(function (ok, no) { new THREE.GLTFLoader().load(url, ok, null, no); }); }
+  // 같은 파일은 한 번만 읽고, 쓸 때마다 복사본을 줌 (물고기가 많아도 느려지지 않게)
+  var parsed = {};
+  function gltf(THREE, url) {
+    function read() { return new Promise(function (ok, no) { new THREE.GLTFLoader().load(url, ok, null, no); }); }
+    if (!THREE.SkeletonUtils) return read();
+    if (!parsed[url]) { parsed[url] = read(); parsed[url].catch(function () { delete parsed[url]; }); }
+    return parsed[url].then(function (g) { return { scene: THREE.SkeletonUtils.clone(g.scene), animations: g.animations }; });
+  }
 
   /* ── 무늬 바꾸기: skin 그림이 있으면 같은 모델에 그 그림을 입힘
      빛나는 그림도 같은 그림으로 (원래 파일처럼 몸 색의 약 30% 밝기) ── */
@@ -136,6 +146,7 @@
       var g = r[0], tex = r[1];
       if (tex) g.scene.traverse(function (o) {
         if (!o.isMesh || !o.material.map) return;
+        o.material = o.material.clone();   // 같은 파일의 다른 무늬와 겹치지 않게 재질을 따로 씀
         tex.wrapS = o.material.map.wrapS; tex.wrapT = o.material.map.wrapT;
         o.material.map = tex;
         if (o.material.emissiveMap) { o.material.emissiveMap = tex; o.material.emissive.setScalar(0.07); }
@@ -149,11 +160,7 @@
   function loadSchool(THREE, f) {
     return loadGltf(THREE, f).then(function (g) {
       var scene = g.scene, mixer = null, clip = g.animations[0] || null, mine = {};
-      if (clip) {
-        mixer = new THREE.AnimationMixer(scene);
-        g.animations.forEach(function (a) { mixer.clipAction(a).play(); });
-        clip.tracks.forEach(function (t) { var k = who(t.name.split('.')[0]); if (k) mine[k] = 1; });
-      }
+      if (clip) clip.tracks.forEach(function (t) { var k = who(t.name.split('.')[0]); if (k) mine[k] = 1; });
       var each = {};   // 한 마리 → { bones, head, roots }
       scene.traverse(function (o) {
         if (o.isMesh) o.frustumCulled = false;   // 뼈로 움직여서 화면 밖으로 잘못 잘리는 것 방지
@@ -171,6 +178,15 @@
       var bones = [], heads = [];
       shown.forEach(function (k) { bones = bones.concat(each[k].bones); if (each[k].head) heads.push(each[k].head); });
       function hide() { hiddenRoots.forEach(function (b) { b.scale.setScalar(1e-4); }); }
+      // 보이는 물고기 뼈만 움직이게 동작을 줄임 (숨긴 물고기 뼈까지 매번 움직이면 느려짐)
+      if (clip) {
+        var keep = {}; shown.forEach(function (k) { keep[k] = 1; });
+        mixer = new THREE.AnimationMixer(scene);
+        g.animations.forEach(function (a) {
+          var tr = a.tracks.filter(function (t) { var k = who(t.name.split('.')[0]); return !mine[k] || keep[k]; });
+          mixer.clipAction(new THREE.AnimationClip(a.name, a.duration, tr)).play();
+        });
+      }
       hide();
       return { kind: 'school', id: f.id, name: f.name || f.id, color: f.color || '', obj: scene, mixer: mixer, clip: clip, delay: num(f.delay, 0),
                bones: bones, heads: heads, hide: hide, says: f.says || [] };

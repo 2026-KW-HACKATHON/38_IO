@@ -38,7 +38,7 @@
   function verified(p) {
     proof = p;
     gstat.innerHTML = '';
-    gstat.appendChild(el('div', 'msg ok', p.kind === 'gps' ? '✔ 후아나에서 확인됐어요' : p.kind === 'admin' ? '✔ 관리자 모드 (위치 확인 없음)' : '✔ 영수증으로 확인됐어요'));
+    gstat.appendChild(el('div', 'msg ok', p.kind === 'gps' ? '후아나에서 확인됐어요' : p.kind === 'admin' ? '관리자 모드 (위치 확인 없음)' : '영수증으로 확인됐어요'));
     form.classList.remove('hidden');
   }
   function receiptBtn() { return button('영수증으로 인증하기', 'vbtn', function () { $('rcpt').value = ''; $('rcpt').click(); }); }
@@ -94,7 +94,7 @@
 
   /* ══ 2. 어항 ══ */
   var renderer = new THREE.WebGLRenderer({ canvas: $('gl'), alpha: true, antialias: true });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
   renderer.outputEncoding = THREE.sRGBEncoding;
   var scene = new THREE.Scene(), camera = new THREE.PerspectiveCamera(40, 1, 0.05, 50);
   scene.add(new THREE.HemisphereLight(0xdff6ff, 0x1a3a5a, 1.1));
@@ -152,7 +152,9 @@
         while (fishes.length > MAX_FISH) dropFish(fishes[0]);
         $('empty').classList.add('hidden');
         if (r.fresh) say(f, 5);
-      }).catch(function () { delete byId[r.id]; });
+      }).catch(function () { delete byId[r.id]; }).then(function () {
+        return new Promise(function (ok) { setTimeout(ok, 40); });   // 한 마리 넣고 쉬어서 화면이 멈추지 않게
+      });
     });
   }
   function dropFish(f) {
@@ -280,24 +282,59 @@
       btns[id] = b; picks.appendChild(b);
     });
   }
+  // 아이템: 비스타 동그라미 단추 (하나만 고름)
   function drawItems() {
     var box = $('items'); box.innerHTML = '';
-    var all = [{ id: '', name: '없음' }].concat(itemsCfg), bs = [];
-    all.forEach(function (it) {
-      var b = button(it.name || it.id, 'vbtn' + (it.id === chosenItem ? ' on' : ''), function () {
-        chosenItem = it.id; bs.forEach(function (x) { x[1].classList.toggle('on', x[0] === chosenItem); });
-      });
-      bs.push([it.id, b]); box.appendChild(b);
+    [{ id: '', name: '없음' }].concat(itemsCfg).forEach(function (it) {
+      var l = el('label', 'rb'), r = el('input');
+      r.type = 'radio'; r.name = 'item'; r.value = it.id; r.checked = it.id === chosenItem;
+      r.addEventListener('change', function () { chosenItem = it.id; });
+      l.appendChild(r); l.appendChild(el('span', '', it.name || it.id)); box.appendChild(l);
     });
   }
-  function makeThumbs() {
+  var THUMB_DIR = 'assets/thumbs/';
+  function setThumb(id, src) {
+    thumbs[id] = src;
+    var img = el('img'); img.alt = ''; img.src = src;
+    var b = btns[id]; if (b) b.replaceChild(img, b.firstChild);
+  }
+  // 미리 만들어 둔 그림(assets/thumbs/물고기 id.png)을 쓰고, 없는 것만 모델을 그려서 만듦
+  function loadThumbs() {
+    var missing = [];
+    Promise.all(speciesIds.map(function (id) {
+      return new Promise(function (ok) {
+        var im = new Image();
+        im.onload = function () { setThumb(id, im.src); ok(); };
+        im.onerror = function () { missing.push(id); ok(); };
+        im.src = THUMB_DIR + id + '.png';
+      });
+    })).then(function () { drawList(); if (missing.length) makeThumbs(missing); });
+  }
+  function makeThumbs(ids) {
     var r2 = new THREE.WebGLRenderer({ alpha: true, antialias: true, preserveDrawingBuffer: true });
     r2.setPixelRatio(1); r2.setSize(168, 168); r2.outputEncoding = THREE.sRGBEncoding;
     var sc = new THREE.Scene(), cam = new THREE.PerspectiveCamera(30, 1, 0.1, 50);
     sc.add(new THREE.HemisphereLight(0xffffff, 0x446688, 1.2)); var l = new THREE.DirectionalLight(0xffffff, 1.1); l.position.set(2, 3, 4); sc.add(l);
     cam.position.set(0, 0, 3.4);
+    // 한 번 그려 보고 물고기가 그려진 자리를 재서, 그림 가운데에 알맞은 크기로 오게 옮김
+    var N = 168, u = 2 * 3.4 * Math.tan(15 * Math.PI / 180) / N, c2 = document.createElement('canvas'), x2 = c2.getContext('2d');
+    c2.width = c2.height = N;
+    function fitShot(h) {
+      r2.render(sc, cam);
+      x2.clearRect(0, 0, N, N); x2.drawImage(r2.domElement, 0, 0);
+      var d = x2.getImageData(0, 0, N, N).data, x0 = N, y0 = N, x1 = -1, y1 = -1;
+      for (var y = 0; y < N; y++) for (var x = 0; x < N; x++) if (d[(y * N + x) * 4 + 3] > 12) {
+        if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+      }
+      if (x1 < 0) return;
+      var k = 0.84 * N / Math.max(x1 - x0 + 1, y1 - y0 + 1);
+      if (x0 <= 0 || y0 <= 0 || x1 >= N - 1 || y1 >= N - 1) k = Math.min(k, 0.5);   // 가장자리에 잘렸으면 일단 줄임
+      var cx = ((x0 + x1) / 2 - N / 2) * u, cy = -((y0 + y1) / 2 - N / 2) * u;
+      h.scale.multiplyScalar(k);
+      h.position.set(-k * (cx - h.position.x), -k * (cy - h.position.y), h.position.z * k);
+    }
     var chain = Promise.resolve();
-    speciesIds.forEach(function (id) {
+    ids.forEach(function (id) {
       chain = chain.then(function () {
         return ReefModel.load(THREE, [speciesCfg[id]]).then(function (m) {
           var p = m.fish[0], v = new THREE.Vector3();
@@ -309,11 +346,11 @@
             m.holder.scale.setScalar(2.2 / m.ref); m.holder.updateMatrixWorld(true);
             p.heads[0].getWorldPosition(v); m.holder.position.sub(v);
           }
-          sc.add(m.holder); r2.render(sc, cam);
-          thumbs[id] = r2.domElement.toDataURL('image/png');
+          sc.add(m.holder);
+          for (var n = 0; n < 4; n++) fitShot(m.holder);
+          r2.render(sc, cam);
+          setThumb(id, r2.domElement.toDataURL('image/png'));
           sc.remove(m.holder);
-          var img = el('img'); img.alt = id; img.src = thumbs[id];
-          var b = btns[id]; if (b) b.replaceChild(img, b.firstChild);
           drawList();
         }).catch(function () {});
       });
@@ -369,8 +406,9 @@
   }
   function itemName(id) { var it = itemsCfg.filter(function (x) { return x.id === id; })[0]; return it ? it.name || it.id : ''; }
   function drawList() {
-    var box = $('list'); box.innerHTML = '';
     $('cnt').textContent = reviews.length ? '(' + reviews.length + ')' : '';
+    if ($('pList').classList.contains('hidden')) return;
+    var box = $('list'); box.innerHTML = '';
     if (!reviews.length) { box.appendChild(el('p', 'none', '아직 리뷰가 없어요')); return; }
     var size = {}; reviews.forEach(function (r) { size[r.grp] = (size[r.grp] || 0) + 1; });
     reviews.forEach(function (r) {
@@ -438,7 +476,7 @@
     speciesIds = order; itemsCfg = (d.items || []).filter(function (x) { return x && x.id; });
     chosen = speciesIds[Math.floor(Math.random() * speciesIds.length)] || '';
     kit.applyStyle(d.style); talk = kit.Talk(tank, camera, d.style);
-    drawPicks(); drawItems(); makeThumbs(); fetchReviews();
+    drawPicks(); drawItems(); loadThumbs(); fetchReviews();
   }).catch(function () { toast('물고기 정보를 읽지 못했어요'); });
   spotsReady.then(checkGeo);
 })();
