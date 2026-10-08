@@ -34,12 +34,15 @@
     gstat.appendChild(m);
     if (buttons && buttons.length) { var r = el('div', 'row'); buttons.forEach(function (b) { r.appendChild(b); }); gstat.appendChild(r); }
     form.classList.add('hidden');
+    arAllowed(false);   // 확인이 풀리면 AR도 끔
   }
   function verified(p) {
     proof = p;
     gstat.innerHTML = '';
     gstat.appendChild(el('div', 'msg ok', p.kind === 'gps' ? '후아나에서 확인됐어요' : p.kind === 'admin' ? '관리자 모드 (위치 확인 없음)' : '영수증으로 확인됐어요'));
     form.classList.remove('hidden');
+    arAllowed(p.kind === 'gps' || p.kind === 'admin');
+    if (p.kind === 'gps') arStart();   // 후아나 안에서는 바로 카메라 위에 물고기를 띄움
   }
   function receiptBtn() { return button('영수증으로 인증하기', 'vbtn', function () { $('rcpt').value = ''; $('rcpt').click(); }); }
   function retryBtn() { return button('위치 다시 확인', 'vbtn', checkGeo); }
@@ -105,7 +108,9 @@
   var tank = $('tank'), camT = 0;
   function resize() {
     var w = tank.clientWidth || innerWidth, h = tank.clientHeight || 300;
-    renderer.setSize(w, h, false); camera.aspect = w / Math.max(1, h); camera.updateProjectionMatrix();
+    renderer.setSize(w, h, false);
+    if (ar && ar.on) { arFit(); return; }
+    camera.clearViewOffset(); camera.fov = 40; camera.aspect = w / Math.max(1, h); camera.updateProjectionMatrix();
   }
   window.addEventListener('resize', resize);
   if (window.ResizeObserver) new ResizeObserver(resize).observe(tank);
@@ -240,6 +245,7 @@
   var view = { theta: 0, phi: Math.PI / 2, zoom: 1, idle: 9 }, pts = {}, pinch = null;
   function two() { var k = Object.keys(pts); return k.length === 2 ? [pts[k[0]], pts[k[1]]] : null; }
   cv.addEventListener('pointerdown', function (e) {
+    if (ar.on) askMotion();
     pts[e.pointerId] = { x: e.clientX, y: e.clientY };
     try { cv.setPointerCapture(e.pointerId); } catch (er) {}
     down = Object.keys(pts).length === 1 ? { x: e.clientX, y: e.clientY, t: performance.now() } : null;
@@ -258,7 +264,7 @@
         view.theta -= da;
       }
       pinch = { d: d, a: a };
-    } else if (Object.keys(pts).length === 1) {
+    } else if (Object.keys(pts).length === 1 && !(ar.on && ar.have)) {   // AR에서 방향 센서가 있으면 폰을 돌려서 봄
       view.theta -= dx * 0.008;
       view.phi = Math.max(0.35, Math.min(Math.PI - 0.35, view.phi - dy * 0.006));
     }
@@ -276,6 +282,69 @@
   // 가만히 있어도 가끔 물고기가 한마디씩 함
   setInterval(function () { if (fishes.length && !document.hidden) say(fishes[Math.floor(Math.random() * fishes.length)]); }, 3600);
 
+  /* ══ AR: 후아나 안에서는 어항 칸이 카메라 화면이 되고, 물고기 무리가 폰 앞 공간에 떠 있음 ══
+     폰 방향 센서로 보는 방향을 바꾸고, 센서가 없으면 손가락으로 끌어서 둘러봄. 두 손가락은 거리(확대) */
+  var ar = { on: false, ok: false, have: false, first: true, asked: false, q: new THREE.Quaternion(), dir: new THREE.Vector3(0, 0, -1) };
+  var video = $('cam'), arBtn = $('bAR'), arCenter = $('bARc');
+  var ZEE = new THREE.Vector3(0, 0, 1), Q0 = new THREE.Quaternion(), Q1 = new THREE.Quaternion(-Math.sqrt(0.5), 0, 0, Math.sqrt(0.5)), eul = new THREE.Euler();
+  function rad(d) { return d * Math.PI / 180; }
+  function onOri(e) {
+    if (e.alpha == null) return;
+    var sa = screen.orientation && typeof screen.orientation.angle === 'number' ? screen.orientation.angle : (window.orientation || 0);
+    eul.set(rad(e.beta || 0), rad(e.alpha || 0), rad(-(e.gamma || 0)), 'YXZ');
+    ar.q.setFromEuler(eul).multiply(Q1).multiply(Q0.setFromAxisAngle(ZEE, -rad(sa)));
+    ar.have = true;
+    if (ar.first) { ar.first = false; arRecenter(); }
+  }
+  // 아이폰은 누르는 순간에만 방향 센서를 물어볼 수 있음
+  function askMotion() {
+    if (ar.asked) return; ar.asked = true;
+    var D = window.DeviceOrientationEvent;
+    var ask = D && typeof D.requestPermission === 'function' ? D.requestPermission() : Promise.resolve('granted');
+    ask.then(function (r) { if (r === 'granted') window.addEventListener('deviceorientation', onOri, true); }, function () {});
+  }
+  // 물고기 무리를 지금 보는 방향 앞에 놓음
+  function arRecenter() {
+    var f = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+    f.y = 0; if (f.lengthSq() < 1e-4) f.set(0, 0, -1);
+    ar.dir.copy(f.normalize());
+  }
+  // 카메라 화면을 칸에 꽉 채워 보일 때와 같은 범위로 3D 화면을 맞춤
+  function arFit() {
+    var sw = tank.clientWidth || 1, sh = tank.clientHeight || 1, vw = video.videoWidth || 720, vh = video.videoHeight || 1280;
+    var fFull = (Math.min(vw, vh) / 2) / Math.tan(rad(62) / 2), k = Math.max(sw / vw, sh / vh);
+    camera.fov = 2 * Math.atan(vh / (2 * fFull)) * 180 / Math.PI; camera.aspect = vw / vh;
+    camera.setViewOffset(vw, vh, (vw - sw / k) / 2, (vh - sh / k) / 2, sw / k, sh / k);
+    camera.updateProjectionMatrix();
+  }
+  function arAllowed(on) {
+    ar.ok = on && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+    arBtn.classList.toggle('hidden', !ar.ok);
+    if (!ar.ok && ar.on) arStop();
+  }
+  function arStart() {
+    if (!ar.ok || ar.on) return;
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false })
+      .then(function (st) { video.srcObject = st; return video.play(); })
+      .then(function () {
+        ar.on = true; ar.first = true; view.zoom = 1; view.theta = 0; view.phi = Math.PI / 2;
+        tank.classList.add('ar'); arBtn.textContent = 'AR 끄기'; arCenter.classList.remove('hidden');
+        if (!(window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === 'function')) askMotion();
+        resize(); arRecenter();
+        Core.log('wall_ar', { spot: SPOT });
+      }, function () { arStop(); toast('카메라를 켜지 못해서 어항으로 보여 줘요'); });
+  }
+  function arStop() {
+    var st = video.srcObject; if (st) st.getTracks().forEach(function (t) { t.stop(); });
+    video.srcObject = null; ar.on = false; ar.have = false;
+    window.removeEventListener('deviceorientation', onOri, true); ar.asked = false;
+    tank.classList.remove('ar'); arBtn.textContent = 'AR 켜기'; arCenter.classList.add('hidden');
+    view.zoom = 1; resize();
+  }
+  arBtn.addEventListener('click', function () { if (ar.on) arStop(); else { askMotion(); arStart(); } });
+  arCenter.addEventListener('click', function () { askMotion(); arRecenter(); });
+  video.addEventListener('loadedmetadata', function () { if (ar.on) arFit(); });
+
   var clock = new THREE.Clock();
   (function frame() {
     requestAnimationFrame(frame);
@@ -287,8 +356,17 @@
     var dist = Math.max(2.3, 0.9 / (Math.tan(20 * Math.PI / 180) * camera.aspect)) * view.zoom;
     var sway = Math.min(1, Math.max(0, view.idle - 4) / 2);
     var th = view.theta + Math.sin(camT * 0.2) * 0.15 * sway, ph = view.phi - Math.sin(camT * 0.13) * 0.035 * sway;
-    camera.position.set(dist * Math.sin(ph) * Math.sin(th), dist * Math.cos(ph), dist * Math.sin(ph) * Math.cos(th));
-    camera.lookAt(0, 0, 0);
+    if (ar.on) {
+      // AR: 카메라는 제자리, 보는 방향은 방향 센서(없으면 손가락), 무리는 앞쪽 2만큼 떨어진 곳
+      camera.position.set(0, 0, 0);
+      if (ar.have) camera.quaternion.copy(ar.q);
+      else camera.rotation.set(view.phi - Math.PI / 2, view.theta, 0, 'YXZ');
+      world.position.copy(ar.dir).multiplyScalar(2 * view.zoom).setY(-0.2);
+    } else {
+      world.position.set(0, 0, 0);
+      camera.position.set(dist * Math.sin(ph) * Math.sin(th), dist * Math.cos(ph), dist * Math.sin(ph) * Math.cos(th));
+      camera.lookAt(0, 0, 0);
+    }
     renderer.render(scene, camera);
     if (talk) {
       talk.update();
