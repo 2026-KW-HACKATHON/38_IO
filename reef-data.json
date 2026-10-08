@@ -271,10 +271,7 @@
       "size": 1.3,
       "forward": "-x",
       "speed": 0.6,
-      "says": [
-       "조용하니 딱 좋아",
-       "혼자가 편해"
-      ]
+      "says": []
      },
      {
       "id": "anchovy",
@@ -285,10 +282,7 @@
       "size": 0.9,
       "forward": "-z",
       "speed": 1.2,
-      "says": [
-       "많을수록 신나!",
-       "다 같이 가자"
-      ]
+      "says": []
      },
      {
       "id": "greenland-shark",
@@ -299,10 +293,7 @@
       "size": 4.0,
       "forward": "-z",
       "speed": 0.3,
-      "says": [
-       "시원하고 좋네",
-       "추위? 그게 뭔데"
-      ]
+      "says": []
      },
      {
       "id": "bobtail-squid",
@@ -313,10 +304,7 @@
       "size": 1.3,
       "forward": "-z",
       "speed": 0.5,
-      "says": [
-       "먹물 좀 묻으면 어때",
-       "깔끔은 사치야"
-      ]
+      "says": []
      },
      {
       "id": "pufferfish",
@@ -327,10 +315,7 @@
       "size": 1.3,
       "forward": "+z",
       "speed": 0.5,
-      "says": [
-       "냄새쯤이야",
-       "나도 좀 뿜거든"
-      ]
+      "says": []
      },
      {
       "id": "jellyfish",
@@ -342,10 +327,7 @@
       "forward": "+x",
       "upright": true,
       "speed": 0.3,
-      "says": [
-       "어두우면 내가 빛나지",
-       "불 꺼도 괜찮아"
-      ]
+      "says": []
      },
      {
       "id": "medaka",
@@ -356,10 +338,7 @@
       "size": 0.9,
       "forward": "+z",
       "speed": 0.9,
-      "says": [
-       "모기 많으면 배부르지",
-       "장구벌레 맛집 어디?"
-      ]
+      "says": []
      }
     ]
    }
