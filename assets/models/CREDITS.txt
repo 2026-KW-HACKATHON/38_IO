@@ -5,3 +5,21 @@ clownfish.glb, moorish-idol.glb, yellow-tang.glb, powder-blue-tang.glb
   Changes: split into one file per species, textures resized to 512px and
   converted to WebP, materials converted to metal/roughness, swimming
   animation keyframes resampled (glTF-Transform).
+
+blue-tang.glb
+  "Tropical Fish" (https://skfb.ly/ooxXK) by House Doctor
+  (https://sketchfab.com/chin4grci4), licensed under
+  Creative Commons Attribution 4.0 (http://creativecommons.org/licenses/by/4.0/).
+  Changes: texture converted to WebP.
+
+seahorse.glb
+  "Seahorse Sf" (https://skfb.ly/oRKNs) by kenchoo
+  (https://sketchfab.com/kenchoo), licensed under
+  Creative Commons Attribution 4.0 (http://creativecommons.org/licenses/by/4.0/).
+  Changes: textures resized to 512px and converted to WebP, unused UV sets
+  removed, vertex data quantized, animation resampled.
+
+discus.glb
+  "Fish" (https://sketchfab.com/3d-models/fish-74e57a9de7a24975b02d236ea3be614f)
+  by assetfactory (https://sketchfab.com/assetfactory), Sketchfab Standard license
+  (https://sketchfab.com/licenses). Changes: texture resized to 512px and converted to WebP.

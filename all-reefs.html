@@ -2190,10 +2190,14 @@ function cfgModel(box, r){
     d.innerHTML = `<div class="g4"><label class="f"><span>이름</span><input type="text" data-fk="name"></label>
       <label class="f"><span>id</span><input type="text" data-fk="id"></label>
       <label class="f"><span>모델 파일 (GLB)</span><input type="text" data-fk="model"></label>
-      <button class="btn small danger" type="button" style="align-self:end">빼기</button></div>`;
+      <button class="btn small danger" type="button" style="align-self:end">빼기</button></div>
+      <div class="g4" style="margin-top:6px"><label class="f"><span>대표 색 (그림판 색 상자)</span><input type="color" data-fk="color"></label>
+      <label class="f"><span>헤엄 방식</span><select data-fk="swim"><option value="school">떼 (파일 안 움직임)</option><option value="path">혼자 (고리 길)</option></select></label>
+      <label class="f"><span>${fi.swim === 'path' ? '길이 (떼 물고기 한 마리 대비)' : '보일 마리 수'}</span><input type="number" step="${fi.swim === 'path' ? 0.01 : 1}" min="0" data-fk="${fi.swim === 'path' ? 'size' : 'count'}"></label></div>`;
     $$('[data-fk]', d).forEach(el => {
-      el.value = fi[el.dataset.fk] || '';
-      el.addEventListener('change', () => edit(() => { fi[el.dataset.fk] = el.value.trim(); }, true));
+      const k = el.dataset.fk;
+      el.value = fi[k] != null ? fi[k] : (k === 'color' ? '#888888' : k === 'swim' ? 'school' : k === 'count' ? 1 : '');
+      el.addEventListener('change', () => { edit(() => { fi[k] = el.type === 'number' ? numv(el.value, 1) : el.value.trim(); }, true); if (k === 'swim') renderReefs(); });
     });
     $('button', d).addEventListener('click', () => { edit(() => c.fish.splice(i, 1), true); renderReefs(); });
     fb.appendChild(d);

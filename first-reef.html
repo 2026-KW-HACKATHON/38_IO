@@ -7,33 +7,84 @@
 <style>
   html,body{height:100%;margin:0;overflow:hidden;background:#1EB6F0;color:#F2EEF9;
     font-family:system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-user-select:none;user-select:none}
-  #stage{position:fixed;inset:0;background:#1EB6F0}
+  #stage{position:fixed;inset:0;background:#1EB6F0;overflow:hidden}
   /* 뒤에 깔리는 물속 움짤 (반투명) */
   .bgfx{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.5;pointer-events:none}
   canvas{position:relative;z-index:1;display:block;width:100%;height:100%;touch-action:none}
   #top{position:absolute;left:12px;top:calc(10px + env(safe-area-inset-top,0px));z-index:5;display:flex;gap:8px;align-items:center}
   #top a,#top span{font-size:13px;color:#fff;background:rgba(16,12,30,.45);border-radius:999px;padding:6px 12px;text-decoration:none}
   #msg{position:absolute;inset:0;z-index:4;display:flex;align-items:center;justify-content:center;font-size:14px;pointer-events:none}
-  /* 물고기 이름 목록 (누르면 그 물고기를 숨기거나 보이기) */
-  #legend{position:absolute;left:10px;bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:5;display:flex;flex-wrap:wrap;gap:6px;max-width:calc(100% - 20px)}
-  #legend button{appearance:none;border:0;font:inherit;font-size:12px;color:#fff;background:rgba(16,12,30,.5);border-radius:999px;padding:5px 11px;cursor:pointer}
-  #legend button[aria-pressed="false"]{opacity:.45;text-decoration:line-through}
   /* 누른 물고기 이름표 */
   .tag{position:absolute;z-index:6;transform:translate(-50%,-130%);white-space:nowrap;pointer-events:none;
     font-size:12px;font-weight:600;color:#14324a;background:#fffdf6;border-radius:8px;padding:4px 9px;box-shadow:0 2px 6px rgba(0,0,0,.25)}
-  /* 나의 어항 창 안 (?embed): 위 안내는 숨기고 이름 목록은 작게 */
+  /* 나의 어항 창 안 (?embed): 위 안내 숨김 */
   body.embed #top{display:none}
-  body.embed #legend{left:6px;bottom:6px;gap:4px}
-  body.embed #legend button{font-size:10px;padding:3px 8px}
+  .paint-only{display:none}
+
+  /* ══ 그림판 모양 (?paint): 메뉴 줄 · 도구 상자 · 캔버스 · 색 상자 · 상태 줄 ══ */
+  body.paint{display:flex;flex-direction:column;background:#ece9d8;color:#000;
+    font-family:Tahoma,"굴림",Gulim,"Nanum Gothic",sans-serif;font-size:12px}
+  body.paint .paint-only{display:flex}
+  body.paint #top{display:none}
+  .pmenu{flex:none;height:20px;align-items:stretch;padding:0 2px;border-bottom:1px solid #fff}
+  .pmenu span{padding:2px 7px 0;cursor:default}
+  .pmenu span:hover{background:#316ac5;color:#fff}
+  .pwork{flex:1;min-height:0;align-items:stretch;border-top:1px solid #aca899}
+  /* 도구 상자 (2줄 × 8칸) */
+  .ptools{flex:none;width:56px;flex-direction:column;align-items:center;padding:4px 0;gap:6px;border-right:1px solid #fff}
+  .pgrid{display:grid;grid-template-columns:repeat(2,25px);gap:0}
+  .pgrid button{width:25px;height:25px;padding:0;border:1px solid transparent;background:transparent;display:flex;align-items:center;justify-content:center;cursor:default}
+  .pgrid button:hover{border-color:#fff #808080 #808080 #fff}
+  .pgrid button[aria-pressed="true"]{border-color:#808080 #fff #fff #808080;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='2' height='2'%3E%3Crect width='1' height='1' fill='%23ece9d8'/%3E%3Crect x='1' y='1' width='1' height='1' fill='%23ece9d8'/%3E%3C/svg%3E")}
+  .pgrid svg{width:16px;height:16px}
+  .popt{width:42px;height:62px;border:1px solid;border-color:#808080 #fff #fff #808080}
+  /* 캔버스 자리: 회색 바탕 위에 하얀 테두리 그림, 오른쪽·아래 스크롤 막대 */
+  .parea{flex:1;min-width:0;display:grid;grid-template-columns:1fr 17px;grid-template-rows:1fr 17px;background:#808080;
+    border:1px solid;border-color:#808080 #fff #fff #808080}
+  .pcanvas{position:relative;margin:4px 0 0 4px;overflow:hidden;box-shadow:1px 1px 0 #404040}
+  body.paint #stage{position:absolute;inset:0}
+  .pvs,.phs{background:#f4f3ee;display:flex}
+  .pvs{flex-direction:column;border-left:1px solid #fff}
+  .phs{border-top:1px solid #fff}
+  .sb{flex:none;width:17px;height:17px;background:#c1d2ee;border:1px solid #fff;box-sizing:border-box;border-radius:2px;display:flex;align-items:center;justify-content:center}
+  .sb i{width:0;height:0;border:4px solid transparent}
+  .up i{border-bottom-color:#4d6185;margin-top:-4px}.dn i{border-top-color:#4d6185;margin-top:4px}
+  .lt i{border-right-color:#4d6185;margin-left:-4px}.rt i{border-left-color:#4d6185;margin-left:4px}
+  .thumb{flex:1;margin:1px;background:#c8d6fb;border:1px solid #fff;border-radius:2px;box-shadow:inset 0 0 0 1px #b0c4f3}
+  .pvs .thumb{flex:none;height:60%}.phs .thumb{flex:none;width:70%}
+  .pcorner{background:#ece9d8}
+  /* 색 상자: 왼쪽 지금 색, 오른쪽 물고기마다 대표 색 */
+  .pcolors{flex:none;height:38px;align-items:center;gap:6px;padding:2px 4px;border-top:1px solid #fff}
+  .pcur{position:relative;width:30px;height:30px;border:1px solid;border-color:#808080 #fff #fff #808080;background:#ece9d8}
+  .pcur b{position:absolute;width:12px;height:12px;border:1px solid;border-color:#808080 #fff #fff #808080}
+  .pcur .fg{left:4px;top:4px;z-index:1;background:#000}.pcur .bg{left:12px;top:12px;background:#fff}
+  .pswatch{display:grid;grid-template-rows:repeat(2,15px);grid-auto-flow:column;grid-auto-columns:15px;gap:1px}
+  .pswatch button{width:15px;height:15px;padding:0;border:1px solid;border-color:#808080 #fff #fff #808080;cursor:default}
+  .pswatch button:hover,.pswatch button.on{outline:1px dotted #000;outline-offset:1px}
+  .pstatus{flex:none;height:20px;align-items:center;gap:2px;padding:0 2px;border-top:1px solid #aca899}
+  .pstatus span{height:16px;line-height:16px;padding:0 4px;border:1px solid;border-color:#aca899 #fff #fff #aca899;overflow:hidden;white-space:nowrap}
+  .pstatus .msg{flex:1}.pstatus .xy{width:70px}
 </style>
 </head>
 <body data-reef="first">
+<!-- 그림판 모양 (?paint): 메뉴 줄 -->
+<div class="pmenu paint-only"><span>파일(F)</span><span>편집(E)</span><span>보기(V)</span><span>이미지(I)</span><span>색(C)</span><span>도움말(H)</span></div>
+<div class="pwork paint-only">
+  <div class="ptools"><div class="pgrid" id="ptools"></div><div class="popt"></div></div>
+  <div class="parea">
+    <div class="pcanvas" id="pcanvas"></div>
+    <div class="pvs"><span class="sb up"><i></i></span><span class="thumb"></span><span style="flex:1"></span><span class="sb dn"><i></i></span></div>
+    <div class="phs"><span class="sb lt"><i></i></span><span class="thumb"></span><span style="flex:1"></span><span class="sb rt"><i></i></span></div>
+    <div class="pcorner"></div>
+  </div>
+</div>
 <div id="stage">
   <img class="bgfx" src="assets/reef/water-tank.webp" alt="">
   <div id="top"><a href="index.html">← 처음으로</a><span>끌어서 돌려보기 · 물고기를 누르면 이름</span></div>
   <div id="msg">물고기 떼를 불러오는 중…</div>
-  <div id="legend"></div>
 </div>
+<div class="pcolors paint-only"><div class="pcur"><b class="fg" id="pfg"></b><b class="bg"></b></div><div class="pswatch" id="pswatch"></div></div>
+<div class="pstatus paint-only"><span class="msg" id="pmsg">도움말을 보려면 [도움말] 메뉴에서 [도움말 항목]을 클릭하십시오.</span><span class="xy" id="pxy"></span></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="reef-kit.js"></script>
@@ -42,10 +93,14 @@
 (function(){
 "use strict";
 /* reef-data.json의 모델 reef(First Reef)를 띄우고 헤엄 동작을 돌림 */
-if (/[?&]embed\b/.test(location.search)) document.body.classList.add('embed');
+var Q = location.search;
+var PAINT = /[?&]paint\b/.test(Q);
+if (/[?&]embed\b/.test(Q) || PAINT) document.body.classList.add('embed');
+if (PAINT) document.body.classList.add('paint');
 var REEF_ID = document.body.getAttribute('data-reef');
 var kit = ReefKit(THREE);
 var stage = document.getElementById('stage'), msg = document.getElementById('msg');
+if (PAINT) document.getElementById('pcanvas').appendChild(stage);   // 그림판 캔버스 자리에 넣음
 var renderer = new THREE.WebGLRenderer({antialias:true, alpha:true});
 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
 renderer.outputEncoding = THREE.sRGBEncoding;
@@ -55,22 +110,8 @@ var camera = new THREE.PerspectiveCamera(40, 1, 0.01, 1000);
 scene.add(new THREE.HemisphereLight(0xdff6ff, 0x1a3a5a, 1.1));
 var sun = new THREE.DirectionalLight(0xffffff, 1.2); sun.position.set(3, 6, 4); scene.add(sun);
 
-var fish = null, cfg = {}, listKey = '', size = 1, hidden = {};
-var cam = {theta:0.6, phi:1.25, radius:3};
-
-// 이름 목록: 누르면 그 물고기를 숨기거나 보이기
-function drawLegend(){
-  var box = document.getElementById('legend'); box.innerHTML = '';
-  (cfg.fish || []).forEach(function(f){
-    var b = document.createElement('button'); b.type = 'button'; b.textContent = f.name || f.id;
-    b.setAttribute('aria-pressed', !hidden[f.id]);
-    b.addEventListener('click', function(){
-      hidden[f.id] = !hidden[f.id]; b.setAttribute('aria-pressed', !hidden[f.id]);
-      if (fish) fish.show(f.id, !hidden[f.id]);
-    });
-    box.appendChild(b);
-  });
-}
+var fish = null, cfg = {}, listKey = '', size = 1;
+var cam = {theta:0.6, phi:1.25, radius:3}, zoomK = 1;
 
 // 설정 → 물고기들 (목록이 바뀔 때만 새로 불러옴)
 function build(d){
@@ -79,24 +120,23 @@ function build(d){
   cfg = r.config || {};
   document.title = cfg.title || r.name || 'Reef';
   if (fish) fish.setSpeed(cfg.speed);
-  cam.radius = size * (+cfg.zoom || 0.65);
-  var key = JSON.stringify((cfg.fish || []).map(function(f){ return [f.id, f.model]; }));
+  cam.radius = size * (+cfg.zoom || 0.65) * zoomK;
+  drawSwatches();
+  var key = JSON.stringify((cfg.fish || []).map(function(f){ return [f.id, f.model, f.swim, f.count, f.size, f.forward, f.upright]; }));
   if (key === listKey){
-    // 이름만 바뀌었으면 목록과 이름표 글자만 바꿈
+    // 이름만 바뀌었으면 이름표 글자만 바꿈
     if (fish) fish.fish.forEach(function(p){ var f = (cfg.fish || []).filter(function(x){ return x.id === p.id; })[0]; if (f) p.name = f.name || f.id; });
-    drawLegend(); return;
+    return;
   }
   listKey = key;
   if (fish){ scene.remove(fish.holder); fish = null; }
-  drawLegend();
   msg.style.display = ''; msg.textContent = '물고기 떼를 불러오는 중…';
   var mine = key;
   ReefModel.load(THREE, cfg.fish).then(function(m){
     if (mine !== listKey) return;
     fish = m; size = m.size; m.setSpeed(cfg.speed);
-    m.fish.forEach(function(p){ m.show(p.id, !hidden[p.id]); });
     scene.add(m.holder);
-    cam.radius = size * (+cfg.zoom || 0.65);
+    cam.radius = size * (+cfg.zoom || 0.65) * zoomK;
     camera.near = size / 500; camera.far = size * 20; camera.updateProjectionMatrix();
     msg.style.display = 'none';
   }).catch(function(){ msg.textContent = '물고기 모델을 불러오지 못했어요'; });
@@ -107,8 +147,7 @@ var tags = [];
 function showTag(hit){
   var el = document.createElement('div'); el.className = 'tag'; el.textContent = hit.fish.name;
   stage.appendChild(el);
-  var t = { el: el, bone: hit.bone, left: 2.2 };
-  tags.push(t);
+  tags.push({ el: el, bone: hit.bone, left: 2.2 });
 }
 var tv = new THREE.Vector3();
 function updateTags(dt){
@@ -123,6 +162,64 @@ function updateTags(dt){
   });
 }
 
+/* ── 그림판 부분: 도구 상자, 물고기 대표 색 상자, 상태 줄 ── */
+var pmsg = document.getElementById('pmsg'), HELP = pmsg.textContent;
+var TOOLS = [
+  ['자유형 선택', '<path d="M3 4l4-2 6 3-2 4 3 4-6 1-5-3z" fill="none" stroke="#000" stroke-dasharray="2 1"/>'],
+  ['선택', '<rect x="2.5" y="3.5" width="11" height="9" fill="none" stroke="#000" stroke-dasharray="2 1"/>'],
+  ['지우개', '<path d="M3 11l6-6 4 4-4 4H5z" fill="#f6c" stroke="#000"/><path d="M5 9l4 4" stroke="#000"/>'],
+  ['채우기', '<path d="M4 7l5-5 5 5-5 5z" fill="#ddd" stroke="#000"/><path d="M12 8c1 2 2 3 2 4a1.3 1.3 0 0 1-2.6 0c0-1 .6-2 .6-4z" fill="#36c"/>'],
+  ['색 고르기', '<path d="M3 13l6-6M8 4l4 4M10 2l4 4-2 2-4-4z" stroke="#000" fill="#ccc"/>'],
+  ['확대/축소', '<circle cx="6.5" cy="6.5" r="4" fill="#cdf" stroke="#000"/><path d="M9.5 9.5l4.5 4.5" stroke="#000" stroke-width="2"/>'],
+  ['연필', '<path d="M3 13l1-3 7-7 2 2-7 7z" fill="#fc3" stroke="#000"/>'],
+  ['브러시', '<path d="M9 2l5 5-4 3-4-4z" fill="#c96" stroke="#000"/><path d="M6 9c-3 0-4 2-4 5 3 0 5-1 5-4" fill="#33f" stroke="#000"/>'],
+  ['에어브러시', '<path d="M6 6h5v8H6z" fill="#ddd" stroke="#000"/><path d="M8 6V3h1v3" stroke="#000"/><circle cx="3" cy="3" r=".7"/><circle cx="2" cy="6" r=".7"/><circle cx="4" cy="5" r=".7"/>'],
+  ['텍스트', '<text x="3" y="13" font-size="13" font-weight="700" font-family="serif">A</text>'],
+  ['직선', '<path d="M2 13L14 3" stroke="#000" stroke-width="1.5"/>'],
+  ['곡선', '<path d="M2 13c3-12 7 4 12-10" fill="none" stroke="#000" stroke-width="1.5"/>'],
+  ['직사각형', '<rect x="2.5" y="4.5" width="11" height="7" fill="none" stroke="#000"/>'],
+  ['다각형', '<path d="M3 13l2-9 8 2-3 3 3 4z" fill="none" stroke="#000"/>'],
+  ['타원', '<ellipse cx="8" cy="8" rx="6" ry="4" fill="none" stroke="#000"/>'],
+  ['둥근 직사각형', '<rect x="2.5" y="4.5" width="11" height="7" rx="3" fill="none" stroke="#000"/>']
+];
+if (PAINT){
+  var tb = document.getElementById('ptools');
+  TOOLS.forEach(function(t, i){
+    var b = document.createElement('button'); b.type = 'button'; b.title = t[0];
+    b.innerHTML = '<svg viewBox="0 0 16 16">' + t[1] + '</svg>';
+    b.setAttribute('aria-pressed', i === 6);
+    b.addEventListener('mouseenter', function(){ pmsg.textContent = t[0]; });
+    b.addEventListener('mouseleave', function(){ pmsg.textContent = HELP; });
+    b.addEventListener('click', function(){
+      tb.querySelectorAll('button').forEach(function(x){ x.setAttribute('aria-pressed', x === b); });
+      // 확대/축소 도구는 물고기 떼를 크게·작게 봄
+      zoomK = t[0] === '확대/축소' ? (zoomK === 1 ? 0.55 : 1) : zoomK;
+      cam.radius = size * (+cfg.zoom || 0.65) * zoomK;
+    });
+    tb.appendChild(b);
+  });
+}
+// 색 상자: 물고기마다 대표 색 한 칸. 누르면 그 물고기 이름표
+function drawSwatches(){
+  if (!PAINT) return;
+  var box = document.getElementById('pswatch'); box.innerHTML = '';
+  (cfg.fish || []).forEach(function(f){
+    var b = document.createElement('button'); b.type = 'button'; b.title = f.name || f.id;
+    b.style.background = f.color || '#888';
+    b.addEventListener('mouseenter', function(){ pmsg.textContent = f.name || f.id; });
+    b.addEventListener('mouseleave', function(){ pmsg.textContent = HELP; });
+    b.addEventListener('click', function(){
+      box.querySelectorAll('button').forEach(function(x){ x.classList.toggle('on', x === b); });
+      document.getElementById('pfg').style.background = f.color || '#000';
+      if (!fish) return;
+      var w = stage.clientWidth, h = stage.clientHeight;
+      var hit = fish.nearest(camera, w / 2, h / 2, w, h, 1e6, f.id);
+      if (hit) showTag(hit);
+    });
+    box.appendChild(b);
+  });
+}
+
 // 손가락·마우스로 돌려보기, 휠·두 손가락으로 확대
 function applyCam(){
   cam.phi = Math.max(0.15, Math.min(Math.PI - 0.15, cam.phi));
@@ -134,6 +231,7 @@ function applyCam(){
 var el = renderer.domElement, pts = {}, lastPinch = 0, idle = 0;
 el.addEventListener('pointerdown', function(e){ pts[e.pointerId] = {x:e.clientX, y:e.clientY, x0:e.clientX, y0:e.clientY, t0:performance.now()}; idle = 0; try{ el.setPointerCapture(e.pointerId); }catch(er){} });
 el.addEventListener('pointermove', function(e){
+  if (PAINT){ var rr = el.getBoundingClientRect(); document.getElementById('pxy').textContent = Math.round(e.clientX - rr.left) + ',' + Math.round(e.clientY - rr.top); }
   var p = pts[e.pointerId]; if (!p) return;
   var ids = Object.keys(pts);
   if (ids.length === 1){ cam.theta -= (e.clientX - p.x) * 0.006; cam.phi -= (e.clientY - p.y) * 0.006; }
@@ -145,6 +243,7 @@ el.addEventListener('pointermove', function(e){
   }
   idle = 0;
 });
+el.addEventListener('pointerleave', function(){ if (PAINT) document.getElementById('pxy').textContent = ''; });
 function up(e){
   var p = pts[e.pointerId];
   // 거의 안 움직이고 뗐으면 물고기를 누른 것 → 이름표
@@ -163,6 +262,7 @@ function resize(){
   renderer.setSize(w, h, false); camera.aspect = w / Math.max(1, h); camera.updateProjectionMatrix();
 }
 window.addEventListener('resize', resize); resize();
+if (window.ResizeObserver) new ResizeObserver(resize).observe(stage);
 
 // 가만히 두면 천천히 돎
 var clock = new THREE.Clock();
