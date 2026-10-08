@@ -432,14 +432,33 @@ language sql stable security definer set search_path = public as $$
   where p.id = target and exists (select 1 from public.friends f where f.user_id = auth.uid() and f.friend_id = target and f.state = 'friend')
 $$;
 
+-- 시작 아이템을 이미 받았는지 기록 (선물로 보내 없어져도 다시 주지 않음)
+create table if not exists public.starter_given (
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  ref text not null,
+  primary key (user_id, ref)
+);
+alter table public.starter_given enable row level security;
+
 -- 시작 재고: 재고가 한 번도 없던 사람에게 물고기를 한 마리씩 (First Reef 물고기)
+-- 아이템은 모든 사람에게 하나씩 한 번만 (새 아이템을 목록에 넣으면 이미 가입한 사람도 받음)
 create or replace function public.give_starter(uid uuid) returns void
-language sql security definer set search_path = public as $$
+language plpgsql security definer set search_path = public as $$
+begin
   insert into public.stock (user_id, kind, ref, qty)
   select uid, 'fish', x, 1 from unnest(array['clownfish', 'moorish-idol', 'yellow-tang', 'powder-blue-tang',
                                               'discus', 'blue-tang', 'seahorse', 'shark']) x
   where not exists (select 1 from public.stock s where s.user_id = uid);
-$$;
+  with fresh as (
+    insert into public.starter_given (user_id, ref)
+    select uid, x from unnest(array['tennis-ball', 'lightbulb', 'cake']) x
+    on conflict do nothing
+    returning ref
+  )
+  insert into public.stock (user_id, kind, ref, qty)
+  select uid, 'item', ref, 1 from fresh
+  on conflict (user_id, kind, ref) do nothing;
+end $$;
 revoke all on function public.give_starter(uuid) from public, anon, authenticated;
 
 -- 내 재고
