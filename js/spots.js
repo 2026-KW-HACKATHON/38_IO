@@ -11,7 +11,7 @@ window.SPOTS = [
 ];
 
 /* 범위 둘레에 더 줄 여유 (미터). 0이면 범위 안일 때만 통과 */
-window.SPOT_MARGIN_M = 15;
+window.SPOT_MARGIN_M = 50;
 
 /* 지금 위치가 장소 범위에서 몇 미터 떨어졌는지 (안이면 0) */
 window.spotDistance = function (spot, lat, lng) {
