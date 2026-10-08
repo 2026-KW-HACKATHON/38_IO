@@ -28,6 +28,9 @@
   #fpick button i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;vertical-align:0}
   #fprev,#fnext{display:none}
   #fpick.solo #fprev,#fpick.solo #fnext{display:inline-block}
+  body.paint #fpick{display:none!important}
+  .pdrop button .ck{position:absolute;left:5px}
+  .pdrop button{position:relative}
   .paint-only{display:none}
 
   /* ══ 그림판 모양 (?paint): 윈도우 XP 그림판 그대로 (메뉴 줄 · 도구 상자 · 캔버스 · 색 상자 · 상태 줄) ══ */
@@ -135,6 +138,8 @@
 </div>
 <div class="pcolors paint-only"><div class="pcur"><b class="fg" id="pfg"></b><b class="bg"></b></div><div class="pswatch" id="pswatch"></div></div>
 <!-- 이미지 메뉴, 물고기 특성 창 -->
+<!-- 보기 메뉴: 물고기 넣고 빼기 · 하나씩 보기 (그림판 모양일 때) -->
+<div class="pdrop" id="pview"></div>
 <div class="pdrop" id="pdrop">
   <button type="button" disabled><span>대칭 이동/회전(<u>F</u>)...</span><span>Ctrl+R</span></button>
   <button type="button" disabled><span>크기 조정/기울이기(<u>S</u>)...</span><span>Ctrl+W</span></button>
@@ -454,18 +459,24 @@ function drawSwatches(){
 var msgT = 0;
 function setMsg(t){ pmsg.textContent = t; clearTimeout(msgT); msgT = setTimeout(function(){ pmsg.textContent = HELP; }, 2500); }
 
-// 이미지 메뉴 → 물고기 특성
-var drop = document.getElementById('pdrop'), imgMenu = document.querySelectorAll('.pmenu span')[3];
-function closeDrop(){ drop.classList.remove('open'); imgMenu.classList.remove('on'); }
+// 메뉴 줄: 보기 → 물고기 넣고 빼기 · 하나씩 보기, 이미지 → 물고기 특성
+var drop = document.getElementById('pdrop'), menus = document.querySelectorAll('.pmenu span');
+var imgMenu = menus[3], viewMenu = menus[2], viewDrop = document.getElementById('pview');
+var pairs = [[imgMenu, drop], [viewMenu, viewDrop]];
+function closeDrop(){ pairs.forEach(function(q){ q[1].classList.remove('open'); q[0].classList.remove('on'); }); }
 if (PAINT){
-  imgMenu.addEventListener('click', function(e){
-    e.stopPropagation();
-    if (drop.classList.contains('open')) return closeDrop();
-    var r = imgMenu.getBoundingClientRect();
-    drop.style.left = r.left + 'px'; drop.style.top = r.bottom + 'px';
-    drop.classList.add('open'); imgMenu.classList.add('on');
+  pairs.forEach(function(q){
+    q[0].addEventListener('click', function(e){
+      e.stopPropagation();
+      var was = q[1].classList.contains('open'); closeDrop();
+      if (was) return;
+      if (q[1] === viewDrop) drawView();
+      var r = q[0].getBoundingClientRect();
+      q[1].style.left = r.left + 'px'; q[1].style.top = r.bottom + 'px';
+      q[1].classList.add('open'); q[0].classList.add('on');
+    });
   });
-  document.addEventListener('pointerdown', function(e){ if (!drop.contains(e.target) && e.target !== imgMenu) closeDrop(); });
+  document.addEventListener('pointerdown', function(e){ if (!drop.contains(e.target) && !viewDrop.contains(e.target) && e.target !== imgMenu && e.target !== viewMenu) closeDrop(); });
   document.getElementById('pAttr').disabled = !!FRIEND;   // 친구 어항은 구경만
   document.getElementById('pAttr').addEventListener('click', function(){ closeDrop(); openAttr(); });
   document.getElementById('pAttr').addEventListener('mouseenter', function(){ pmsg.textContent = '물고기가 할 말과 이펙트, 아이템을 정합니다.'; });
@@ -626,6 +637,34 @@ document.getElementById('fsolo').addEventListener('click', function(){ solo = so
 function step(d){ var n = ids().length; if (!n) return; solo = (solo + d + n) % n; drawPick(); applyVis(); }
 document.getElementById('fprev').addEventListener('click', function(){ step(-1); });
 document.getElementById('fnext').addEventListener('click', function(){ step(1); });
+
+// 보기 메뉴 내용: 물고기마다 체크 (넣기 · 빼기), 모두 보기, 하나씩 보기, 이전 · 다음
+function drawView(){
+  viewDrop.innerHTML = '';
+  function item(label, key, on, fn, off, help){
+    var b = document.createElement('button'); b.type = 'button'; b.disabled = !!off;
+    var ck = document.createElement('span'); ck.className = 'ck'; ck.textContent = on ? '✓' : ''; b.appendChild(ck);
+    var t = document.createElement('span'); t.textContent = label; b.appendChild(t);
+    var k = document.createElement('span'); k.textContent = key || ''; b.appendChild(k);
+    b.addEventListener('click', function(){ closeDrop(); fn(); });
+    if (help) b.addEventListener('mouseenter', function(){ pmsg.textContent = help; });
+    viewDrop.appendChild(b);
+  }
+  (cfg.fish || []).forEach(function(f, i){
+    item(f.name || f.id, '', solo >= 0 ? solo === i : !hidden[f.id], function(){ chips.children[i] && chips.children[i].click(); }, false,
+      solo >= 0 ? '이 물고기만 봅니다.' : '어항에 넣거나 뺍니다.');
+  });
+  viewDrop.appendChild(document.createElement('hr'));
+  item('모두 보기', '', false, function(){ document.getElementById('fall').click(); }, false, '모든 물고기를 다시 넣습니다.');
+  item('하나씩 보기', 'Ctrl+K', solo >= 0, function(){ document.getElementById('fsolo').click(); }, false, '한 마리씩 넘겨 봅니다.');
+  item('이전 물고기', '←', false, function(){ step(-1); }, solo < 0);
+  item('다음 물고기', '→', false, function(){ step(1); }, solo < 0);
+}
+if (PAINT) document.addEventListener('keydown', function(e){
+  if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K')){ e.preventDefault(); document.getElementById('fsolo').click(); }
+  if (solo >= 0 && e.key === 'ArrowLeft') step(-1);
+  if (solo >= 0 && e.key === 'ArrowRight') step(1);
+});
 
 // 가만히 두면 천천히 돎
 var clock = new THREE.Clock();
