@@ -65,6 +65,13 @@ button,input{font:inherit;color:inherit}
 /* ── 어항 ── */
 #tank{flex:1;min-height:170px;position:relative;overflow:hidden;background:#1EB6F0}
 .bgfx{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.5;pointer-events:none}
+/* AR: 카메라 화면이 물 배경 대신 깔림 */
+#cam{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none}
+#tank.ar #cam{display:block}
+#tank.ar .bgfx{display:none}
+#tank.ar{background:#000}
+.arbar{position:absolute;right:6px;top:6px;z-index:5;display:flex;gap:4px}
+.arbar .vbtn{min-width:0}
 #gl{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
 #empty{position:absolute;left:0;right:0;top:50%;margin:0;text-align:center;color:#fff;font-size:13px;text-shadow:0 1px 4px rgba(0,40,80,.7);pointer-events:none}
 .reef-layer{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:4}
@@ -86,6 +93,10 @@ button,input{font:inherit;color:inherit}
 #gstat .msg.ok{display:flex;align-items:center;gap:6px;margin:0 0 6px}
 #gstat .msg.ok::before{content:"";flex:none;width:16px;height:16px;border-radius:50%;
   background:radial-gradient(circle at 35% 30%,#a6ef8e,#3ea623 60%,#2b7d16);box-shadow:inset 0 0 0 1px rgba(0,60,0,.35)}
+/* 매장 밖 글: 파란 동그라미 i 표시 */
+#gstat .msg.ok.info::before{content:"i";color:#fff;font:700 11px/16px Georgia,serif;text-align:center;
+  background:radial-gradient(circle at 35% 30%,#9fd1ff,#2a74c9 60%,#1b4f94);box-shadow:inset 0 0 0 1px rgba(0,30,80,.35)}
+#gstat .msg small{color:var(--dim)}
 #gstat .row{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end;margin:0 0 12px}
 .bar{height:15px;border:1px solid #bcbcbc;border-radius:3px;background:linear-gradient(180deg,#f3f3f3,#e5e5e5);padding:1px;margin:6px 0;overflow:hidden}
 .bar i{display:block;height:100%;width:0;transition:width .2s;border-radius:2px;

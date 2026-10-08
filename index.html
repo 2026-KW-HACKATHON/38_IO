@@ -30,7 +30,10 @@
       <!-- 어항: 남긴 리뷰마다 물고기 한 마리, 2분 안에 같이 남기면 한 무리 -->
       <main id="tank">
         <img class="bgfx" src="assets/reef/water-tank.webp" alt="">
+        <video id="cam" playsinline muted autoplay></video>
         <canvas id="gl"></canvas>
+        <!-- AR 단추: 후아나 안(또는 관리자 모드)에서만 보임 -->
+        <div class="arbar"><button id="bARc" class="vbtn hidden" type="button">가운데로</button><button id="bAR" class="vbtn hidden" type="button">AR 켜기</button></div>
         <p id="empty" class="hidden">아직 물고기가 없어요. 첫 리뷰를 남겨 보세요!</p>
       </main>
 
