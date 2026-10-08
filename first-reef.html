@@ -307,11 +307,8 @@ function wearBody(w, p, sz, vol){
   var bd = ReefModel.body(THREE, p);
   if (!bd) return false;
   var back = fishOf(p.id).carry === 'back', up = !!p.upright && !back, X, Y, Z, at;
-  // 모양은 그대로 (가로 · 세로 · 높이 같은 배율): 몸 높이를 거의 덮을 만큼 키우되, 머리와 꼬리가 나오게 물고기 길이의 80%까지만
-  var k = Math.cbrt(vol), u;
-  if (back) u = bd.len * 0.36 * k / sz.x;
-  else if (up) u = bd.len * 0.3 * k / sz.y;
-  else u = Math.min(Math.max(bd.len * 0.6 / sz.x, bd.ha * 0.85 / sz.y) * k, bd.len * 0.8 / sz.x);
+  // 모양은 그대로 (가로 · 세로 · 높이 같은 배율): 길이는 물고기 길이의 절반 (등에 얹으면 36%, 서서 헤엄치면 높이가 30%)
+  var k = Math.cbrt(vol), u = (back ? bd.len * 0.36 / sz.x : up ? bd.len * 0.3 / sz.y : bd.len * 0.5 / sz.x) * k;
   X = sz.x * u; Y = sz.y * u; Z = sz.z * u; at = bd.center;
   if (back) at = bd.top.clone().addScaledVector(bd.a, Y * 0.42);   // 바닥이 등에 살짝 묻힘
   var xd = up ? bd.a : bd.axis, yd = up ? bd.axis : bd.a, zd = new THREE.Vector3().crossVectors(xd, yd);
