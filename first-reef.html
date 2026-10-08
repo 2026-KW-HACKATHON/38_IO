@@ -18,6 +18,16 @@
   /* 물고기 말풍선 모양은 reef-data.json의 말풍선·글꼴 설정(reef-kit)을 따름 */
   /* 나의 어항 창 안 (?embed): 위 안내 숨김 */
   body.embed #top{display:none}
+  /* 물고기 넣고 빼기: 아래쪽 띠, 누르면 넣고 빼고, 하나씩 보기는 ◀ ▶로 넘김 */
+  #fpick{position:absolute;left:8px;right:8px;bottom:calc(8px + env(safe-area-inset-bottom,0px));z-index:6;display:none;flex-direction:column;gap:6px;align-items:flex-start}
+  #fpick.on{display:flex}
+  #fpick .row{display:flex;flex-wrap:wrap;gap:5px}
+  #fpick button{font:12px system-ui,sans-serif;color:#fff;background:rgba(16,12,30,.5);border:1px solid rgba(255,255,255,.25);border-radius:999px;padding:5px 10px;cursor:pointer}
+  #fpick button.off{opacity:.4;text-decoration:line-through}
+  #fpick button.cur{background:rgba(255,255,255,.9);color:#1a1530}
+  #fpick button i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;vertical-align:0}
+  #fprev,#fnext{display:none}
+  #fpick.solo #fprev,#fpick.solo #fnext{display:inline-block}
   .paint-only{display:none}
 
   /* ══ 그림판 모양 (?paint): 윈도우 XP 그림판 그대로 (메뉴 줄 · 도구 상자 · 캔버스 · 색 상자 · 상태 줄) ══ */
@@ -120,6 +130,8 @@
   <img class="bgfx" src="assets/reef/water-tank.webp" alt="">
   <div id="top"><a href="index.html">← 처음으로</a><span>끌어서 돌려보기 · 물고기를 누르면 말해요</span></div>
   <div id="msg">물고기 떼를 불러오는 중…</div>
+  <!-- 물고기 넣고 빼기 · 하나씩 보기 -->
+  <div id="fpick"><div class="row" id="fchips"></div><div class="row"><button type="button" id="fall">모두</button><button type="button" id="fprev">◀</button><button type="button" id="fsolo">하나씩</button><button type="button" id="fnext">▶</button></div></div>
 </div>
 <div class="pcolors paint-only"><div class="pcur"><b class="fg" id="pfg"></b><b class="bg"></b></div><div class="pswatch" id="pswatch"></div></div>
 <!-- 이미지 메뉴, 물고기 특성 창 -->
@@ -189,7 +201,7 @@ function build(d){
   var key = JSON.stringify((cfg.fish || []).map(function(f){ return [f.id, f.model, f.swim, f.count, f.size, f.forward, f.upright]; }));
   if (key === listKey){
     // 이름이나 할 말만 바뀌었으면 글자만 바꿈
-    applyTank();
+    applyTank(); drawPick();
     return;
   }
   listKey = key;
@@ -199,6 +211,7 @@ function build(d){
   ReefModel.load(THREE, cfg.fish).then(function(m){
     if (mine !== listKey) return;
     fish = m; size = m.size; m.setSpeed(cfg.speed); applyTank();
+    solo = -1; drawPick(); applyVis();
     scene.add(m.holder);
     cam.radius = size * (+cfg.zoom || 0.65) * zoomK;
     camera.near = size / 500; camera.far = size * 20; camera.updateProjectionMatrix();
@@ -563,7 +576,7 @@ function up(e){
 }
 // 누른 물고기: 그림판 상태 줄에 이름을 보여 주고 말하게 함
 function tapFish(hit){
-  if (!hit) return;
+  if (!hit || !shown(hit.fish.id)) return;
   if (PAINT) setMsg(hit.fish.name || '');
   speak(hit);
 }
@@ -578,6 +591,42 @@ function resize(){
 window.addEventListener('resize', resize); resize();
 if (window.ResizeObserver) new ResizeObserver(resize).observe(stage);
 
+/* ── 물고기 넣고 빼기 · 하나씩 보기 ──
+   칩을 누르면 그 물고기를 넣고 뺌 (이 기기에 기억), '하나씩'을 누르면 한 마리만 보이고 ◀ ▶로 넘김 */
+var pickBox = document.getElementById('fpick'), chips = document.getElementById('fchips');
+var hidden = {}, solo = -1, HIDE_KEY = 'reef-hide-' + REEF_ID;
+try { hidden = JSON.parse(localStorage.getItem(HIDE_KEY)) || {}; } catch(e){ hidden = {}; }
+function ids(){ return (cfg.fish || []).map(function(f){ return f.id; }); }
+function shown(id){ return solo >= 0 ? ids()[solo] === id : !hidden[id]; }
+function applyVis(){
+  if (!fish) return;
+  fish.fish.forEach(function(p){ p.obj.visible = shown(p.id); });
+  worn.forEach(function(w){ w.obj.visible = shown(w.p.id); });
+}
+function drawPick(){
+  chips.innerHTML = '';
+  (cfg.fish || []).forEach(function(f, i){
+    var b = document.createElement('button'); b.type = 'button';
+    var dot = document.createElement('i'); dot.style.background = f.color || '#fff'; b.appendChild(dot);
+    b.appendChild(document.createTextNode(f.name || f.id));
+    if (solo >= 0) b.className = solo === i ? 'cur' : '';
+    else if (hidden[f.id]) b.className = 'off';
+    b.addEventListener('click', function(){
+      if (solo >= 0) solo = i; else { if (hidden[f.id]) delete hidden[f.id]; else hidden[f.id] = 1; try { localStorage.setItem(HIDE_KEY, JSON.stringify(hidden)); } catch(e){} }
+      drawPick(); applyVis();
+    });
+    chips.appendChild(b);
+  });
+  pickBox.classList.toggle('on', !!(cfg.fish || []).length);
+  pickBox.classList.toggle('solo', solo >= 0);
+  document.getElementById('fsolo').className = solo >= 0 ? 'cur' : '';
+}
+document.getElementById('fall').addEventListener('click', function(){ solo = -1; hidden = {}; try { localStorage.removeItem(HIDE_KEY); } catch(e){} drawPick(); applyVis(); });
+document.getElementById('fsolo').addEventListener('click', function(){ solo = solo >= 0 ? -1 : 0; drawPick(); applyVis(); });
+function step(d){ var n = ids().length; if (!n) return; solo = (solo + d + n) % n; drawPick(); applyVis(); }
+document.getElementById('fprev').addEventListener('click', function(){ step(-1); });
+document.getElementById('fnext').addEventListener('click', function(){ step(1); });
+
 // 가만히 두면 천천히 돎
 var clock = new THREE.Clock();
 (function frame(){
@@ -586,6 +635,7 @@ var clock = new THREE.Clock();
   idle += dt; if (idle > 3) cam.theta += dt * 0.12;
   if (fish) fish.update(dt);
   wearTick(clock.elapsedTime);
+  applyVis();   // 늦게 붙은 아이템도 같이 숨김
   applyCam();
   renderer.render(scene, camera);
   if (talk) talk.update();
