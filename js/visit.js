@@ -1,5 +1,5 @@
-/* 처음 화면의 영수증 인증 창: 영수증을 찍어 가게 방문을 확인하고, 물고기 뽑기 · 리뷰 작성 단추를 보여 줌
-   로그인 없이 확인만 되고, 로그인한 상태면 서버에도 남김 */
+/* 처음 화면의 영수증 인증 창: 영수증을 찍어 가게 방문을 확인하고, 그 매장의 낚시 · 리뷰 작성 단추를 보여 줌
+   로그인 없이 확인만 되고, 로그인한 상태면 서버에도 남김. 인증한 영수증은 이 탭에 기억해서 낚시 · 리뷰에 씀 */
 (function () {
   "use strict";
   var about = document.getElementById('about'), win = document.getElementById('visit');
@@ -44,11 +44,15 @@
     if (now.v.ok) {
       body.appendChild(el('p', 'vdone', '\'' + shopName(now.info) + '\' 방문 인증되었습니다.'));
       if (now.note) body.appendChild(el('p', 'fine', now.note));
-      // 아래 두 단추는 나중에 실제 동작을 붙임
-      body.appendChild(btns([
-        button('물고기 뽑기', function () { Core.toast('물고기 뽑기는 준비 중입니다'); }, true),
-        button('로그인하고 리뷰 작성하기', function () { Core.toast('리뷰 작성은 준비 중입니다'); })
-      ]));
+      var id = now.info.spot && now.info.spot.id;
+      if (FISHING[id]) {
+        remember(id);
+        body.appendChild(el('p', 'fine', '낚시는 매장 안에서만 할 수 있습니다.'));
+        body.appendChild(btns([
+          button('리뷰 작성', function () { location.href = 'reef.html?spot=' + id; }),
+          button('낚시', function () { location.href = 'reef.html?spot=' + id + '&mode=fish'; }, true)
+        ]));
+      } else body.appendChild(el('p', 'fine', '이 매장은 아직 어항이 없습니다.'));
       return;
     }
     // 인증 실패: 네 가지 확인 결과를 보여 주고 다시 찍기
@@ -60,6 +64,17 @@
     body.appendChild(kv);
     body.appendChild(el('p', 'fine', '✖ 칸이 있으면 흔들리지 않게, 글자가 잘 보이도록 다시 찍어 주십시오.'));
     body.appendChild(btns([button('다시 찍기', shot, true)]));
+  }
+
+  // 낚시 · 리뷰를 할 수 있는 매장
+  var FISHING = { juana: 1, cord: 1 };
+  // 인증한 영수증을 이 탭에 기억 (장소 어항 화면이 낚시 · 영수증 리뷰에 씀)
+  function remember(id) {
+    var i = now.info;
+    try {
+      sessionStorage.setItem('qrium.receipt', JSON.stringify({ spot: id, shop: i.spot.name, approval: i.approval || null,
+        amount: i.amount || null, biz: i.biz || null, paid: now.v.at ? now.v.at.toISOString() : null }));
+    } catch (e) {}
   }
 
   // 가게 이름: 지도에 있는 가게면 그 이름, 아니면 영수증에서 읽은 이름

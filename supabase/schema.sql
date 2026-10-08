@@ -591,9 +591,9 @@ begin
   -- 위치가 오면 매장까지 거리를 재서 같이 남김
   bx := sp.box;
   if lat is not null and lng is not null and bx is not null then
-    d := hypot(
-      greatest((bx->>'s')::double precision - lat, 0, lat - (bx->>'n')::double precision) * 111320,
-      greatest((bx->>'w')::double precision - lng, 0, lng - (bx->>'e')::double precision) * 111320 * cos(radians(lat)));
+    -- 남북 · 동서로 범위에서 벗어난 거리(미터)를 재서 직선거리로 (Postgres에는 hypot이 없음)
+    d := sqrt(power(greatest((bx->>'s')::double precision - lat, 0, lat - (bx->>'n')::double precision) * 111320, 2)
+            + power(greatest((bx->>'w')::double precision - lng, 0, lng - (bx->>'e')::double precision) * 111320 * cos(radians(lat)), 2));
   end if;
   if proof = 'gps' then
     if d is null or d > margin then proof := 'remote'; end if;   -- 범위 밖이면 매장 밖 글로 남김
@@ -617,3 +617,61 @@ begin
 end $$;
 revoke all on function public.submit_wall_review(text, text, text, text, double precision, double precision, text, jsonb, text) from public;
 grant execute on function public.submit_wall_review(text, text, text, text, double precision, double precision, text, jsonb, text) to anon, authenticated;
+-- 서버(API)가 새 함수 · 칸을 바로 알도록 목록을 다시 읽게 함
+notify pgrst, 'reload schema';
+
+-- 16) 매장 낚시: 영수증 인증 + 매장 안(범위 + 50m)에서 물고기를 길게 눌러 잡으면 내 재고(어항)에 한 마리 더함
+--     영수증 하나로 잡을 수 있는 수: 화면에 띄우는 수만큼 (후아나 3마리씩, CORD Jr. 2마리씩). 관리자는 위치 · 영수증 없이 시험 가능
+create table if not exists public.catches (
+  id bigserial primary key,
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  spot text not null references public.spots(id) on delete cascade,
+  fish text not null check (char_length(fish) between 1 and 40),
+  receipt_key text not null,
+  dist real,
+  created_at timestamptz not null default now()
+);
+create index if not exists catches_key on public.catches (spot, receipt_key, fish);
+alter table public.catches enable row level security;
+revoke all on public.catches from anon, authenticated;
+
+create or replace function public.catch_fish(spot_id text, fish_id text,
+  lat double precision default null, lng double precision default null, receipt jsonb default null)
+returns jsonb language plpgsql security definer set search_path = public as $$
+declare
+  sp record; bx jsonb; d double precision := null; lim integer; used integer; k text; q integer;
+  adm boolean := public.is_admin();
+begin
+  if auth.uid() is null then raise exception '로그인이 필요합니다'; end if;
+  -- 매장마다 잡을 수 있는 물고기와 영수증 하나로 잡을 수 있는 수
+  lim := case spot_id || '/' || fish_id
+    when 'juana/blue-betta' then 3 when 'juana/neon-tetra' then 3 when 'juana/goldfish' then 3
+    when 'cord/manta-ray' then 2 when 'cord/sea-turtle' then 2 when 'cord/reef-shark' then 2
+    else 0 end;
+  if lim = 0 then raise exception '이 매장에서 잡을 수 없는 물고기입니다'; end if;
+  select * into sp from public.spots where id = spot_id;
+  if not found then raise exception '등록되지 않은 매장입니다'; end if;
+  bx := sp.box;
+  if lat is not null and lng is not null and bx is not null then
+    d := sqrt(power(greatest((bx->>'s')::double precision - lat, 0, lat - (bx->>'n')::double precision) * 111320, 2)
+            + power(greatest((bx->>'w')::double precision - lng, 0, lng - (bx->>'e')::double precision) * 111320 * cos(radians(lat)), 2));
+  end if;
+  if not adm then
+    if d is null or d > 50 then raise exception '매장 안에서만 낚시할 수 있습니다'; end if;
+    if receipt is null or jsonb_typeof(receipt) <> 'object' then raise exception '영수증 인증이 필요합니다'; end if;
+  end if;
+  -- 영수증 구분: 승인번호 · 결제 시각 · 금액 (관리자 시험은 사람마다)
+  k := case when receipt is null then 'admin:' || auth.uid()::text
+    else coalesce(receipt->>'approval', '') || '|' || coalesce(receipt->>'paid', '') || '|' || coalesce(receipt->>'amount', '') end;
+  select count(*) into used from public.catches c where c.spot = spot_id and c.fish = fish_id and c.receipt_key = k;
+  if used >= lim and not adm then raise exception '이 영수증으로는 더 잡을 수 없습니다'; end if;
+  perform public.give_starter(auth.uid());   -- 처음 재고(시작 물고기)를 먼저 받고 나서 더함
+  insert into public.catches (user_id, spot, fish, receipt_key, dist) values (auth.uid(), spot_id, fish_id, k, d);
+  insert into public.stock (user_id, kind, ref, qty) values (auth.uid(), 'fish', fish_id, 1)
+    on conflict (user_id, kind, ref) do update set qty = public.stock.qty + 1
+    returning qty into q;
+  return jsonb_build_object('qty', q, 'left', greatest(lim - used - 1, 0));
+end $$;
+revoke all on function public.catch_fish(text, text, double precision, double precision, jsonb) from public, anon;
+grant execute on function public.catch_fish(text, text, double precision, double precision, jsonb) to authenticated;
+notify pgrst, 'reload schema';

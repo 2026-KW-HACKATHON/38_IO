@@ -90,11 +90,11 @@ button,input{font:inherit;color:inherit}
 /* 위치 확인 안내: 비스타 대화 상자처럼 파란 큰 글(주 안내) + 보통 글 */
 #gstat .msg{margin:2px 0 10px}
 #gstat .msg b{display:block;font-size:15px;font-weight:400;color:var(--mi);margin-bottom:4px}
-#gstat .msg.ok{display:flex;align-items:center;gap:6px;margin:0 0 6px}
-#gstat .msg.ok::before{content:"";flex:none;width:16px;height:16px;border-radius:50%;
+.msg.ok{display:flex;align-items:center;gap:6px;margin:0 0 6px}
+.msg.ok::before{content:"";flex:none;width:16px;height:16px;border-radius:50%;
   background:radial-gradient(circle at 35% 30%,#a6ef8e,#3ea623 60%,#2b7d16);box-shadow:inset 0 0 0 1px rgba(0,60,0,.35)}
 /* 매장 밖 글: 파란 동그라미 i 표시 */
-#gstat .msg.ok.info::before{content:"i";color:#fff;font:700 11px/16px Georgia,serif;text-align:center;
+.msg.ok.info::before{content:"i";color:#fff;font:700 11px/16px Georgia,serif;text-align:center;
   background:radial-gradient(circle at 35% 30%,#9fd1ff,#2a74c9 60%,#1b4f94);box-shadow:inset 0 0 0 1px rgba(0,30,80,.35)}
 #gstat .msg small{color:var(--dim)}
 #gstat .row{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end;margin:0 0 12px}
@@ -166,3 +166,18 @@ body.kb .foot{padding-bottom:16px}
   padding:6px 12px;font-size:12px;text-align:center;color:#575757;pointer-events:none;transition:.2s;
   background:linear-gradient(180deg,#fff 0%,#e4e5f0 100%);border:1px solid #767676;border-radius:3px;box-shadow:1px 2px 4px rgba(0,0,0,.3)}
 #toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* 비스타 대화 상자: 화면을 살짝 어둡게 하고 가운데 작은 유리 창 */
+.vdlg{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(0,20,40,.25)}
+.dwin{width:min(360px,100%);padding:0 7px 7px;border-radius:7px;border:1px solid rgba(30,45,70,.75);
+  background:linear-gradient(180deg,rgba(255,255,255,.75) 0%,rgba(200,222,243,.7) 40%,rgba(170,200,232,.75) 100%);
+  backdrop-filter:blur(7px) saturate(1.5);-webkit-backdrop-filter:blur(7px) saturate(1.5);box-shadow:inset 0 0 0 1px rgba(255,255,255,.7),0 8px 24px rgba(0,0,0,.45)}
+.dcap{height:28px;display:flex;align-items:center;padding-left:4px}
+.dttl{text-shadow:0 0 8px #fff,0 0 4px #fff}
+.dbody{background:#fff;border:1px solid rgba(40,60,90,.55);padding:12px 12px 0}
+.dbody p{margin:0 0 8px}
+.dbody .foot{margin:10px -12px 0}
+.dbody .foot .vbtn{margin-left:6px}
+#panel .foot .vbtn{margin-left:6px}
+#panel .msg{margin:0 0 6px}
+#gl{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
