@@ -101,8 +101,3 @@ pre{padding:10px 12px;overflow:auto;user-select:all}
 #qrbox{background:#fff;padding:16px;border-radius:16px;display:inline-block}
 .center{display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center}
 @media (max-width:640px){ .hide-sm{display:none} }
-/* 물고기 모델 출처 줄 */
-.mcredit{position:absolute;left:0;right:0;bottom:calc(52px + env(safe-area-inset-bottom,0px));z-index:5;margin:0;padding:0 12px;
-  text-align:center;font-size:10.5px;line-height:1.4;color:rgba(255,255,255,.85);text-shadow:0 1px 2px rgba(0,0,0,.5);pointer-events:none}
-.mcredit a{color:inherit;pointer-events:auto}
-.mcredit .note{display:none}

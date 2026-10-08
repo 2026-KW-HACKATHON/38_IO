@@ -39,10 +39,9 @@
   function build(d) {
     var r = ReefModel.reef(d);
     cfg = r ? r.config : {};
-    if (!cfg.model) { Core.toast('보여 줄 물고기 모델이 없습니다'); return; }
-    ReefModel.load(THREE, cfg.model).then(function (m) {
+    if (!(cfg.fish || []).length) { Core.toast('보여 줄 물고기 모델이 없습니다'); return; }
+    ReefModel.load(THREE, cfg.fish).then(function (m) {
       fish = m; m.fit(C.size); m.setSpeed(cfg.speed);
-      var cr = document.getElementById('modelCredit'); if (cr) cr.innerHTML = ReefModel.creditHTML(cfg.credit);
       shoal.add(m.holder);
     }).catch(function () { Core.toast('물고기 모델을 불러오지 못했습니다'); });
   }

@@ -2109,7 +2109,7 @@ function renderReefs(){
     b.setAttribute('aria-current', i === ui.sel.reefs);
     b.innerHTML = '<span><b></b><i></i></span>';
     b.querySelector('b').textContent = rr.name;
-    const n = rr.kind === 'model' ? (rr.config.model || '모델 없음').split('/').pop() : rr.kind === 'showcase' ? (rr.config.lanes || []).length + '마리' : rr.kind === 'marker' ? (rr.config.fishTotal || 0) + '마리' : (rr.config.swimmers || []).length + '마리';
+    const n = rr.kind === 'model' ? (rr.config.fish || []).length + '종' : rr.kind === 'showcase' ? (rr.config.lanes || []).length + '마리' : rr.kind === 'marker' ? (rr.config.fishTotal || 0) + '마리' : (rr.config.swimmers || []).length + '마리';
     b.querySelector('i').textContent = rr.file + ' · ' + (KIND_INFO[rr.kind] ? KIND_INFO[rr.kind].ko : rr.kind) + ' · ' + n;
     b.addEventListener('click', () => { ui.sel.reefs = i; renderReefs(); });
     rl.appendChild(b);
@@ -2119,7 +2119,7 @@ function renderReefs(){
     edit(() => {
       const id = uid(kind === 'showcase' ? 'reef' : kind, D.reefs);
       const firstModel = D.reefs.find(x => x.kind === 'model');
-      const cfg = kind === 'model' ? (firstModel ? JSON.parse(JSON.stringify(firstModel.config)) : { title: 'New Reef', model: '', speed: 1, zoom: 0.65, credit: {} })
+      const cfg = kind === 'model' ? (firstModel ? JSON.parse(JSON.stringify(firstModel.config)) : { title: 'New Reef', fish: [], speed: 1, zoom: 0.65 })
         : kind === 'showcase' ? { title: 'New Reef', subtitle: '', radius: 50, lanes: [], props: [], sliders: ['swim', 'flap'], talk: { tap: true, auto: 0 } }
         : kind === 'marker' ? { fishTotal: 12, mix: D.species.filter(m => m.motion === 'fish').slice(0, 2).map(m => m.id), shells: [22, 36, 52], chargeEvery: 0, chargeEffect: '', cubeCm: 4, fovDeg: 65, drop: 14, wallGap: 8 }
         : { swimmers: [] };
@@ -2170,19 +2170,35 @@ function wireNums(box, obj, after){
   $$('input[data-k]', box).forEach(el => el.addEventListener('input', () => { edit(() => { obj[el.dataset.k] = numv(el.value, 0); }); if (after) after(); }));
 }
 
-// 3D 모델 reef 설정: 모델 파일, 빠르기, 카메라 거리, 출처
+// 3D 모델 reef 설정: 물고기 목록(이름 · 모델 파일), 빠르기, 카메라 거리
 function cfgModel(box, r){
-  const c = r.config; c.credit = c.credit || {};
+  const c = r.config; c.fish = c.fish || [];
   box.innerHTML = `
     <h2>설정</h2>
-    <div class="g3" style="margin-top:8px">${field('제목', 'title', c.title || '', 'text')}${field('모델 파일 (GLB)', 'model', c.model || '', 'text')}
-      <label class="f"><span>헤엄 빠르기</span><input type="number" step="0.1" min="0" data-m="speed" value="${c.speed == null ? 1 : c.speed}"></label></div>
-    <div class="g3" style="margin-top:8px"><label class="f"><span>카메라 거리 (모델 크기 배수)</span><input type="number" step="0.05" min="0.1" data-m="zoom" value="${c.zoom || 0.65}"></label></div>
-    <h3>출처 (CC BY 같은 라이선스는 꼭 적기)</h3>
-    <div class="g3">${['title:제목', 'author:만든 사람', 'license:라이선스', 'source:원본 주소', 'authorUrl:만든 사람 주소', 'licenseUrl:라이선스 주소', 'note:바꾼 점'].map(x => { const [k, l] = x.split(':'); return `<label class="f"><span>${l}</span><input type="text" data-cr="${k}" value="${esc(c.credit[k] || '')}"></label>`; }).join('')}</div>`;
+    <div class="g3" style="margin-top:8px">${field('제목', 'title', c.title || '', 'text')}
+      <label class="f"><span>헤엄 빠르기</span><input type="number" step="0.1" min="0" data-m="speed" value="${c.speed == null ? 1 : c.speed}"></label>
+      <label class="f"><span>카메라 거리 (떼 크기 배수)</span><input type="number" step="0.05" min="0.1" data-m="zoom" value="${c.zoom || 0.65}"></label></div>
+    <h3>물고기 <span class="mono" style="color:var(--ink-soft)">${c.fish.length}</span></h3>
+    <p class="hint" style="margin-top:0">이름은 화면의 이름표와 목록에 나옵니다. 모델 파일은 같은 떼에서 나눈 GLB 파일이어야 서로 자리가 맞습니다.</p>
+    <div class="lanes" id="mFish"></div>
+    <button class="btn small ghost" id="mFishAdd" type="button" style="margin-top:8px">+ 물고기</button>`;
   $$('[data-f]', box).forEach(el => el.addEventListener('change', () => edit(() => { c[el.dataset.f] = el.value.trim(); }, true)));
   $$('[data-m]', box).forEach(el => el.addEventListener('input', () => edit(() => { c[el.dataset.m] = numv(el.value, el.dataset.m === 'speed' ? 1 : 0.65); })));
-  $$('[data-cr]', box).forEach(el => el.addEventListener('input', () => edit(() => { c.credit[el.dataset.cr] = el.value; })));
+  const fb = $('#mFish');
+  c.fish.forEach((fi, i) => {
+    const d = document.createElement('div'); d.className = 'lane';
+    d.innerHTML = `<div class="g4"><label class="f"><span>이름</span><input type="text" data-fk="name"></label>
+      <label class="f"><span>id</span><input type="text" data-fk="id"></label>
+      <label class="f"><span>모델 파일 (GLB)</span><input type="text" data-fk="model"></label>
+      <button class="btn small danger" type="button" style="align-self:end">빼기</button></div>`;
+    $$('[data-fk]', d).forEach(el => {
+      el.value = fi[el.dataset.fk] || '';
+      el.addEventListener('change', () => edit(() => { fi[el.dataset.fk] = el.value.trim(); }, true));
+    });
+    $('button', d).addEventListener('click', () => { edit(() => c.fish.splice(i, 1), true); renderReefs(); });
+    fb.appendChild(d);
+  });
+  $('#mFishAdd').addEventListener('click', () => { edit(() => c.fish.push({ id: 'fish' + (c.fish.length + 1), name: '새 물고기', model: 'assets/models/' }), true); renderReefs(); });
 }
 function cfgShowcase(box, r){
   const c = r.config;

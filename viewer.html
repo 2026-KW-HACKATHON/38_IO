@@ -53,11 +53,6 @@
     background:rgba(16,12,30,.5);border:1px solid rgba(220,212,255,.16);border-radius:999px;
     padding:7px 14px;color:var(--dim);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
   .hidden{display:none!important}
-  /* 물고기 모델 출처 (CC BY라서 늘 보임) */
-  #modelCredit{position:absolute;left:0;right:0;bottom:calc(8px + env(safe-area-inset-bottom,0px));z-index:6;margin:0;padding:0 12px;
-    text-align:center;font-size:10.5px;line-height:1.4;color:rgba(255,255,255,.85);text-shadow:0 1px 2px rgba(0,0,0,.6);pointer-events:none}
-  #modelCredit a{color:inherit;pointer-events:auto}
-  #modelCredit .note{display:none}
 </style>
 <link rel="stylesheet" href="css/xp-font.css">
 </head>
@@ -66,7 +61,6 @@
   <video id="cam" playsinline muted autoplay></video>
   <canvas id="gl"></canvas>
   <div id="bubbles"></div>
-  <p id="modelCredit"></p>
 
   <div id="hud" class="hidden">
     <div class="chip" id="scene">—</div>
@@ -333,12 +327,12 @@ var CLEAR = 6;
 // 물고기 떼 모델은 한 번만 불러옴 (reef-data.json의 모델 reef)
 var school = null, schoolUrl = '', schoolModel = null;
 function loadSchool(){
-  var r = REEF_DATA && ReefModel.reef(REEF_DATA), url = r && r.config.model;
-  if (!url) return new Promise(function(){});
+  var r = REEF_DATA && ReefModel.reef(REEF_DATA), list = (r && r.config.fish) || [];
+  var url = JSON.stringify(list.map(function(f){ return f.model; }));
+  if (!list.length) return new Promise(function(){});
   if (!school || url !== schoolUrl){
     schoolUrl = url;
-    school = ReefModel.load(THREE, url).then(function(m){ m.setSpeed(r.config.speed); schoolModel = m; return m; });
-    document.getElementById('modelCredit').innerHTML = ReefModel.creditHTML(r.config.credit);
+    school = ReefModel.load(THREE, list).then(function(m){ m.setSpeed(r.config.speed); schoolModel = m; return m; });
   }
   return school;
 }

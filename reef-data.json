@@ -1,6 +1,6 @@
 {
  "v": 1,
- "updated": "2026-10-08T00:39:13.000Z",
+ "updated": "2026-10-08T01:01:48.000Z",
  "style": {
   "font": {
    "family": "\"Galmuri11\", \"DotGothic16\", \"Jua\", sans-serif",
@@ -42,18 +42,30 @@
    "kind": "model",
    "config": {
     "title": "First Reef",
-    "model": "assets/models/school-of-fish.glb",
     "speed": 1,
     "zoom": 0.65,
-    "credit": {
-     "title": "School Of Fish",
-     "source": "https://skfb.ly/6WpRz",
-     "author": "Titanas YT",
-     "authorUrl": "https://sketchfab.com/pcarnage252",
-     "license": "Creative Commons Attribution",
-     "licenseUrl": "http://creativecommons.org/licenses/by/4.0/",
-     "note": "그림 크기와 움직임 데이터를 줄여서 씀"
-    }
+    "fish": [
+     {
+      "id": "clownfish",
+      "name": "Clownfish",
+      "model": "assets/models/clownfish.glb"
+     },
+     {
+      "id": "moorish-idol",
+      "name": "Moorish Idol",
+      "model": "assets/models/moorish-idol.glb"
+     },
+     {
+      "id": "yellow-tang",
+      "name": "Yellow Tang",
+      "model": "assets/models/yellow-tang.glb"
+     },
+     {
+      "id": "powder-blue-tang",
+      "name": "Powder Blue Tang",
+      "model": "assets/models/powder-blue-tang.glb"
+     }
+    ]
    }
   }
  ]

@@ -1,6 +1,7 @@
-school-of-fish.glb
-  "School Of Fish" (https://skfb.ly/6WpRz) by Titanas YT
-  (https://sketchfab.com/pcarnage252) is licensed under
+clownfish.glb, moorish-idol.glb, yellow-tang.glb, powder-blue-tang.glb
+  Made from "School Of Fish" (https://skfb.ly/6WpRz) by Titanas YT
+  (https://sketchfab.com/pcarnage252), licensed under
   Creative Commons Attribution 4.0 (http://creativecommons.org/licenses/by/4.0/).
-  Changes: textures resized to 512px and converted to WebP, materials converted
-  to metal/roughness, swimming animation keyframes resampled (glTF-Transform).
+  Changes: split into one file per species, textures resized to 512px and
+  converted to WebP, materials converted to metal/roughness, swimming
+  animation keyframes resampled (glTF-Transform).
