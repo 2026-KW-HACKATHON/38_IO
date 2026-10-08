@@ -82,3 +82,23 @@ body{background:#1f5f97}
 #top{justify-content:flex-start}
 #brand{margin-right:auto}
 #gate .alogo{top:8%;transform:none}
+/* QR 찾기: 가운데 네모 틀 (모서리만 흰 선) + 아래 안내 글 */
+#scan{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;z-index:5;pointer-events:none}
+#scan .sframe{width:min(62vw,260px);aspect-ratio:1;box-shadow:0 0 0 100vmax rgba(0,0,0,.35);border-radius:6px;
+  background:linear-gradient(#fff,#fff) 0 0/28px 4px,linear-gradient(#fff,#fff) 0 0/4px 28px,
+    linear-gradient(#fff,#fff) 100% 0/28px 4px,linear-gradient(#fff,#fff) 100% 0/4px 28px,
+    linear-gradient(#fff,#fff) 0 100%/28px 4px,linear-gradient(#fff,#fff) 0 100%/4px 28px,
+    linear-gradient(#fff,#fff) 100% 100%/28px 4px,linear-gradient(#fff,#fff) 100% 100%/4px 28px;background-repeat:no-repeat}
+#scan .stip{margin:0;padding:6px 12px;font-size:13px;color:#575757;border:1px solid #767676;border-radius:3px;
+  background:linear-gradient(180deg,#fff 0%,#e4e5f0 100%);box-shadow:1px 2px 4px rgba(0,0,0,.3)}
+/* 영수증 인증 창: 첫 문단 위 여백, 진행 막대, 결과 글 */
+#visit .vwait{margin-top:14px;padding:0 18px 12px}
+#visit .xprog{height:14px;border:1px solid #686868;border-radius:3px;background:#fff;padding:1px;overflow:hidden;margin-bottom:8px}
+#visit .xprog i{display:block;height:100%;width:0;transition:width .2s;background:repeating-linear-gradient(90deg,#2ed330 0 8px,transparent 8px 10px)}
+#visit .vdone{font-size:16px;color:#1e5aa8;padding-top:18px;padding-bottom:8px;text-align:center}
+#visit .vbad{color:#c0392b}
+#visit .vchk{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;margin:14px 18px 10px;font-size:13px}
+#visit .vchk dt{color:#555}
+#visit .vchk dd{margin:0;word-break:break-all}
+#visit .vchk .ok{color:#2e8b3e}
+#visit .vchk .no{color:#c0392b}

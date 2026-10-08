@@ -1,4 +1,4 @@
-/* AR 화면: 카메라 위에 물고기 띄우기, 권한 요청, 로그인 표시 */
+/* AR 화면: QR을 찾아 그 QR의 물고기를 카메라 위에 띄우기, 권한 요청, 로그인 표시 */
 (function () {
   "use strict";
 
@@ -20,6 +20,7 @@
   var backBtn = document.getElementById('bBack');
   var chipBox = document.getElementById('chips');
   var cCam = document.getElementById('cCam'), cGyro = document.getElementById('cGyro'), cLoc = document.getElementById('cLoc');
+  var cScene = document.getElementById('cScene'), scanBox = document.getElementById('scan');
 
   var renderer = new THREE.WebGLRenderer({ canvas: glc, alpha: true, antialias: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
@@ -31,20 +32,47 @@
   scene.add(shoal);
 
   var viewMode = 'orbit';         // 'camera'(카메라 위 AR) 또는 'orbit'(손으로 돌려보기)
-  var fish = null, cfg = {};
+  var step = 'gate';              // 'gate' 처음 화면, 'scan' QR 찾기, 'ar' AR 화면, 'receipt' 영수증 인증
+  var fish = null, cfg = {}, data = null, reefId = null;
   var cameraOn = false;
 
   function setChip(el, text, on) { el.textContent = text; el.className = 'chip' + (on === true ? ' on' : on === false ? ' off' : ''); }
 
-  /* ── 물고기 떼 만들기: reef-data.json의 모델 reef ── */
-  function build(d) {
-    var r = ReefModel.reef(d);
+  /* ── 물고기 떼 만들기: reef-data.json의 모델 reef (id와 같은 reef가 없으면 첫 번째) ── */
+  function build(d, id) {
+    var r = ReefModel.reef(d, id) || ReefModel.reef(d);
+    if (r && r.id === reefId) return;
+    reefId = r ? r.id : null;
     cfg = r ? r.config : {};
+    if (fish) { shoal.remove(fish.holder); fish = null; }
     if (!(cfg.fish || []).length) { Core.toast('보여 줄 물고기 모델이 없습니다'); return; }
+    var want = reefId;
     ReefModel.load(THREE, cfg.fish).then(function (m) {
+      if (want !== reefId) return;   // 불러오는 사이 다른 QR로 바뀌면 버림
       fish = m; m.fit(C.size); m.setSpeed(cfg.speed);
       shoal.add(m.holder);
     }).catch(function () { Core.toast('물고기 모델을 불러오지 못했습니다'); });
+  }
+
+  /* ── QR 글 → 장면 id: 주소의 s · spot · reef 값이나 '#id', 또는 글 그대로 중 등록된 것 ── */
+  var scenes = {};
+  fetch('scenes.json', { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : {}; })
+    .then(function (j) { scenes = j || {}; }, function () {});
+  function findSpot(id) { return (window.SPOTS || []).filter(function (o) { return o.id === id; })[0]; }
+  function sceneName(id) {
+    var sc = scenes[id], sp = findSpot(id), r = data && ReefModel.reef(data, id);
+    return (sc && sc.name) || (sp && sp.name) || (r && r.name) || '';
+  }
+  function qrId(text) {
+    var list = [], t = String(text || '').trim();
+    try {
+      var u = new URL(t, location.href), h = u.hash.replace(/^#/, '');
+      ['s', 'spot', 'reef'].forEach(function (k) { list.push(u.searchParams.get(k)); });
+      list.push(new URLSearchParams(h).get('s'), h);
+    } catch (e) {}
+    list.push(t);
+    for (var i = 0; i < list.length; i++) if (list[i] && sceneName(list[i])) return list[i];
+    return null;
   }
 
 
@@ -130,6 +158,27 @@
     e.preventDefault(); orbit.radius *= Math.exp(e.deltaY * 0.0013); applyOrbit();
   }, { passive: false });
 
+  /* ── QR 찾기: 카메라 화면을 작게 줄여 0.25초마다 읽음 ── */
+  var qrCv = document.createElement('canvas'), qrCx = qrCv.getContext('2d', { willReadFrequently: true });
+  var qrNext = 0, badText = '', badAt = 0, nowId = null, skipId = null, skipUntil = 0;
+  function scanQR(now) {
+    if (now < qrNext || !window.jsQR || !video.videoWidth) return;
+    qrNext = now + 250;
+    var k = 480 / video.videoWidth;
+    qrCv.width = 480; qrCv.height = Math.round(video.videoHeight * k);
+    qrCx.drawImage(video, 0, 0, qrCv.width, qrCv.height);
+    var img = qrCx.getImageData(0, 0, qrCv.width, qrCv.height), code = null;
+    try { code = jsQR(img.data, img.width, img.height, { inversionAttempts: 'dontInvert' }); } catch (e) { return; }
+    if (!code || !code.data) return;
+    var id = qrId(code.data);
+    if (id && !(id === skipId && now < skipUntil)) { enterAR(id); return; }
+    // 등록 안 된 QR: 같은 QR이면 3초에 한 번만 알림
+    if (!id && (code.data !== badText || now - badAt > 3000)) {
+      badText = code.data; badAt = now;
+      Core.toast('등록되지 않은 QR입니다');
+    }
+  }
+
   /* ── 매 프레임 움직이기 ── */
   var clock = new THREE.Clock(), t = 0;
   var camQuat = new THREE.Quaternion();
@@ -137,6 +186,7 @@
     requestAnimationFrame(frame);
     var dt = Math.min(clock.getDelta(), 0.05);
     t += dt;
+    if (step === 'scan') scanQR(performance.now());
     if (viewMode === 'camera') {
       if (haveOrientation) camera.quaternion.copy(deviceQuat); else camera.quaternion.identity();
       camera.position.set(0, 0, 0);
@@ -171,57 +221,98 @@
     applyOrbit(); fitCamera();
   }
 
-  function startAR() {
-    // iOS는 버튼을 누른 그 순간에 센서 권한을 물어봐야 해서 가장 먼저 호출
+  // 움직임 센서 · 위치 권한 요청 (iOS는 버튼을 누른 그 순간에 물어봐야 해서 가장 먼저 호출)
+  function askSensors() {
     var motionAsk = (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function')
       ? DeviceOrientationEvent.requestPermission() : Promise.resolve('granted');
     motionAsk.then(function (res) {
       if (res !== 'granted') { motionDenied = true; setChip(cGyro, 'GYRO 거부', false); }
       window.addEventListener('deviceorientation', onOrientation, true);
     }).catch(function () { motionDenied = true; setChip(cGyro, 'GYRO 거부', false); });
-    chipBox.classList.remove('hidden');
     askLocation();
+  }
 
+  // QR 인식: 카메라를 켜고 QR 찾기 단계로
+  function startScan() {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      setChip(cCam, 'CAM 없음', false); Core.toast('이 브라우저는 카메라를 쓸 수 없습니다. 둘러보기로 봅니다');
-      enterOrbit(); return;
+      Core.toast('이 브라우저는 카메라를 쓸 수 없습니다. Chrome이나 Safari로 열어 주십시오'); return;
     }
+    askSensors();
     navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false })
       .then(function (stream) { video.srcObject = stream; return video.play(); })
       .then(function () {
         cameraOn = true; viewMode = 'camera';
         video.classList.remove('hidden'); stage.style.background = '#000';
-        gate.classList.add('hidden'); bottomBar.classList.remove('hidden'); backBtn.classList.remove('hidden');
-        document.getElementById('bRecenter').classList.remove('hidden');
+        gate.classList.add('hidden'); backBtn.classList.remove('hidden'); chipBox.classList.remove('hidden');
         setChip(cCam, 'CAM OK', true);
-        fitCamera(); recenter();
-        Core.log('ar_start', { camera: true, motion: !motionDenied });
+        fitCamera(); showScan();
+        Core.log('qr_scan', { motion: !motionDenied });
       })
       .catch(function () {
-        setChip(cCam, 'CAM 거부', false);
-        Core.toast('카메라 권한이 없어서 둘러보기로 봅니다');
-        enterOrbit();
-        Core.log('ar_start', { camera: false, motion: !motionDenied });
+        stopCamera();
+        Core.toast('카메라 권한이 없어서 QR을 읽을 수 없습니다');
       });
   }
-  document.getElementById('go').addEventListener('click', startAR);
-  function startOrbit() { enterOrbit(); Core.log('ar_start', { camera: false, motion: false }); }
-  document.getElementById('goOrbit').addEventListener('click', startOrbit);
-  document.getElementById('gateClose').addEventListener('click', startOrbit);   // 창을 닫으면 카메라 없이 둘러보기
+  document.getElementById('goScan').addEventListener('click', startScan);
 
-  // 뒤로: 카메라를 끄고 처음 화면으로
-  function backToGate() {
+  // QR 찾기 화면: 물고기는 숨기고 네모 틀만
+  function showScan() {
+    step = 'scan';
+    shoal.visible = false;
+    scanBox.classList.remove('hidden'); bottomBar.classList.add('hidden'); cScene.classList.add('hidden');
+  }
+
+  // 찾은 QR의 물고기를 내 앞쪽에 띄움
+  function enterAR(id) {
+    step = 'ar'; nowId = id;
+    if (data) build(data, id);
+    shoal.visible = true;
+    cScene.textContent = sceneName(id); cScene.classList.remove('hidden');
+    scanBox.classList.add('hidden'); bottomBar.classList.remove('hidden');
+    document.getElementById('bRecenter').classList.remove('hidden');
+    recenter();
+    Core.log('ar_start', { qr: id, camera: true, motion: !motionDenied });
+  }
+
+  // 영수증 인증: 처음 화면 위에 영수증 창을 띄움 (내용은 js/visit.js)
+  document.getElementById('goReceipt').addEventListener('click', function () {
+    step = 'receipt';
+    backBtn.classList.remove('hidden');
+    Visit.open();
+  });
+
+  function stopCamera() {
     var st = video.srcObject;
     if (st) st.getTracks().forEach(function (t) { t.stop(); });
     video.srcObject = null; video.classList.add('hidden');
     cameraOn = false; viewMode = 'orbit'; stage.style.background = '';
     haveOrientation = false; firstOrientation = true;
     window.removeEventListener('deviceorientation', onOrientation, true);
-    chipBox.classList.add('hidden');
+  }
+
+  // 처음 화면으로: 카메라를 끄고 모든 창을 처음 상태로
+  function backToGate() {
+    step = 'gate';
+    stopCamera();
+    shoal.visible = true;
+    chipBox.classList.add('hidden'); scanBox.classList.add('hidden'); cScene.classList.add('hidden');
     bottomBar.classList.add('hidden'); backBtn.classList.add('hidden'); gate.classList.remove('hidden');
+    Visit.close();
     applyOrbit(); fitCamera();
   }
-  backBtn.addEventListener('click', backToGate);
+
+  // 뒤로: AR → QR 찾기 → 처음 화면, 영수증 창은 안쪽 단계부터 되돌림
+  function back() {
+    if (step === 'ar') {
+      // 방금 본 QR이 아직 화면에 있어도 3초 동안은 다시 열지 않음
+      skipId = nowId; skipUntil = performance.now() + 3000;
+      showScan();
+      return;
+    }
+    if (step === 'receipt' && Visit.back()) return;
+    backToGate();
+  }
+  backBtn.addEventListener('click', back);
 
   /* ── 로그인 영역 (위쪽 오른쪽) ── */
   var authBox = document.getElementById('auth');
@@ -247,7 +338,7 @@
 
   /* ── 시작: 데이터 읽고 그리기 ── */
   kit.loadData().then(function (d) {
-    build(d); frame();
+    data = d; build(d); frame();
   }).catch(function (e) {
     Core.toast('reef-data.json을 읽지 못했습니다');
     frame();
