@@ -10,7 +10,7 @@
        thrust(꼬리 밀기, 아래 참고),
        flutter(지느러미 떨림, 아래 참고), skin(같은 모델에 입힐 다른 무늬 그림),
        pick(떼 파일 안에서 몇 번째 물고기부터 보일지, 기본 1), delay(떼 헤엄을 몇 초 지난 자리에서 시작할지),
-       carry('back'이면 몸에 끼우는 아이템을 등에 얹음) }
+       carry('back'이면 몸에 끼우는 아이템을 등에 얹음), ghost(흰색 반투명으로 칠함) }
      school: 같은 떼에서 나눈 파일이라 자리와 헤엄이 파일 안에 들어 있음
      path:   혼자 있는 모델이라 여기서 고리 모양 길을 따라 헤엄치게 함
 */
@@ -282,6 +282,13 @@
       var model = g.scene, mixer = null;
       model.traverse(function (o) { if (o.isMesh) o.frustumCulled = false; });
       if (f.flutter && f.flutter.y) addFlutter(THREE, model, f.flutter);
+      // ghost: 모양은 그대로 두고 전체를 흰색 반투명으로
+      if (f.ghost) model.traverse(function (o) {
+        if (!o.isMesh) return;
+        o.material = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: .5,
+          side: THREE.DoubleSide, depthWrite: false,
+          morphTargets: !!o.morphTargetInfluences, skinning: !!o.isSkinnedMesh });
+      });
       // 동작이 여러 개면 clip 이름으로 고른 것 하나만 (없으면 첫 번째)
       var clip = g.animations.filter(function (a) { return a.name === f.clip; })[0] || g.animations[0];
       if (clip) { mixer = new THREE.AnimationMixer(model); mixer.clipAction(clip).play(); }

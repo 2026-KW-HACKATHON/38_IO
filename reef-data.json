@@ -327,7 +327,8 @@
       "forward": "+x",
       "upright": true,
       "speed": 0.3,
-      "says": []
+      "says": [],
+      "ghost": true
      },
      {
       "id": "medaka",
