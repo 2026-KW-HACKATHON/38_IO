@@ -236,11 +236,43 @@
     });
     return best;
   }
-  cv.addEventListener('pointerdown', function (e) { down = { x: e.clientX, y: e.clientY, t: performance.now() }; });
-  cv.addEventListener('pointerup', function (e) {
-    if (down && Math.hypot(e.clientX - down.x, e.clientY - down.y) < 14 && performance.now() - down.t < 600) say(nearest(e.clientX, e.clientY), 4);
-    down = null;
+  /* 손가락 하나로 끌면 돌려보기, 두 손가락으로 벌리면 확대 · 비틀면 돌리기, 휠로 확대. 잠깐 누르면 물고기가 말함 */
+  var view = { theta: 0, phi: Math.PI / 2, zoom: 1, idle: 9 }, pts = {}, pinch = null;
+  function two() { var k = Object.keys(pts); return k.length === 2 ? [pts[k[0]], pts[k[1]]] : null; }
+  cv.addEventListener('pointerdown', function (e) {
+    pts[e.pointerId] = { x: e.clientX, y: e.clientY };
+    try { cv.setPointerCapture(e.pointerId); } catch (er) {}
+    down = Object.keys(pts).length === 1 ? { x: e.clientX, y: e.clientY, t: performance.now() } : null;
+    pinch = null; view.idle = 0;
   });
+  cv.addEventListener('pointermove', function (e) {
+    var p = pts[e.pointerId]; if (!p) return;
+    var dx = e.clientX - p.x, dy = e.clientY - p.y;
+    p.x = e.clientX; p.y = e.clientY; view.idle = 0;
+    var t = two();
+    if (t) {
+      var d = Math.hypot(t[0].x - t[1].x, t[0].y - t[1].y), a = Math.atan2(t[1].y - t[0].y, t[1].x - t[0].x);
+      if (pinch) {
+        view.zoom = Math.max(0.35, Math.min(2.2, view.zoom * pinch.d / Math.max(1, d)));
+        var da = a - pinch.a; if (da > Math.PI) da -= 2 * Math.PI; if (da < -Math.PI) da += 2 * Math.PI;
+        view.theta -= da;
+      }
+      pinch = { d: d, a: a };
+    } else if (Object.keys(pts).length === 1) {
+      view.theta -= dx * 0.008;
+      view.phi = Math.max(0.35, Math.min(Math.PI - 0.35, view.phi - dy * 0.006));
+    }
+  });
+  function lift(e) {
+    if (e.type === 'pointerup' && down && Object.keys(pts).length === 1 &&
+        Math.hypot(e.clientX - down.x, e.clientY - down.y) < 14 && performance.now() - down.t < 600) say(nearest(e.clientX, e.clientY), 4);
+    delete pts[e.pointerId]; down = null; pinch = null;
+  }
+  cv.addEventListener('pointerup', lift); cv.addEventListener('pointercancel', lift);
+  cv.addEventListener('wheel', function (e) {
+    e.preventDefault(); view.idle = 0;
+    view.zoom = Math.max(0.35, Math.min(2.2, view.zoom * Math.exp(e.deltaY * 0.0012)));
+  }, { passive: false });
   // 가만히 있어도 가끔 물고기가 한마디씩 함
   setInterval(function () { if (fishes.length && !document.hidden) say(fishes[Math.floor(Math.random() * fishes.length)]); }, 3600);
 
@@ -250,10 +282,12 @@
     var dt = Math.min(clock.getDelta(), 0.05);
     fishes.forEach(function (f) { f.m.update(dt); });
     wearTick(clock.elapsedTime);
-    // 화면이 좁으면 뒤로 물러나 무리가 다 보이게, 카메라는 천천히 흔들림
-    camT += dt;
-    var dist = Math.max(2.3, 0.9 / (Math.tan(20 * Math.PI / 180) * camera.aspect));
-    camera.position.set(Math.sin(camT * 0.2) * 0.35, Math.sin(camT * 0.13) * 0.08, dist);
+    // 화면이 좁으면 뒤로 물러나 무리가 다 보이게. 손대지 않은 지 4초가 지나면 천천히 흔들림
+    camT += dt; view.idle += dt;
+    var dist = Math.max(2.3, 0.9 / (Math.tan(20 * Math.PI / 180) * camera.aspect)) * view.zoom;
+    var sway = Math.min(1, Math.max(0, view.idle - 4) / 2);
+    var th = view.theta + Math.sin(camT * 0.2) * 0.15 * sway, ph = view.phi - Math.sin(camT * 0.13) * 0.035 * sway;
+    camera.position.set(dist * Math.sin(ph) * Math.sin(th), dist * Math.cos(ph), dist * Math.sin(ph) * Math.cos(th));
     camera.lookAt(0, 0, 0);
     renderer.render(scene, camera);
     if (talk) {
@@ -454,6 +488,24 @@
   }
   $('tWrite').addEventListener('click', function () { showTab(false); });
   $('tList').addEventListener('click', function () { showTab(true); });
+
+  /* ══ 키보드: 폰 키보드가 올라오면 화면을 보이는 영역에 맞추고, 글 칸과 '물고기 풀어주기' 단추가 보이게 올림 ══ */
+  var vv = window.visualViewport, app = $('app');
+  function fitView() {
+    if (!vv) return;
+    // 화면 전체를 손가락으로 확대한 중이면 건드리지 않음 (키보드일 때만 맞춤)
+    if (Math.abs(vv.scale - 1) > 0.01) { app.style.height = app.style.top = app.style.bottom = ''; document.body.classList.remove('kb'); return; }
+    var kb = vv.height < window.innerHeight - 120;
+    document.body.classList.toggle('kb', kb);
+    if (!kb) { app.style.height = app.style.top = app.style.bottom = ''; return; }
+    app.style.bottom = 'auto'; app.style.height = vv.height + 'px'; app.style.top = vv.offsetTop + 'px';
+  }
+  if (vv) { vv.addEventListener('resize', fitView); vv.addEventListener('scroll', fitView); fitView(); }
+  ['nick', 'body'].forEach(function (id) {
+    $(id).addEventListener('focus', function () {
+      setTimeout(function () { fitView(); $('send').scrollIntoView({ block: 'end', behavior: 'smooth' }); }, 350);
+    });
+  });
 
   /* ══ 6. 로그인 · 관리자 단추 (작게) ══ */
   Core.onChange(function (st) {
