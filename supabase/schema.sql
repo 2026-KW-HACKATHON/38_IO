@@ -591,9 +591,9 @@ begin
   -- 위치가 오면 매장까지 거리를 재서 같이 남김
   bx := sp.box;
   if lat is not null and lng is not null and bx is not null then
-    d := hypot(
-      greatest((bx->>'s')::double precision - lat, 0, lat - (bx->>'n')::double precision) * 111320,
-      greatest((bx->>'w')::double precision - lng, 0, lng - (bx->>'e')::double precision) * 111320 * cos(radians(lat)));
+    -- 남북 · 동서로 범위에서 벗어난 거리(미터)를 재서 직선거리로 (Postgres에는 hypot이 없음)
+    d := sqrt(power(greatest((bx->>'s')::double precision - lat, 0, lat - (bx->>'n')::double precision) * 111320, 2)
+            + power(greatest((bx->>'w')::double precision - lng, 0, lng - (bx->>'e')::double precision) * 111320 * cos(radians(lat)), 2));
   end if;
   if proof = 'gps' then
     if d is null or d > margin then proof := 'remote'; end if;   -- 범위 밖이면 매장 밖 글로 남김
