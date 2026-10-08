@@ -6,7 +6,8 @@
    쓰는 법: ReefModel.load(THREE, cfg.fish).then(function (s) { scene.add(s.holder); 매 프레임 s.update(dt); })
    cfg.fish 한 줄:
      { id, name, model, color(대표 색), swim: 'school' | 'path', count(떼 물고기를 몇 마리 보일지, 기본 1),
-       size(혼자 헤엄치는 물고기 길이, 떼 물고기 한 마리 길이 대비), speed(혼자 헤엄치는 빠르기 배수), says(할 말), forward(머리 방향 '+x' '-z' 등), upright(해마처럼 서서 헤엄),
+       size(혼자 헤엄치는 물고기 길이, 떼 물고기 한 마리 길이 대비), speed(혼자 헤엄치는 빠르기 배수), says(할 말), forward(머리 방향 '+x' '-z' 등), upright(해마처럼 서서 헤엄), clip(동작 이름, 여러 개일 때), pitch(머리를 숙이는 각도, 도),
+       thrust(꼬리 밀기, 아래 참고),
        flutter(지느러미 떨림, 아래 참고) }
      school: 같은 떼에서 나눈 파일이라 자리와 헤엄이 파일 안에 들어 있음
      path:   혼자 있는 모델이라 여기서 고리 모양 길을 따라 헤엄치게 함
@@ -96,6 +97,29 @@
     return skinned ? box : new THREE.Box3().setFromObject(root);
   }
 
+  /* ── 꼬리 밀기: 뼈 몇 개를 박자에 맞춰 한 방향으로 확 굽혔다가 천천히 폄 ──
+     thrust: { bones: [뼈 이름 앞부분...], axis: 'x'|'y'|'z', amp: 굽는 각도(라디안, 끝 뼈일수록 커짐), rate: 1초에 몇 번 }
+     파일 동작이 움직이지 않는 뼈는 매번 처음 자세로 되돌린 뒤 굽힘 */
+  function setupThrust(THREE, root, clip, th) {
+    var moved = {}, list = [];
+    if (clip) clip.tracks.forEach(function (t) { moved[t.name.split('.').slice(0, -1).join('.')] = 1; });
+    (th.bones || []).forEach(function (pre, i, all) {
+      root.traverse(function (o) {
+        if (!o.isBone || o.name.indexOf(pre) !== 0 || list.some(function (x) { return x.b === o; })) return;
+        list.push({ b: o, rest: o.quaternion.clone(), anim: !!moved[o.name], k: (i + 1) / all.length });
+      });
+    });
+    var axis = new THREE.Vector3(th.axis === 'x' ? 1 : 0, th.axis === 'y' ? 1 : 0, th.axis === 'z' ? 1 : 0), q = new THREE.Quaternion();
+    return function (t) {
+      // 빨리 굽히고(앞 25%) 천천히 폄
+      var ph = (t * (+th.rate || 1)) % 1, push = ph < 0.25 ? Math.sin(ph / 0.25 * Math.PI / 2) : Math.cos((ph - 0.25) / 0.75 * Math.PI / 2);
+      list.forEach(function (x) {
+        if (!x.anim) x.b.quaternion.copy(x.rest);
+        x.b.quaternion.multiply(q.setFromAxisAngle(axis, push * (+th.amp || 0.3) * x.k));
+      });
+    };
+  }
+
   function gltf(THREE, url) { return new Promise(function (ok, no) { new THREE.GLTFLoader().load(url, ok, null, no); }); }
 
   /* ── 떼 물고기: 동작이 붙은 뼈만 그 종류의 뼈. 한 마리씩 나눠서 count 마리만 보임 ── */
@@ -137,20 +161,21 @@
       var model = g.scene, mixer = null;
       model.traverse(function (o) { if (o.isMesh) o.frustumCulled = false; });
       if (f.flutter && f.flutter.y) addFlutter(THREE, model, f.flutter);
-      if (g.animations.length) {
-        mixer = new THREE.AnimationMixer(model);
-        g.animations.forEach(function (a) { mixer.clipAction(a).play(); });
-      }
-      var turn = new THREE.Group(), pivot = new THREE.Group();
-      turn.add(model); pivot.add(turn);
+      // 동작이 여러 개면 clip 이름으로 고른 것 하나만 (없으면 첫 번째)
+      var clip = g.animations.filter(function (a) { return a.name === f.clip; })[0] || g.animations[0];
+      if (clip) { mixer = new THREE.AnimationMixer(model); mixer.clipAction(clip).play(); }
+      var thrust = f.thrust && f.thrust.bones ? setupThrust(THREE, model, clip, f.thrust) : null;
+      var turn = new THREE.Group(), tilt = new THREE.Group(), pivot = new THREE.Group();
+      turn.add(model); tilt.add(turn); pivot.add(tilt);
       turn.rotation.y = TURN[f.forward] || 0;
       // 가운데로 옮기고 머리 방향(+x) 길이를 잼
       var box = skinnedBox(THREE, turn), c = box.getCenter(new THREE.Vector3()), s = box.getSize(new THREE.Vector3());
       model.position.sub(c.applyAxisAngle(new THREE.Vector3(0, 1, 0), -turn.rotation.y));
       var len = f.upright ? s.y : s.x;
+      tilt.rotation.z = -num(f.pitch, 0) * Math.PI / 180;   // 머리 숙이기
       var head = new THREE.Object3D(); pivot.add(head);   // 머리 자리 (이름표용, 크기 정한 뒤 옮김)
       return { kind: 'path', id: f.id, name: f.name || f.id, color: f.color || '', obj: pivot, mixer: mixer,
-               len: len || 1, inner: turn, heads: [head], upright: !!f.upright, sizeK: num(f.size, 1.3), speedK: num(f.speed, 1),
+               thrust: thrust, len: len || 1, inner: turn, heads: [head], upright: !!f.upright, sizeK: num(f.size, 1.3), speedK: num(f.speed, 1),
                says: f.says || [] };
     });
   }
@@ -210,7 +235,7 @@
       var a = new THREE.Vector3(), b = new THREE.Vector3(), v = new THREE.Vector3();
       function step(dt) {
         t += dt * speed; clock.value = t;
-        parts.forEach(function (p) { if (p.mixer) p.mixer.update(dt * speed); if (p.hide) p.hide(); });
+        parts.forEach(function (p) { if (p.mixer) p.mixer.update(dt * speed); if (p.thrust) p.thrust(t); if (p.hide) p.hide(); });
         solo.forEach(function (p) {
           lane(p, t, a); lane(p, t + 0.05, b);
           p.obj.position.copy(a);

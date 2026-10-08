@@ -128,6 +128,18 @@
        "amp": 0.05,
        "rate": 14,
        "wave": 18
+      },
+      "thrust": {
+       "bones": [
+        "Bone003",
+        "Bone004",
+        "Bone005",
+        "Bone006",
+        "Bone007"
+       ],
+       "axis": "x",
+       "amp": 0.6,
+       "rate": 0.7
       }
      },
      {
@@ -140,6 +152,40 @@
       "forward": "-x",
       "speed": 0.5,
       "says": []
+     },
+     {
+      "id": "emperor-angelfish",
+      "name": "Emperor Angelfish",
+      "model": "assets/models/emperor-angelfish.glb",
+      "color": "#3A3F9E",
+      "swim": "path",
+      "size": 1.4,
+      "forward": "+x",
+      "speed": 0.7,
+      "says": []
+     },
+     {
+      "id": "ryukin-goldfish",
+      "name": "Ryukin Goldfish",
+      "model": "assets/models/ryukin-goldfish.glb",
+      "color": "#D9262B",
+      "swim": "path",
+      "size": 1.1,
+      "forward": "+z",
+      "speed": 0.5,
+      "says": []
+     },
+     {
+      "id": "sea-turtle",
+      "name": "Sea Turtle",
+      "model": "assets/models/sea-turtle.glb",
+      "color": "#5E8C3A",
+      "swim": "path",
+      "size": 2.2,
+      "forward": "-x",
+      "speed": 0.4,
+      "says": [],
+      "pitch": 28
      }
     ]
    }

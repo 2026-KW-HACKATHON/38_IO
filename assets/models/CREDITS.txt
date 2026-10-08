@@ -37,3 +37,28 @@ tennis-ball.glb
   Sketchfab Standard license (https://sketchfab.com/licenses).
   Changes: textures resized to 256px and converted to WebP, unused UV sets
   removed, vertex data quantized.
+
+emperor-angelfish.glb
+  "Fishe" (https://skfb.ly/oNX6A) by bukharig0300, licensed under
+  Creative Commons Attribution 4.0 (http://creativecommons.org/licenses/by/4.0/).
+  Changes: textures resized to 512px and converted to WebP, unused UV sets
+  removed, vertex data quantized, animation keyframes thinned.
+
+ryukin-goldfish.glb
+  "Ryukin goldfish" (https://skfb.ly/6TMC9) by somitsu, licensed under
+  Creative Commons Attribution 4.0 (http://creativecommons.org/licenses/by/4.0/).
+  Changes: textures resized to 512px and converted to WebP, unused UV sets
+  removed, vertex data quantized, animation keyframes thinned.
+
+sea-turtle.glb
+  "Turtle" (https://skfb.ly/oITRq) by yaniu03, licensed under
+  Creative Commons Attribution 4.0 (http://creativecommons.org/licenses/by/4.0/).
+  Changes: textures resized to 512px and converted to WebP, unused UV sets
+  removed, vertex data quantized, animation keyframes thinned.
+
+sailfish.glb (stored, not shown in any reef yet)
+  "Sailfish" (https://skfb.ly/6DGVV) by Mateus Schwaab, licensed under
+  Creative Commons Attribution 4.0 (http://creativecommons.org/licenses/by/4.0/).
+  Changes: textures resized to 512px and converted to WebP, vertex data
+  quantized, animation keyframes thinned. Head points +z; clips: Swim,
+  SwimFast, Bite.
