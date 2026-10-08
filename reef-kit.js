@@ -1117,7 +1117,7 @@
       return '.reef-layer{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:4}' +
         '.reef-say{position:absolute;left:0;top:0;max-width:' + num(b.maxWidth, 190) + 'px;padding:' + num(b.pad, 8) + 'px ' + (num(b.pad, 8) + 2) + 'px;' +
         'background:' + bg + ';color:' + b.ink + ';font-family:' + (family || 'system-ui,sans-serif') + ';font-size:' + num(b.size, 14) + 'px;line-height:1.35;' +
-        'white-space:pre-wrap;word-break:keep-all;overflow-wrap:anywhere;width:max-content;' + edge + '}' +
+        'white-space:pre-wrap;word-break:keep-all;overflow-wrap:anywhere;width:max-content;-webkit-font-smoothing:none;font-smooth:never;' + edge + '}' +
         '.reef-say .in{display:block}' +
         (b.anim === 'pop' ? '.reef-say .in{animation:reefPop .22s steps(4,end)}@keyframes reefPop{from{transform:scale(.55);opacity:0}to{transform:none;opacity:1}}' : '') +
         '.reef-say.out{opacity:0;transition:opacity .25s}' + tail;

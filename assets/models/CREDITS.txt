@@ -23,3 +23,10 @@ discus.glb
   "Fish" (https://sketchfab.com/3d-models/fish-74e57a9de7a24975b02d236ea3be614f)
   by assetfactory (https://sketchfab.com/assetfactory), Sketchfab Standard license
   (https://sketchfab.com/licenses). Changes: texture resized to 512px and converted to WebP.
+
+shark.glb
+  "Model 54A - Caribbean Reef Shark" (https://skfb.ly/6RnNA) by DigitalLife3D
+  (https://sketchfab.com/DigitalLife3D), licensed under
+  Creative Commons Attribution-NonCommercial 4.0 (http://creativecommons.org/licenses/by-nc/4.0/).
+  Changes: textures resized to 512px and converted to WebP, unused UV sets
+  removed, vertex data quantized, animation resampled.

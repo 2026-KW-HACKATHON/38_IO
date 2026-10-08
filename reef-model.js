@@ -6,7 +6,7 @@
    쓰는 법: ReefModel.load(THREE, cfg.fish).then(function (s) { scene.add(s.holder); 매 프레임 s.update(dt); })
    cfg.fish 한 줄:
      { id, name, model, color(대표 색), swim: 'school' | 'path', count(떼 물고기를 몇 마리 보일지, 기본 1),
-       size(혼자 헤엄치는 물고기 길이, 떼 물고기 한 마리 길이 대비), forward(머리 방향 '+x' '-z' 등), upright(해마처럼 서서 헤엄) }
+       size(혼자 헤엄치는 물고기 길이, 떼 물고기 한 마리 길이 대비), speed(혼자 헤엄치는 빠르기 배수), says(할 말), forward(머리 방향 '+x' '-z' 등), upright(해마처럼 서서 헤엄) }
      school: 같은 떼에서 나눈 파일이라 자리와 헤엄이 파일 안에 들어 있음
      path:   혼자 있는 모델이라 여기서 고리 모양 길을 따라 헤엄치게 함
 */
@@ -67,7 +67,7 @@
       function hide() { hiddenRoots.forEach(function (b) { b.scale.setScalar(1e-4); }); }
       hide();
       return { kind: 'school', id: f.id, name: f.name || f.id, color: f.color || '', obj: scene, mixer: mixer, clip: clip,
-               bones: bones, heads: heads, hide: hide };
+               bones: bones, heads: heads, hide: hide, says: f.says || [] };
     });
   }
 
@@ -90,7 +90,8 @@
       var len = f.upright ? s.y : s.x;
       var head = new THREE.Object3D(); pivot.add(head);   // 머리 자리 (이름표용, 크기 정한 뒤 옮김)
       return { kind: 'path', id: f.id, name: f.name || f.id, color: f.color || '', obj: pivot, mixer: mixer,
-               len: len || 1, inner: turn, heads: [head], upright: !!f.upright, sizeK: num(f.size, 1.3) };
+               len: len || 1, inner: turn, heads: [head], upright: !!f.upright, sizeK: num(f.size, 1.3), speedK: num(f.speed, 1),
+               says: f.says || [] };
     });
   }
 
@@ -136,8 +137,10 @@
         var L = p.sizeK * m.ref;
         p.inner.scale.setScalar(L / p.len);
         p.heads[0].position.set(p.upright ? 0 : L * 0.4, p.upright ? L * 0.35 : 0, 0);
-        p.lane = { rx: S * (0.26 + 0.05 * (i % 2)), rz: S * (0.2 + 0.04 * ((i + 1) % 2)), y: S * (0.1 * (i - (solo.length - 1) / 2)),
-                   sp: p.upright ? 0.07 : 0.16 + 0.03 * i, ph: i * 2.1, dir: i % 2 ? -1 : 1 };
+        // 큰 물고기는 더 넓게 돌고, 빠르기는 각도 대신 실제로 가는 거리 기준 (멀리 돌아도 빨라 보이지 않게)
+        var rx = S * (0.26 + 0.05 * (i % 2)) + L * 0.4, rz = S * (0.2 + 0.04 * ((i + 1) % 2)) + L * 0.3;
+        p.lane = { rx: rx, rz: rz, y: S * (0.1 * (i - (solo.length - 1) / 2)),
+                   sp: (p.upright ? 0.35 : 0.9) * L / ((rx + rz) / 2) * p.speedK, ph: i * 2.1, dir: i % 2 ? -1 : 1 };
         holder.add(p.obj);
       });
       function lane(p, time, out) {
@@ -151,7 +154,7 @@
         solo.forEach(function (p) {
           lane(p, t, a); lane(p, t + 0.05, b);
           p.obj.position.copy(a);
-          p.obj.rotation.y = Math.atan2(-(b.z - a.z), b.x - a.x) + (p.upright ? 0 : Math.sin(t * 7 + p.lane.ph) * 0.12);
+          p.obj.rotation.y = Math.atan2(-(b.z - a.z), b.x - a.x) + (p.upright ? 0 : Math.sin(t * 4 * p.speedK + p.lane.ph) * 0.1);
           if (!p.upright) p.obj.rotation.z = Math.atan2(b.y - a.y, Math.hypot(b.x - a.x, b.z - a.z)) * 0.6;
         });
       }

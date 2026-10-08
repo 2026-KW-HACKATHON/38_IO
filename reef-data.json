@@ -1,22 +1,19 @@
 {
  "v": 1,
- "updated": "2026-10-08T03:44:00.000Z",
+ "updated": "2026-10-08T04:08:02.000Z",
  "style": {
   "font": {
-   "family": "\"Galmuri11\", \"DotGothic16\", \"Jua\", sans-serif",
-   "google": [
-    "DotGothic16",
-    "Jua"
-   ],
-   "cssUrl": "https://cdn.jsdelivr.net/npm/galmuri@2.40.3/dist/galmuri.css"
+   "family": "\"DOSSaemmul\", monospace",
+   "google": [],
+   "cssUrl": "assets/fonts/dossaemmul.css"
   },
   "bubble": {
-   "bg": "#FFFDF8",
-   "ink": "#3B3350",
-   "border": "#3B3350",
-   "px": 1,
-   "size": 14,
-   "pad": 8,
+   "bg": "#FFF1C1",
+   "ink": "#2B2233",
+   "border": "#2B2233",
+   "px": 2,
+   "size": 16,
+   "pad": 6,
    "maxWidth": 190,
    "tail": true,
    "pixel": true,
@@ -51,7 +48,12 @@
       "model": "assets/models/clownfish.glb",
       "color": "#FF7A1A",
       "swim": "school",
-      "count": 1
+      "count": 1,
+      "says": [
+       "말미잘이 우리 집이야!",
+       "오늘도 줄무늬 정리 끝",
+       "숨바꼭질 할 사람?"
+      ]
      },
      {
       "id": "moorish-idol",
@@ -59,7 +61,12 @@
       "model": "assets/models/moorish-idol.glb",
       "color": "#1E1E1E",
       "swim": "school",
-      "count": 1
+      "count": 1,
+      "says": [
+       "내 지느러미 멋있지?",
+       "천천히, 우아하게~",
+       "길쭉한 건 내 자랑"
+      ]
      },
      {
       "id": "yellow-tang",
@@ -67,7 +74,12 @@
       "model": "assets/models/yellow-tang.glb",
       "color": "#FFE135",
       "swim": "school",
-      "count": 1
+      "count": 1,
+      "says": [
+       "노랑노랑 반짝반짝",
+       "이끼 냠냠 맛있다",
+       "햇빛이 좋아!"
+      ]
      },
      {
       "id": "powder-blue-tang",
@@ -75,7 +87,12 @@
       "model": "assets/models/powder-blue-tang.glb",
       "color": "#8CCBF0",
       "swim": "school",
-      "count": 1
+      "count": 1,
+      "says": [
+       "하늘색이 내 색이야",
+       "물이 시원하다~",
+       "같이 헤엄칠래?"
+      ]
      },
      {
       "id": "discus",
@@ -84,7 +101,13 @@
       "color": "#E0482E",
       "swim": "path",
       "size": 1.5,
-      "forward": "-z"
+      "forward": "+z",
+      "says": [
+       "동글동글 내 몸",
+       "천천히 가도 괜찮아",
+       "무늬가 다 달라!"
+      ],
+      "speed": 0.6
      },
      {
       "id": "blue-tang",
@@ -93,7 +116,13 @@
       "color": "#2E4FE6",
       "swim": "path",
       "size": 1.3,
-      "forward": "+x"
+      "forward": "+x",
+      "says": [
+       "어디 가더라…?",
+       "계속 헤엄쳐!",
+       "파랑이 최고야"
+      ],
+      "speed": 0.8
      },
      {
       "id": "seahorse",
@@ -102,8 +131,28 @@
       "color": "#E8A030",
       "swim": "path",
       "size": 1.2,
-      "forward": "-z",
-      "upright": true
+      "forward": "+z",
+      "upright": true,
+      "says": [
+       "꼬리로 꼭 잡아!",
+       "나는 서서 헤엄쳐",
+       "아빠가 알을 품어요"
+      ]
+     },
+     {
+      "id": "shark",
+      "name": "Caribbean Reef Shark",
+      "model": "assets/models/shark.glb",
+      "color": "#7D8B96",
+      "swim": "path",
+      "size": 4,
+      "forward": "-x",
+      "speed": 0.5,
+      "says": [
+       "겁먹지 마, 착해",
+       "어흥… 아니 뻐끔",
+       "천천히 순찰 중"
+      ]
      }
     ]
    }
