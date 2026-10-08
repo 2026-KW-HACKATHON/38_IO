@@ -1,14 +1,13 @@
-/* AR 화면: 카메라 위에 물고기 띄우기, 어항/낚시 전환, 권한 요청, 로그인 표시 */
+/* AR 화면: 카메라 위에 물고기 띄우기, 권한 요청, 로그인 표시 */
 (function () {
   "use strict";
 
   var kit = ReefKit(THREE);
-  var GOLD = '#FFC300';
   var HASH_PREVIEW = /preview/.test(location.hash);
 
   /* ── 조절값 (숫자만 바꿔서 크기·거리 조정) ── */
   var C = {
-    scale: 3,        // 물고기 무리 크기 배율
+    size: 220,       // 물고기 떼 전체 지름
     distance: 150,   // 내 앞쪽으로 얼마나 떨어뜨릴지 (cm 느낌)
     height: -15,     // 눈높이보다 얼마나 아래에 둘지
     fovDeg: 62       // 카메라 시야각
@@ -30,60 +29,24 @@
   var shoal = new THREE.Group();
   scene.add(shoal);
 
-  var baseData = null, goldData = null;
-  var mode = 'aquarium';          // 'aquarium'(어항) 또는 'fishing'(낚시)
   var viewMode = 'orbit';         // 'camera'(카메라 위 AR) 또는 'orbit'(손으로 돌려보기)
-  var fishes = [], talk = null, cfg = {};
+  var fish = null, cfg = {};
   var cameraOn = false;
 
   function setChip(el, text, on) { el.textContent = text; el.className = 'chip' + (on === true ? ' on' : on === false ? ' off' : ''); }
 
-  /* ── 낚시용 데이터: 모양과 움직임은 그대로, 색만 금색 + 전부 빛나게 ── */
-  function makeGold(d) {
-    var g = JSON.parse(JSON.stringify(d));
-    g.species.forEach(function (m) {
-      Object.keys(m.palette || {}).forEach(function (k) { m.palette[k] = GOLD; });
-      m.effects = [];
-    });
-    g.effects = (g.effects || []).concat([{ id: 'glow-gold', name: '금빛', type: 'glow',
-      params: { color: GOLD, strength: 0.45, rate: 1.2 } }]);
-    var r = kit.reef(g, 'voxel');
-    if (r) r.config.lanes.forEach(function (lane) { lane.effects = ['glow-gold']; lane.variant = null; });
-    return g;
-  }
-
-  /* ── 물고기 만들기 (어항/낚시 바꿀 때마다 다시 만듦) ── */
-  function build() {
-    if (!baseData) return;
-    var d = mode === 'fishing' ? goldData : baseData;
-    var r = kit.reef(d, 'voxel');
+  /* ── 물고기 떼 만들기: reef-data.json의 모델 reef ── */
+  function build(d) {
+    var r = ReefModel.reef(d);
     cfg = r ? r.config : {};
-    kit.applyStyle(d.style);
-    fishes.forEach(kit.dispose); fishes = [];
-    (cfg.lanes || []).forEach(function (lane, i) {
-      var m = kit.find(d, lane.species);
-      if (!m) return;
-      var variant = (typeof lane.variant === 'number') ? m.variants[lane.variant] : lane.variant;
-      var effects = (lane.effects || []).map(function (id) { return kit.effect(d, id); }).filter(Boolean);
-      var size = (+lane.scale || 1) * (0.92 + 0.16 * ((i * 37) % 7) / 7);
-      var f = kit.build(m, { variant: variant, effects: effects, phase: (+lane.ph || 0) + i * 0.37, scale: size });
-      f.userData.lane = lane;
-      shoal.add(f); fishes.push(f);
-    });
-    if (!talk) talk = kit.Talk(stage, camera, d.style); else { talk.setStyle(d.style); talk.clear(); }
-    fishes.forEach(function (f) { kit.steer(f, f.userData.lane, 0); });
+    if (!cfg.model) { Core.toast('보여 줄 물고기 모델이 없습니다'); return; }
+    ReefModel.load(THREE, cfg.model).then(function (m) {
+      fish = m; m.fit(C.size); m.setSpeed(cfg.speed);
+      var cr = document.getElementById('modelCredit'); if (cr) cr.innerHTML = ReefModel.creditHTML(cfg.credit);
+      shoal.add(m.holder);
+    }).catch(function () { Core.toast('물고기 모델을 불러오지 못했습니다'); });
   }
 
-  function setMode(next) {
-    if (next === mode) return;
-    mode = next;
-    document.getElementById('bAquarium').setAttribute('aria-pressed', mode === 'aquarium');
-    document.getElementById('bFishing').setAttribute('aria-pressed', mode === 'fishing');
-    build();
-    Core.log('reef_switch', { reef: mode === 'fishing' ? '낚시' : '어항' });
-  }
-  document.getElementById('bAquarium').addEventListener('click', function () { setMode('aquarium'); });
-  document.getElementById('bFishing').addEventListener('click', function () { setMode('fishing'); });
 
   /* ── 화면 크기에 맞추기 ── */
   function fitCamera() {
@@ -161,13 +124,7 @@
     orbit.theta -= (e.clientX - lastP.x) * 0.006; orbit.phi -= (e.clientY - lastP.y) * 0.006;
     lastP = { x: e.clientX, y: e.clientY }; applyOrbit();
   });
-  glc.addEventListener('pointerup', function (e) {
-    if (downAt && Math.hypot(e.clientX - downAt.x, e.clientY - downAt.y) < 8 && performance.now() - downAt.t < 450) {
-      var f = kit.pick(camera, e.clientX / window.innerWidth * 2 - 1, -(e.clientY / window.innerHeight) * 2 + 1, fishes);
-      if (f && talk) talk.say(f, kit.nextLine(f));
-    }
-    downAt = null; lastP = null;
-  });
+  glc.addEventListener('pointerup', function () { downAt = null; lastP = null; });
   glc.addEventListener('wheel', function (e) {
     if (viewMode !== 'orbit') return;
     e.preventDefault(); orbit.radius *= Math.exp(e.deltaY * 0.0013); applyOrbit();
@@ -187,13 +144,7 @@
     } else {
       shoal.position.set(0, 0, 0);
     }
-    shoal.scale.setScalar(C.scale);
-    kit.tick(t);
-    for (var i = 0; i < fishes.length; i++) {
-      kit.steer(fishes[i], fishes[i].userData.lane, t);
-      kit.animate(fishes[i], t);
-    }
-    if (talk) talk.update();
+    if (fish) fish.update(dt);
     renderer.render(scene, camera);
   }
 
@@ -281,8 +232,7 @@
 
   /* ── 시작: 데이터 읽고 그리기 ── */
   kit.loadData().then(function (d) {
-    baseData = d; goldData = makeGold(d);
-    build(); frame();
+    build(d); frame();
   }).catch(function (e) {
     Core.toast('reef-data.json을 읽지 못했습니다');
     frame();

@@ -292,11 +292,11 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
   /* ── 만들 창 목록 (위에서부터 순서대로 쌓임, 마지막이 맨 앞) ── */
   var WINDOWS = [
     { id: 'account', title: '나의 계정',   kind: 'account', icon: "assets/space/xp/icon-account.png", at: [0.30, 0.08] },
-    { id: 'fish',    title: '나의 어항',   kind: 'reef',    page: 'ppt-reef.html?xp', icon: "assets/space/xp/icon-fish.png",   at: [0.03, 0.37] },
+    { id: 'fish',    title: '나의 어항',   kind: 'reef',    page: 'first-reef.html?embed', icon: "assets/space/xp/icon-fish.png",   at: [0.03, 0.37] },
     { id: 'map',     title: '월계 지도', kind: 'map',     icon: "assets/space/xp/icon-map.png",    at: [0.29, 0.06] },
     { id: 'friends', title: '친구 관리',   kind: 'friends', icon: "assets/space/xp/icon-friends.png", at: [0.72, 0.10] },
     { id: 'stock',   title: '재고 관리',   kind: 'picture', img: "assets/space/stock.webp", cover: true, icon: "assets/space/xp/icon-stock.png", at: [0.07, 0.62] },
-    { id: 'review',  title: '리뷰 관리',   kind: 'reef',    page: 'cord-jr-reef.html',        icon: "assets/space/xp/icon-review.png", at: [0.36, 0.60] },
+    { id: 'review',  title: '리뷰 관리',   kind: 'friends', text: '리뷰 관리 기능은 준비 중입니다.', icon: "assets/space/xp/icon-review.png", at: [0.36, 0.60] },
     { id: 'gift',    title: '선물 코드',   kind: 'gift',    icon: "assets/space/xp/icon-gift.png",    at: [0.72, 0.52] }
   ];
 
@@ -366,7 +366,7 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
     } else if (def.kind === 'account') {
       buildAccount(entry);
     } else if (def.kind === 'friends') {
-      body.innerHTML = '친구 목록이 비어 있습니다.<br>친구 관리 기능은 준비 중입니다.';
+      body.innerHTML = def.text || '친구 목록이 비어 있습니다.<br>친구 관리 기능은 준비 중입니다.';
     } else if (def.kind === 'map') {
       buildMap(body);
     }
@@ -739,6 +739,7 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
         if (named.length > 1) named.forEach(function (v) { opts.push({ m: m, vi: m.variants.indexOf(v), name: m.name + ' · ' + v.name }); });
         else opts.push({ m: m, vi: 0, name: m.name });
       });
+      if (!opts.length) { panel.appendChild(el('p', 'empty', '아바타로 고를 물고기가 아직 없습니다.')); return; }   // 도트 물고기가 없을 때
       var gold = opts.filter(function (o) { return o.m.id === 'goldfish' && /주황/.test(o.name); })[0] || opts[0];
       var av = Object.assign({ species: gold.m.id, variant: gold.vi, effect: '', items: [] }, p.avatar || {});
       function pick() { return opts.filter(function (o) { return o.m.id === av.species && o.vi === av.variant; })[0] || gold; }

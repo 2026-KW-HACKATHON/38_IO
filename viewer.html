@@ -53,6 +53,11 @@
     background:rgba(16,12,30,.5);border:1px solid rgba(220,212,255,.16);border-radius:999px;
     padding:7px 14px;color:var(--dim);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
   .hidden{display:none!important}
+  /* 물고기 모델 출처 (CC BY라서 늘 보임) */
+  #modelCredit{position:absolute;left:0;right:0;bottom:calc(8px + env(safe-area-inset-bottom,0px));z-index:6;margin:0;padding:0 12px;
+    text-align:center;font-size:10.5px;line-height:1.4;color:rgba(255,255,255,.85);text-shadow:0 1px 2px rgba(0,0,0,.6);pointer-events:none}
+  #modelCredit a{color:inherit;pointer-events:auto}
+  #modelCredit .note{display:none}
 </style>
 <link rel="stylesheet" href="css/xp-font.css">
 </head>
@@ -61,6 +66,7 @@
   <video id="cam" playsinline muted autoplay></video>
   <canvas id="gl"></canvas>
   <div id="bubbles"></div>
+  <p id="modelCredit"></p>
 
   <div id="hud" class="hidden">
     <div class="chip" id="scene">—</div>
@@ -79,6 +85,7 @@
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script src="reef-kit.js"></script>
+<script src="reef-model.js"></script>
 <script>
 (function(){
 "use strict";
@@ -206,31 +213,6 @@ function watchScene(){
 var kit = ReefKit(THREE);
 var REEF_DATA = null;          // reef-data.json 내용. 아직 못 받았으면 null
 
-// 예전 scenes.json에는 거북이 번호(0, 1, 2)만 적혀 있었다.
-// 그 번호가 reef-data.json의 어떤 물고기인지 짝지어 둠
-var LEGACY_MORPH = ['turtle-cream', 'turtle-lime', 'turtle-sundae'];
-
-// scene에 적힌 거북이 한 마리(spec)가 reef-data.json의 어떤 물고기인지 찾음
-function speciesFor(spec){
-  var id = spec.species || LEGACY_MORPH[(spec.morph || 0) % LEGACY_MORPH.length];
-  return REEF_DATA ? kit.find(REEF_DATA, id) : null;
-}
-
-// 거북이 한 마리를 3D로 만듦.
-// 천장에 붙인 카드일 때는 등이 천장 쪽을 보게 겉 그룹을 하나 더 씌워서 뒤집는다
-// (물고기 모양 자체는 안 건드리고, 감싸는 그룹만 180도 돌리는 방식)
-function buildTurtle(spec){
-  var m = speciesFor(spec);
-  if (!m) return null;         // 아직 데이터를 못 읽었으면 이번엔 안 만듦
-  var holder = new THREE.Group();
-  holder.rotation.order = 'YZX';
-  var built = kit.build(m, { scale: (0.30 / 0.52) * (spec.sc || 1), phase: spec.ph });
-  holder.add(built);
-  if (CEILING) holder.rotation.x = Math.PI;
-  holder.userData.built = built;   // 몸 흔들기 애니메이션은 이 안쪽 모델에 적용해야 함
-  return holder;
-}
-
 /* ─────────────────────── 3. QR 네 모서리로 카드 위치 계산 ─────────────────── */
 
 // 카드 위의 네 점과 사진 속 네 점을 짝지어서, 카드 평면이 사진에 어떻게 찍혔는지 구함
@@ -348,7 +330,20 @@ var WALL = false;
 var CEILING = false;
 var CLEAR = 6;
 
-// 설정값대로 거북이들을 만들어서 장면에 올림
+// 물고기 떼 모델은 한 번만 불러옴 (reef-data.json의 모델 reef)
+var school = null, schoolUrl = '', schoolModel = null;
+function loadSchool(){
+  var r = REEF_DATA && ReefModel.reef(REEF_DATA), url = r && r.config.model;
+  if (!url) return new Promise(function(){});
+  if (!school || url !== schoolUrl){
+    schoolUrl = url;
+    school = ReefModel.load(THREE, url).then(function(m){ m.setSpeed(r.config.speed); schoolModel = m; return m; });
+    document.getElementById('modelCredit').innerHTML = ReefModel.creditHTML(r.config.credit);
+  }
+  return school;
+}
+
+// 설정값대로 물고기 떼를 장면에 올림
 function buildScene(cfg){
   CFG = cfg;
   WALL = !!cfg.wall;
@@ -357,50 +352,19 @@ function buildScene(cfg){
   while (world.children.length) world.remove(world.children[0]);
   turtles = []; picks = [];
 
-  /* 테이블 위에 놓은 카드는 위쪽이 그대로 '위'라서 손댈 게 없다.
-     벽에 붙인 카드는 위쪽이 사람 쪽을 향하므로, 공간을 90도 눕혀서
-     거북이가 벽을 타고 기어오르지 않고 벽 앞을 가로질러 헤엄치게 한다.
-
-     천장에 붙인 카드는 위쪽이 아래를 향하므로, 거북이가 천장 아래에
-     자연스럽게 놓인다 (아래 place() 참고). 다만 모델이 '카드에서 멀어지는
-     방향 = 위'로 만들어져 있어서 그대로 두면 배를 위로 하고 뜨게 된다.
-     그래서 거북이마다 180도 돌려주는데, 이건 공간이 아니라 모델의
-     문제라서 아래 반복문 안에서 처리한다. */
+  /* 테이블 위 카드는 위쪽이 그대로 '위'.
+     벽에 붙인 카드는 공간을 90도 눕혀서 물고기 떼가 벽 앞에 뜨게 함.
+     천장에 붙인 카드는 물고기 떼를 180도 뒤집어서 배가 아래로 가게 함. */
   world.rotation.x = cfg.wall ? -Math.PI / 2 : 0;
 
-  (cfg.turtles || cfg.swimmers || []).forEach(function(spec, i){
-    var t = buildTurtle(spec);
-    if (!t) return;   // reef-data.json을 아직 못 읽었으면 이번엔 건너뜀 (데이터 오면 다시 그림)
-    // 모델은 코부터 꼬리까지 약 14칸. 실제 바다거북은 90cm쯤인데
-    // 그 크기로 하면 책상이 꽉 차니까 크기는 만드는 사람이 정하게 함
-    var s = (0.30 / 0.52) * (spec.sc || 1);
-    t.userData.spec = spec;
-    t.userData.said = 0;
-    world.add(t);
-    turtles.push(t);
-
-    var sh = null;
-    if (!cfg.wall && !CEILING){           // 벽이나 천장에는 그림자가 질 곳이 없음
-      sh = new THREE.Mesh(
-        new THREE.PlaneBufferGeometry(26*s, 26*s),
-        new THREE.MeshBasicMaterial({map:shadowTex, transparent:true, depthWrite:false})
-      );
-      sh.rotation.x = -Math.PI/2;
-      sh.position.y = 0.12;
-      sh.renderOrder = -1;
-      world.add(sh);
-    }
-    t.userData.shadow = sh;
-
-    // 터치 확인용으로 거북이마다 보이지 않는 상자를 하나씩 둠.
-    // 블록 수천 개를 일일이 검사하는 것보다 훨씬 가볍고 누르기도 쉽다
-    var hit = new THREE.Mesh(
-      new THREE.BoxBufferGeometry(17*s, 12*s, 15*s),
-      new THREE.MeshBasicMaterial({visible:false})
-    );
-    hit.userData.turtle = t;
-    world.add(hit);
-    t.userData.hit = hit;
+  // 물고기 떼(3D 모델)를 카드 위(벽이면 앞)에 띄움. 크기는 장면의 size(cm), 없으면 36cm
+  var d = (+cfg.size || 36);
+  loadSchool().then(function(m){
+    if (CFG !== cfg) return;
+    m.fit(d);
+    m.holder.position.set(0, CLEAR + d * 0.5, 0);
+    if (CEILING) m.holder.rotation.x = Math.PI;
+    world.add(m.holder);
   });
 }
 
@@ -655,6 +619,7 @@ function frame(){
   if (pose) applyPose();
   applyLighting();
   kit.tick(t);   // 전기 이펙트 같은, 시간이 지나야 움직이는 그림들을 한 번에 갱신
+  if (schoolModel) schoolModel.update(dt);
 
   for (var i = 0; i < turtles.length; i++){
     var tt = turtles[i], sp = tt.userData.spec;

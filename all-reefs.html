@@ -2045,16 +2045,14 @@ function renderStyle(){
 
 /* ═══════════════════ 하위 reef ═══════════════════ */
 const KIND_INFO = {
-  showcase: { ko: '전시형', tpl: 'voxel-reef.html', about: '물고기가 떠다니는 3D 전시. 끌어서 돌려보고, 누르면 말합니다.' },
-  marker: { ko: '마커 AR', tpl: 'marker-test.html', about: '벽에 붙인 4cm 형광 큐브 하나를 찾아서 거리·각도를 계산하고, 그 앞에 물고기 떼를 띄웁니다.' },
-  console: { ko: '카드 콘솔', tpl: 'reef-console.html', about: 'QR 카드와 viewer.html용 scenes.json을 만드는 편집기. 여기서는 기본 목록을 정합니다.' }
+  model: { ko: '3D 모델', tpl: 'first-reef.html', about: 'GLB 3D 모델 물고기 떼가 헤엄치는 reef. 끌어서 돌려봅니다.' }
 };
-const BUNDLED = ['voxel-reef.html', 'charged-reef.html', 'reef-console.html', 'marker-test.html', 'cord-jr-reef.html', 'ppt-reef.html'];
+const BUNDLED = ['first-reef.html'];
 // 자기만의 모양이 있는 페이지: 틀로 다시 만들지 않음 (덮어쓰면 모양이 사라짐)
-const OWN_LOOK = ['cord-jr-reef.html', 'ppt-reef.html'];
+const OWN_LOOK = ['first-reef.html'];
 const fileExists = {};
 function reefSrc(r){
-  const tpl = KIND_INFO[r.kind] ? KIND_INFO[r.kind].tpl : 'voxel-reef.html';
+  const tpl = KIND_INFO[r.kind] ? KIND_INFO[r.kind].tpl : 'first-reef.html';
   const f = (BUNDLED.indexOf(r.file) >= 0 || fileExists[r.file]) ? r.file : tpl;
   return f + (r.kind === 'marker' ? '#preview' : '');
 }
@@ -2111,7 +2109,7 @@ function renderReefs(){
     b.setAttribute('aria-current', i === ui.sel.reefs);
     b.innerHTML = '<span><b></b><i></i></span>';
     b.querySelector('b').textContent = rr.name;
-    const n = rr.kind === 'showcase' ? (rr.config.lanes || []).length + '마리' : rr.kind === 'marker' ? (rr.config.fishTotal || 0) + '마리' : (rr.config.swimmers || []).length + '마리';
+    const n = rr.kind === 'model' ? (rr.config.model || '모델 없음').split('/').pop() : rr.kind === 'showcase' ? (rr.config.lanes || []).length + '마리' : rr.kind === 'marker' ? (rr.config.fishTotal || 0) + '마리' : (rr.config.swimmers || []).length + '마리';
     b.querySelector('i').textContent = rr.file + ' · ' + (KIND_INFO[rr.kind] ? KIND_INFO[rr.kind].ko : rr.kind) + ' · ' + n;
     b.addEventListener('click', () => { ui.sel.reefs = i; renderReefs(); });
     rl.appendChild(b);
@@ -2120,7 +2118,9 @@ function renderReefs(){
     const kind = $('#rNewKind').value;
     edit(() => {
       const id = uid(kind === 'showcase' ? 'reef' : kind, D.reefs);
-      const cfg = kind === 'showcase' ? { title: 'New Reef', subtitle: '', radius: 50, lanes: [], props: [], sliders: ['swim', 'flap'], talk: { tap: true, auto: 0 } }
+      const firstModel = D.reefs.find(x => x.kind === 'model');
+      const cfg = kind === 'model' ? (firstModel ? JSON.parse(JSON.stringify(firstModel.config)) : { title: 'New Reef', model: '', speed: 1, zoom: 0.65, credit: {} })
+        : kind === 'showcase' ? { title: 'New Reef', subtitle: '', radius: 50, lanes: [], props: [], sliders: ['swim', 'flap'], talk: { tap: true, auto: 0 } }
         : kind === 'marker' ? { fishTotal: 12, mix: D.species.filter(m => m.motion === 'fish').slice(0, 2).map(m => m.id), shells: [22, 36, 52], chargeEvery: 0, chargeEffect: '', cubeCm: 4, fovDeg: 65, drop: 14, wallGap: 8 }
         : { swimmers: [] };
       D.reefs.push({ id, name: '새 ' + KIND_INFO[kind].ko + ' reef', file: id + '.html', kind, config: cfg });
@@ -2150,7 +2150,8 @@ function renderReefs(){
   $('#rCode').addEventListener('click', () => openCode(r.file, () => reefFileText(r)));
   twoStep($('#rDel'), '정말 지우시겠습니까? (레포 파일은 그대로)', () => { edit(() => D.reefs.splice(ui.sel.reefs, 1), true); ui.sel.reefs = Math.max(0, ui.sel.reefs - 1); renderReefs(); });
   const cfgBox = $('#rCfg');
-  if (r.kind === 'showcase') cfgShowcase(cfgBox, r);
+  if (r.kind === 'model') cfgModel(cfgBox, r);
+  else if (r.kind === 'showcase') cfgShowcase(cfgBox, r);
   else if (r.kind === 'marker') cfgMarker(cfgBox, r);
   else cfgConsole(cfgBox, r);
   askReef($('#rAsk'), r);
@@ -2169,6 +2170,20 @@ function wireNums(box, obj, after){
   $$('input[data-k]', box).forEach(el => el.addEventListener('input', () => { edit(() => { obj[el.dataset.k] = numv(el.value, 0); }); if (after) after(); }));
 }
 
+// 3D 모델 reef 설정: 모델 파일, 빠르기, 카메라 거리, 출처
+function cfgModel(box, r){
+  const c = r.config; c.credit = c.credit || {};
+  box.innerHTML = `
+    <h2>설정</h2>
+    <div class="g3" style="margin-top:8px">${field('제목', 'title', c.title || '', 'text')}${field('모델 파일 (GLB)', 'model', c.model || '', 'text')}
+      <label class="f"><span>헤엄 빠르기</span><input type="number" step="0.1" min="0" data-m="speed" value="${c.speed == null ? 1 : c.speed}"></label></div>
+    <div class="g3" style="margin-top:8px"><label class="f"><span>카메라 거리 (모델 크기 배수)</span><input type="number" step="0.05" min="0.1" data-m="zoom" value="${c.zoom || 0.65}"></label></div>
+    <h3>출처 (CC BY 같은 라이선스는 꼭 적기)</h3>
+    <div class="g3">${['title:제목', 'author:만든 사람', 'license:라이선스', 'source:원본 주소', 'authorUrl:만든 사람 주소', 'licenseUrl:라이선스 주소', 'note:바꾼 점'].map(x => { const [k, l] = x.split(':'); return `<label class="f"><span>${l}</span><input type="text" data-cr="${k}" value="${esc(c.credit[k] || '')}"></label>`; }).join('')}</div>`;
+  $$('[data-f]', box).forEach(el => el.addEventListener('change', () => edit(() => { c[el.dataset.f] = el.value.trim(); }, true)));
+  $$('[data-m]', box).forEach(el => el.addEventListener('input', () => edit(() => { c[el.dataset.m] = numv(el.value, el.dataset.m === 'speed' ? 1 : 0.65); })));
+  $$('[data-cr]', box).forEach(el => el.addEventListener('input', () => edit(() => { c.credit[el.dataset.cr] = el.value; })));
+}
 function cfgShowcase(box, r){
   const c = r.config;
   c.lanes = c.lanes || []; c.props = c.props || []; c.sliders = c.sliders || ['swim', 'flap']; c.talk = c.talk || { tap: true, auto: 0 };
@@ -2550,7 +2565,7 @@ function openCode(name, fallback){
 /* ───────── 전체 파일 모으기 / zip ───────── */
 async function bundleFiles(){
   const files = {}, miss = [];
-  for (const n of ['all-reefs.html', 'reef-kit.js', 'reef-items.js']){
+  for (const n of ['all-reefs.html', 'reef-kit.js', 'reef-items.js', 'reef-model.js']){
     try { files[n] = await fetchText(n); } catch(e){ miss.push(n); }
   }
   files['reef-data.json'] = dataText();

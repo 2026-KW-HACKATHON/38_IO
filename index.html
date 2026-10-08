@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="css/app.css">
 <link rel="stylesheet" href="css/vista.css">
 </head>
-<body data-reef="voxel">
+<body data-reef="first">
 <div id="stage">
   <video id="cam" playsinline muted autoplay class="hidden"></video>
   <canvas id="gl"></canvas>
@@ -27,8 +27,6 @@
 
   <!-- 아래쪽: reef 전환 버튼 -->
   <div id="bottom" class="hidden">
-    <button class="pill" id="bAquarium" type="button" aria-pressed="true">어항</button>
-    <button class="pill gold" id="bFishing" type="button" aria-pressed="false">낚시</button>
     <button class="pill" id="bRecenter" type="button">위치 다시 잡기</button>
     <!-- [임시-촬영저장 시작] 이 구간과 js/capture-temp.js를 지우면 촬영 기능이 빠짐 -->
     <button class="pill" id="bShot" type="button">촬영</button>
@@ -36,6 +34,9 @@
   </div>
 
   <!-- 처음 화면: 비스타 유리 창 'About QRium', 로그인 없이 바로 시작 가능 -->
+  <!-- 물고기 모델 출처 (CC BY라서 늘 보임) -->
+  <p id="modelCredit" class="mcredit"></p>
+
   <div id="gate">
     <div class="about" role="dialog" aria-labelledby="aboutTitle">
       <div class="abar"><span class="attl" id="aboutTitle">About QRium</span><button class="acls" id="gateClose" type="button" title="닫기" aria-label="닫기"></button></div>
@@ -68,6 +69,7 @@
 <script src="js/config.js"></script>
 <script src="js/core.js"></script>
 <script src="reef-kit.js"></script>
+<script src="reef-model.js"></script>
 <script src="js/ar.js"></script>
 <!-- [임시-촬영저장 시작] -->
 <script src="js/capture-temp.js"></script>

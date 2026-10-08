@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>First Reef</title>
+<style>
+  html,body{height:100%;margin:0;overflow:hidden;background:#1EB6F0;color:#F2EEF9;
+    font-family:system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-user-select:none;user-select:none}
+  #stage{position:fixed;inset:0;background:#1EB6F0}
+  /* 뒤에 깔리는 물속 움짤 (반투명) */
+  .bgfx{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.5;pointer-events:none}
+  canvas{position:relative;z-index:1;display:block;width:100%;height:100%;touch-action:none}
+  #top{position:absolute;left:12px;top:calc(10px + env(safe-area-inset-top,0px));z-index:5;display:flex;gap:8px;align-items:center}
+  #top a,#top span{font-size:13px;color:#fff;background:rgba(16,12,30,.45);border-radius:999px;padding:6px 12px;text-decoration:none}
+  #msg{position:absolute;inset:0;z-index:4;display:flex;align-items:center;justify-content:center;font-size:14px;pointer-events:none}
+  /* 모델 출처 (CC BY라서 늘 보여야 함) */
+  #credit{position:absolute;left:0;right:0;bottom:0;z-index:5;margin:0;padding:8px 12px calc(8px + env(safe-area-inset-bottom,0px));
+    font-size:11.5px;line-height:1.5;color:#fff;background:linear-gradient(transparent,rgba(10,20,40,.55));text-align:center}
+  #credit a{color:#fff}
+  /* 나의 어항 창 안 (?embed): 위 안내는 숨기고 출처는 작게 */
+  body.embed #top{display:none}
+  body.embed #credit{font-size:9.5px;padding:4px 6px}
+  body.embed #credit .note{display:none}
+</style>
+</head>
+<body data-reef="first">
+<div id="stage">
+  <img class="bgfx" src="assets/reef/water-tank.webp" alt="">
+  <div id="top"><a href="index.html">← 처음으로</a><span>끌어서 돌려보기 · 두 손가락이나 휠로 확대</span></div>
+  <div id="msg">물고기 떼를 불러오는 중…</div>
+  <p id="credit"></p>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="reef-kit.js"></script>
+<script src="reef-model.js"></script>
+<script>
+(function(){
+"use strict";
+/* reef-data.json의 모델 reef(First Reef)를 띄우고 헤엄 동작을 돌림 */
+if (/[?&]embed\b/.test(location.search)) document.body.classList.add('embed');
+var REEF_ID = document.body.getAttribute('data-reef');
+var kit = ReefKit(THREE);
+var stage = document.getElementById('stage'), msg = document.getElementById('msg');
+var renderer = new THREE.WebGLRenderer({antialias:true, alpha:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+renderer.outputEncoding = THREE.sRGBEncoding;
+stage.insertBefore(renderer.domElement, document.getElementById('top'));
+var scene = new THREE.Scene();
+var camera = new THREE.PerspectiveCamera(40, 1, 0.01, 1000);
+scene.add(new THREE.HemisphereLight(0xdff6ff, 0x1a3a5a, 1.1));
+var sun = new THREE.DirectionalLight(0xffffff, 1.2); sun.position.set(3, 6, 4); scene.add(sun);
+
+var fish = null, cfg = {}, modelUrl = '', size = 1;
+var cam = {theta:0.6, phi:1.25, radius:3};
+
+// 설정 → 모델 (모델 주소가 바뀔 때만 새로 불러옴)
+function build(d){
+  var r = ReefModel.reef(d, REEF_ID) || ReefModel.reef(d);
+  if (!r){ msg.style.display = ''; msg.textContent = 'reef-data.json에 모델 reef가 없어요'; return; }
+  cfg = r.config || {};
+  document.title = cfg.title || r.name || 'Reef';
+  document.getElementById('credit').innerHTML = ReefModel.creditHTML(cfg.credit);
+  if (fish) fish.setSpeed(cfg.speed);
+  cam.radius = size * (+cfg.zoom || 0.65);
+  if (cfg.model === modelUrl) return;
+  modelUrl = cfg.model;
+  if (fish){ scene.remove(fish.holder); fish = null; }
+  msg.style.display = ''; msg.textContent = '물고기 떼를 불러오는 중…';
+  ReefModel.load(THREE, modelUrl).then(function(m){
+    if (modelUrl !== cfg.model) return;
+    fish = m; size = m.size; m.setSpeed(cfg.speed);
+    scene.add(m.holder);
+    cam.radius = size * (+cfg.zoom || 0.65);
+    camera.near = size / 500; camera.far = size * 20; camera.updateProjectionMatrix();
+    msg.style.display = 'none';
+  }).catch(function(){ msg.textContent = '모델을 불러오지 못했어요'; });
+}
+
+// 손가락·마우스로 돌려보기, 휠·두 손가락으로 확대
+function applyCam(){
+  cam.phi = Math.max(0.15, Math.min(Math.PI - 0.15, cam.phi));
+  cam.radius = Math.max(size * 0.15, Math.min(size * 4, cam.radius));
+  var sp = Math.sin(cam.phi);
+  camera.position.set(cam.radius*sp*Math.sin(cam.theta), cam.radius*Math.cos(cam.phi), cam.radius*sp*Math.cos(cam.theta));
+  camera.lookAt(0, 0, 0);
+}
+var el = renderer.domElement, pts = {}, lastPinch = 0, idle = 0;
+el.addEventListener('pointerdown', function(e){ pts[e.pointerId] = {x:e.clientX, y:e.clientY}; idle = 0; try{ el.setPointerCapture(e.pointerId); }catch(er){} });
+el.addEventListener('pointermove', function(e){
+  var p = pts[e.pointerId]; if (!p) return;
+  var ids = Object.keys(pts);
+  if (ids.length === 1){ cam.theta -= (e.clientX - p.x) * 0.006; cam.phi -= (e.clientY - p.y) * 0.006; }
+  p.x = e.clientX; p.y = e.clientY;
+  if (ids.length === 2){
+    var a = pts[ids[0]], b = pts[ids[1]], dd = Math.hypot(a.x - b.x, a.y - b.y);
+    if (lastPinch) cam.radius *= lastPinch / dd;
+    lastPinch = dd;
+  }
+  idle = 0;
+});
+function up(e){ delete pts[e.pointerId]; lastPinch = 0; }
+el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
+el.addEventListener('wheel', function(e){ e.preventDefault(); cam.radius *= Math.exp(e.deltaY * 0.0012); }, {passive:false});
+
+function resize(){
+  var w = stage.clientWidth || innerWidth, h = stage.clientHeight || innerHeight;
+  renderer.setSize(w, h, false); camera.aspect = w / Math.max(1, h); camera.updateProjectionMatrix();
+}
+window.addEventListener('resize', resize); resize();
+
+// 가만히 두면 천천히 돎
+var clock = new THREE.Clock();
+(function frame(){
+  requestAnimationFrame(frame);
+  var dt = Math.min(clock.getDelta(), 0.05);
+  idle += dt; if (idle > 3) cam.theta += dt * 0.12;
+  if (fish) fish.update(dt);
+  applyCam();
+  renderer.render(scene, camera);
+})();
+
+// 데이터 읽기 → 바뀌면 다시 (All Reefs 미리보기 창에서는 고치는 중인 값을 바로 받음)
+var gotLive = false;
+kit.loadData().then(function(d){
+  if (!gotLive) build(d);
+  kit.watchData(d.updated, build);
+}).catch(function(){ msg.textContent = 'reef-data.json을 읽지 못했어요'; });
+kit.onLiveData(function(d, m){ gotLive = true; if (m && m.reef) REEF_ID = m.reef; build(d); });
+})();
+</script>
+</body>
+</html>
