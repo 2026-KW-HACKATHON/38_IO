@@ -539,7 +539,8 @@ grant execute on function public.my_gifts() to authenticated;
 grant execute on function public.new_gifts() to authenticated;
 
 -- 15) 매장 방문자 한 줄 리뷰 (로그인 없이 쓰고 누구나 봄)
---     쓰기는 아래 함수로만 가능: 매장 범위 + 50m 안에서 보낸 위치(gps)이거나, 영수증 인증(receipt)을 거친 경우만 받음
+--     쓰기는 아래 함수로만 가능: 누구나 쓸 수 있고, 확인 방식(proof)을 함께 남김
+--     gps: 매장 범위 + 50m 안에서 보낸 위치 / receipt: 영수증 인증 / admin: 관리자 시험 / remote: 매장 밖이거나 위치 없음
 --     같은 매장에서 직전 리뷰가 2분 안에 올라왔으면 같은 무리(grp)로 묶음
 --     proof가 receipt인 글의 영수증 정보(receipt)는 기기에서 읽은 값이라 서버가 확인하지 못함 (나중에 대조용)
 create table if not exists public.wall_reviews (
@@ -548,17 +549,17 @@ create table if not exists public.wall_reviews (
   nick text check (nick is null or char_length(nick) <= 12),
   body text not null check (char_length(body) between 1 and 60),
   fish text not null check (char_length(fish) between 1 and 40),
-  proof text not null check (proof in ('gps', 'receipt', 'admin')),
+  proof text not null check (proof in ('gps', 'receipt', 'admin', 'remote')),
   item text check (item is null or char_length(item) <= 40),
   dist real,
   receipt jsonb,
   grp bigint not null,
   created_at timestamptz not null default now()
 );
--- 이미 만든 표에는 관리자 시험 글(admin)을 허용하도록 검사를 다시 함
+-- 이미 만든 표에는 관리자 시험 글(admin) · 매장 밖 글(remote)을 허용하도록 검사를 다시 함
 alter table public.wall_reviews add column if not exists item text check (item is null or char_length(item) <= 40);   -- 이미 만든 표에 아이템 칸 추가
 alter table public.wall_reviews drop constraint if exists wall_reviews_proof_check;
-alter table public.wall_reviews add constraint wall_reviews_proof_check check (proof in ('gps', 'receipt', 'admin'));
+alter table public.wall_reviews add constraint wall_reviews_proof_check check (proof in ('gps', 'receipt', 'admin', 'remote'));
 create index if not exists wall_reviews_spot_time on public.wall_reviews (spot, created_at desc);
 alter table public.wall_reviews enable row level security;
 drop policy if exists "wall_select" on public.wall_reviews;
@@ -587,13 +588,17 @@ begin
   if n is not null and char_length(n) > 12 then raise exception '닉네임은 12자까지입니다'; end if;
   if coalesce(fish_id, '') = '' then raise exception '물고기를 골라 주세요'; end if;
 
-  if proof = 'gps' then
-    bx := sp.box;
-    if lat is null or lng is null or bx is null then raise exception '위치를 확인하지 못했습니다'; end if;
+  -- 위치가 오면 매장까지 거리를 재서 같이 남김
+  bx := sp.box;
+  if lat is not null and lng is not null and bx is not null then
     d := hypot(
       greatest((bx->>'s')::double precision - lat, 0, lat - (bx->>'n')::double precision) * 111320,
       greatest((bx->>'w')::double precision - lng, 0, lng - (bx->>'e')::double precision) * 111320 * cos(radians(lat)));
-    if d > margin then raise exception '매장 근처에서만 남길 수 있습니다'; end if;
+  end if;
+  if proof = 'gps' then
+    if d is null or d > margin then proof := 'remote'; end if;   -- 범위 밖이면 매장 밖 글로 남김
+  elsif proof = 'remote' then
+    null;
   elsif proof = 'receipt' then
     if receipt is null or jsonb_typeof(receipt) <> 'object' then raise exception '영수증 정보가 없습니다'; end if;
   elsif proof = 'admin' then

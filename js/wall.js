@@ -23,8 +23,8 @@
   function button(text, cls, fn) { var b = el('button', cls, text); b.type = 'button'; b.addEventListener('click', fn); return b; }
   function spot() { return (window.SPOTS || []).filter(function (o) { return o.id === SPOT; })[0]; }
 
-  /* ══ 1. 방문 확인: 위치 → 안 되면 영수증 (관리자는 관리자 모드) ══ */
-  var proof = null, adminMode = false;   // proof: { kind: 'gps' | 'receipt' | 'admin', ... }
+  /* ══ 1. 방문 확인: 누구나 쓸 수 있고, 후아나 안이면 위치로 확인(AR), 밖이면 매장 밖 글로 남김 (영수증 인증은 선택) ══ */
+  var proof = null, adminMode = false;   // proof: { kind: 'gps' | 'receipt' | 'admin' | 'remote', lat, lng, ... }
   var gstat = $('gstat'), form = $('form');
 
   function show(msg, sub, cls, buttons, extra) {
@@ -36,10 +36,14 @@
     form.classList.add('hidden');
     arAllowed(false);   // 확인이 풀리면 AR도 끔
   }
-  function verified(p) {
+  var KIND = { gps: '후아나에서 확인됐어요', admin: '관리자 모드 (위치 확인 없음)', receipt: '영수증으로 확인됐어요', remote: '후아나 밖에서 남기는 리뷰예요' };
+  function verified(p, note, buttons) {
     proof = p;
     gstat.innerHTML = '';
-    gstat.appendChild(el('div', 'msg ok', p.kind === 'gps' ? '후아나에서 확인됐어요' : p.kind === 'admin' ? '관리자 모드 (위치 확인 없음)' : '영수증으로 확인됐어요'));
+    var m = el('div', 'msg ok' + (p.kind === 'remote' ? ' info' : ''), KIND[p.kind]);
+    if (note) m.appendChild(el('small', '', ' · ' + note));
+    gstat.appendChild(m);
+    if (buttons && buttons.length) { var r = el('div', 'row'); buttons.forEach(function (b) { r.appendChild(b); }); gstat.appendChild(r); }
     form.classList.remove('hidden');
     arAllowed(p.kind === 'gps' || p.kind === 'admin');
     if (p.kind === 'gps') arStart();   // 후아나 안에서는 바로 카메라 위에 물고기를 띄움
@@ -47,21 +51,21 @@
   function receiptBtn() { return button('영수증으로 인증하기', 'vbtn', function () { $('rcpt').value = ''; $('rcpt').click(); }); }
   function retryBtn() { return button('위치 다시 확인', 'vbtn', checkGeo); }
 
+  // 매장 밖 글: 바로 쓸 수 있고, 위치를 다시 확인하거나 영수증으로 방문을 인증할 수 있음 (위치를 알면 같이 보냄)
+  function remote(note, loc) { verified({ kind: 'remote', lat: loc && loc.lat, lng: loc && loc.lng }, note, [retryBtn(), receiptBtn()]); }
   function checkGeo() {
-    proof = null;
-    show('위치를 확인하는 중…', '위치 권한을 허용해 주세요', '', []);
-    if (!navigator.geolocation) { show('위치를 쓸 수 없어요', '영수증으로 대신 인증할 수 있어요', 'bad', [receiptBtn()]); return; }
+    remote('위치를 확인하는 중…');
+    if (!navigator.geolocation) { remote('위치를 쓸 수 없어요'); return; }
     navigator.geolocation.getCurrentPosition(function (p) {
-      if (adminMode) return;
+      if (adminMode || (proof && proof.kind === 'receipt')) return;
       var sp = spot(), lat = p.coords.latitude, lng = p.coords.longitude;
-      if (!sp || !sp.box) { show('매장 정보를 불러오지 못했어요', '잠시 뒤 다시 해 주세요', 'bad', [retryBtn()]); return; }
+      if (!sp || !sp.box) { remote('매장 정보를 불러오지 못했어요', { lat: lat, lng: lng }); return; }
       var d = Math.round(window.spotDistance(sp, lat, lng));
       if (d <= window.SPOT_MARGIN_M) verified({ kind: 'gps', lat: lat, lng: lng });
-      else show('후아나에서 ' + d + 'm 떨어져 있어요', '매장 안이나 바로 앞에서 남길 수 있어요', 'bad', [retryBtn(), receiptBtn()]);
+      else remote('후아나에서 ' + d + 'm', { lat: lat, lng: lng });
     }, function (e) {
-      if (adminMode) return;
-      if (e && e.code === 1) show('위치 권한이 꺼져 있어요', '영수증이 있으면 영수증으로 인증할 수 있어요', 'bad', [receiptBtn(), retryBtn()]);
-      else show('위치를 찾지 못했어요', '잠시 뒤 다시 하거나 영수증으로 인증해 주세요', 'bad', [retryBtn(), receiptBtn()]);
+      if (adminMode || (proof && proof.kind === 'receipt')) return;
+      remote(e && e.code === 1 ? '위치 권한이 꺼져 있어요' : '위치를 찾지 못했어요');
     }, { enableHighAccuracy: true, timeout: 12000, maximumAge: 20000 });
   }
 
@@ -81,8 +85,8 @@
         return;
       }
       var why = !isMine ? '후아나 영수증이 아니에요' : v.checks.filter(function (c) { return !c.ok; }).map(function (c) { return c.text; }).join(' · ');
-      show('인증하지 못했어요', why, 'bad', [receiptBtn(), retryBtn()]);
-    }, function () { show('영수증을 읽지 못했어요', '인터넷 연결을 확인하고 다시 해 주세요', 'bad', [receiptBtn(), retryBtn()]); });
+      remote('영수증 인증 실패: ' + why);
+    }, function () { remote('영수증을 읽지 못했어요'); });
   });
 
   // 관리자 모드: 위치와 상관없이 남기고 리뷰를 지울 수 있음 (서버도 관리자인지 다시 확인)
@@ -480,7 +484,7 @@
     sending = true; $('send').disabled = true;
     sb.rpc('submit_wall_review', {
       spot_id: SPOT, nick: nick || null, body: body, fish_id: chosen, item_id: chosenItem || null,
-      lat: proof.kind === 'gps' ? proof.lat : null, lng: proof.kind === 'gps' ? proof.lng : null,
+      lat: proof.lat != null ? proof.lat : null, lng: proof.lng != null ? proof.lng : null,
       proof: proof.kind, receipt: proof.kind === 'receipt' ? proof.receipt : null
     }).then(function (res) {
       sending = false; $('send').disabled = false;
