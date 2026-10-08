@@ -12,6 +12,7 @@ window.LICENSES = [
   { owner: 'bukharig0300 ("Fishe")', use: '물고기 3D 모델 (Emperor Angelfish), 그림 크기와 모양 · 동작 데이터를 줄여 씀', kind: 'CC BY 4.0', url: 'https://skfb.ly/oNX6A' },
   { owner: 'somitsu ("Ryukin goldfish")', use: '물고기 3D 모델 (Ryukin Goldfish), 그림 크기와 모양 · 동작 데이터를 줄여 씀', kind: 'CC BY 4.0', url: 'https://skfb.ly/6TMC9' },
   { owner: 'yaniu03 ("Turtle")', use: '3D 모델 (Sea Turtle), 그림 크기와 모양 · 동작 데이터를 줄여 씀', kind: 'CC BY 4.0', url: 'https://skfb.ly/oITRq' },
+  { owner: 'yaniu03 ("Manta_new")', use: '3D 모델 (Manta Ray), 그림 크기와 모양 · 동작 데이터를 줄여 씀', kind: 'CC BY 4.0', url: 'https://skfb.ly/oIXu6' },
   { owner: 'Isaiah Odhner (JS Paint)', use: '나의 어항 그림판 도구 그림', kind: 'MIT', url: 'https://github.com/1j01/jspaint' },
   { owner: 'quiple (갈무리11)', use: '굴림이 없는 컴퓨터에서 XP 글씨 대신 쓰는 도트 글꼴', kind: 'SIL OFL 1.1', url: 'https://github.com/quiple/galmuri' },
   { owner: 'leedheo (도스샘물체)', use: '글꼴(폰트)로 도스샘물체(leedheo 제작)를 사용하였습니다. 물고기 말풍선 (한글 2350자만 남겨 씀)', kind: 'MIT', url: 'https://github.com/hurss/fonts' }

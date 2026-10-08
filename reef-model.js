@@ -224,7 +224,9 @@
         p.heads[0].position.set(p.upright ? 0 : L * 0.4, p.upright ? L * 0.35 : 0, 0);
         // 큰 물고기는 더 넓게 돌고, 빠르기는 각도 대신 실제로 가는 거리 기준 (멀리 돌아도 빨라 보이지 않게)
         var rx = S * (0.26 + 0.05 * (i % 2)) + L * 0.4, rz = S * (0.2 + 0.04 * ((i + 1) % 2)) + L * 0.3;
-        p.lane = { rx: rx, rz: rz, y: S * (0.1 * (i - (solo.length - 1) / 2)),
+        // 높이: 물고기 수와 상관없이 화면 안(가운데 위아래 0.15)에 고루 나눔
+        var yk = solo.length > 1 ? i / (solo.length - 1) - 0.5 : 0;
+        p.lane = { rx: rx, rz: rz, y: S * 0.3 * yk,
                    sp: (p.upright ? 0.35 : 0.9) * L / ((rx + rz) / 2) * p.speedK, ph: i * 2.1, dir: i % 2 ? -1 : 1 };
         holder.add(p.obj);
       });

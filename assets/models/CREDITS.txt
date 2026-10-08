@@ -62,3 +62,9 @@ sailfish.glb (stored, not shown in any reef yet)
   Changes: textures resized to 512px and converted to WebP, vertex data
   quantized, animation keyframes thinned. Head points +z; clips: Swim,
   SwimFast, Bite.
+
+manta-ray.glb
+  "Manta_new" (https://skfb.ly/oIXu6) by yaniu03, licensed under
+  Creative Commons Attribution 4.0 (http://creativecommons.org/licenses/by/4.0/).
+  Changes: textures resized to 512px and converted to WebP, vertex data
+  quantized, animation keyframes thinned.

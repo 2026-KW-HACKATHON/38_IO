@@ -181,11 +181,22 @@
       "model": "assets/models/sea-turtle.glb",
       "color": "#5E8C3A",
       "swim": "path",
-      "size": 2.2,
+      "size": 1.6,
       "forward": "-x",
       "speed": 0.4,
       "says": [],
       "pitch": 28
+     },
+     {
+      "id": "manta-ray",
+      "name": "Manta Ray",
+      "model": "assets/models/manta-ray.glb",
+      "color": "#3C4656",
+      "swim": "path",
+      "size": 1.6,
+      "forward": "+z",
+      "speed": 0.4,
+      "says": []
      }
     ]
    }
