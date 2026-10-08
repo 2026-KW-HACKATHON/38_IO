@@ -5,5 +5,6 @@ window.LICENSES = [
   { owner: 'Titanas YT ("School Of Fish")', use: '물고기 3D 모델 (Clownfish · Moorish Idol · Yellow Tang · Powder Blue Tang), 파일을 나누고 그림 크기를 줄여 씀', kind: 'CC BY 4.0', url: 'https://skfb.ly/6WpRz' },
   { owner: 'House Doctor ("Tropical Fish")', use: '물고기 3D 모델 (Blue Tang), 그림 형식을 바꿔 씀', kind: 'CC BY 4.0', url: 'https://skfb.ly/ooxXK' },
   { owner: 'kenchoo ("Seahorse Sf")', use: '물고기 3D 모델 (Seahorse), 그림 크기와 모양 데이터를 줄여 씀', kind: 'CC BY 4.0', url: 'https://skfb.ly/oRKNs' },
+  { owner: 'Tesseract.js (naptha), Tesseract OCR (Google)', use: '영수증 글자 읽기, 한글 · 영문 글자 자료 (assets/ocr)', kind: 'Apache-2.0', url: 'https://github.com/naptha/tesseract.js' },
   { owner: 'assetfactory ("Fish")', use: '물고기 3D 모델 (Discus), 그림 크기를 줄여 씀', kind: 'Sketchfab Standard (Free)', url: 'https://sketchfab.com/3d-models/fish-74e57a9de7a24975b02d236ea3be614f' }
 ];

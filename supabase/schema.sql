@@ -170,3 +170,55 @@ grant execute on function public.admin_delete_user(uuid) to authenticated;
 grant execute on function public.redeem_gift_code(text) to authenticated;
 grant execute on function public.remove_role(text) to authenticated;
 grant execute on function public.delete_my_account() to authenticated;
+
+-- 11) 영수증 인증 기록: 사진은 남기지 않고 읽어 낸 값만. 같은 영수증(가게 · 결제 분 · 승인번호나 금액)은 한 번만
+--     본인, 그 가게 점주, 관리자만 볼 수 있음. 30일은 js/receipt.js의 DAYS와 같게
+create table if not exists public.receipts (
+  id bigint generated always as identity primary key,
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  spot text not null check (char_length(spot) between 1 and 40),
+  paid_at timestamptz not null,
+  approval text check (char_length(approval) <= 20),
+  amount integer check (amount between 0 and 100000000),
+  biz text check (char_length(biz) <= 12),
+  fp text not null unique,
+  created_at timestamptz not null default now()
+);
+create index if not exists receipts_user_idx on public.receipts (user_id, created_at desc);
+create index if not exists receipts_spot_idx on public.receipts (spot, paid_at desc);
+grant select on public.receipts to authenticated;
+alter table public.receipts enable row level security;
+
+drop policy if exists "receipts_select" on public.receipts;
+create policy "receipts_select" on public.receipts for select
+  using (user_id = auth.uid() or public.is_admin() or exists (
+    select 1 from public.profiles p, jsonb_array_elements(p.roles) r
+    where p.id = auth.uid() and r->>'kind' = 'owner' and coalesce(r->>'spot', r->>'code') = receipts.spot));
+
+create or replace function public.submit_receipt(shop text, paid timestamptz, approval_no text, total integer, biz_no text)
+returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare key text; got public.receipts;
+begin
+  if auth.uid() is null then raise exception '로그인이 필요합니다'; end if;
+  if coalesce(shop, '') = '' or paid is null then raise exception '가게와 결제 시각이 필요합니다'; end if;
+  if paid > now() + interval '10 minutes' then raise exception '앞으로의 날짜라 받을 수 없습니다'; end if;
+  if paid < now() - interval '30 days' then raise exception '결제한 지 30일이 지난 영수증입니다'; end if;
+  -- 다시 찍어서 승인번호나 금액 하나를 못 읽었어도, 가게 · 결제 분이 같고 남은 값이 겹치면 같은 영수증으로 봄
+  if exists (select 1 from public.receipts r
+             where r.spot = shop and date_trunc('minute', r.paid_at) = date_trunc('minute', paid)
+               and (r.approval = nullif(approval_no, '') or r.amount = total
+                    or (r.approval is null and r.amount is null) or (nullif(approval_no, '') is null and total is null))) then
+    raise exception '이미 인증된 영수증입니다';
+  end if;
+  key := shop || '|' || to_char(paid at time zone 'Asia/Seoul', 'YYYYMMDDHH24MI') || '|' || coalesce(nullif(approval_no, ''), total::text, '');
+  insert into public.receipts (user_id, spot, paid_at, approval, amount, biz, fp)
+  values (auth.uid(), shop, paid, nullif(approval_no, ''), total, nullif(biz_no, ''), key)
+  on conflict (fp) do nothing
+  returning * into got;
+  if got.id is null then raise exception '이미 인증된 영수증입니다'; end if;
+  return to_jsonb(got) - 'fp';
+end $$;
+
+revoke all on function public.submit_receipt(text, timestamptz, text, integer, text) from public, anon;
+grant execute on function public.submit_receipt(text, timestamptz, text, integer, text) to authenticated;

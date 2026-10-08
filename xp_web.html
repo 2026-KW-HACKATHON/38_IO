@@ -108,6 +108,19 @@ fieldset.grp{border:1px solid #d0d0bf;border-radius:4px;padding:4px 10px 10px;ma
 .xsel{height:21px;border:1px solid #7f9db9;font:inherit;font-size:12px;background:#fff;border-radius:0;width:100%}
 @media (max-width:420px){ .avbox{grid-template-columns:1fr} }
 
+/* 리뷰 관리: 영수증 인증 칸 + 내 인증 기록 */
+.win.receipt .body{width:min(380px,calc(100vw - 40px));height:min(470px,calc(100vh - 110px));background:var(--surface);
+  display:flex;flex-direction:column;padding:8px;box-sizing:border-box}
+.rout{margin-top:8px;display:flex;flex-direction:column;gap:6px}
+.chk.ok{color:#2e8b3e}.chk.no{color:#c0392b}
+.rdone{font-weight:700;color:#2e8b3e;margin:2px 0}
+.rtext summary{cursor:pointer;color:#0046d5;font-size:11px}
+.rtext pre{margin:4px 0 0;max-height:120px;overflow:auto;background:#fff;border:1px solid #7f9db9;padding:4px;font:11px/1.4 var(--ui);
+  white-space:pre-wrap;-webkit-user-select:text;user-select:text}
+/* XP 진행 막대: 초록 칸이 차오름 */
+.xprog{height:14px;border:1px solid #686868;border-radius:3px;background:#fff;padding:1px;box-sizing:border-box;overflow:hidden}
+.xprog i{display:block;height:100%;width:0;transition:width .2s;background:repeating-linear-gradient(90deg,#2ed330 0 8px,transparent 8px 10px)}
+
 /* 라이선스 창: 열 제목 줄 + XP 스크롤 막대가 붙은 목록 + 아래 상태 줄 */
 body.locked #lic{display:none}   /* 권한이 없으면 라이선스 창도 숨김 */
 body.locked .dk:not(.free) .ic{opacity:.45;filter:grayscale(.6)}   /* 막힌 창 아이콘은 흐리게 */
@@ -278,7 +291,8 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
 <script src="js/config.js"></script>
 <script src="js/core.js"></script>
 <script src="js/spots.js"></script>
-<script src="js/licenses.js?v=3"></script>
+<script src="js/licenses.js?v=4"></script>
+<script src="js/receipt.js"></script>
 <script>
 /* 나의 공간: 끌어서 옮기는 가짜 창들, 두 번 누르면 맨 앞으로, 지도의 별 */
 (function () {
@@ -296,7 +310,7 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
     { id: 'map',     title: '월계 지도', kind: 'map',     icon: "assets/space/xp/icon-map.png",    at: [0.29, 0.06] },
     { id: 'friends', title: '친구 관리',   kind: 'friends', icon: "assets/space/xp/icon-friends.png", at: [0.72, 0.10] },
     { id: 'stock',   title: '재고 관리',   kind: 'picture', img: "assets/space/stock.webp", cover: true, icon: "assets/space/xp/icon-stock.png", at: [0.07, 0.62] },
-    { id: 'review',  title: '리뷰 관리',   kind: 'friends', text: '리뷰 관리 기능은 준비 중입니다.', icon: "assets/space/xp/icon-review.png", at: [0.36, 0.60] },
+    { id: 'review',  title: '리뷰 관리',   kind: 'receipt', icon: "assets/space/xp/icon-review.png", at: [0.36, 0.60] },
     { id: 'gift',    title: '선물 코드',   kind: 'gift',    icon: "assets/space/xp/icon-gift.png",    at: [0.72, 0.52] }
   ];
 
@@ -365,6 +379,8 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
       gin.addEventListener('keydown', function (e) { if (e.key === 'Enter') redeem(gin); });
     } else if (def.kind === 'account') {
       buildAccount(entry);
+    } else if (def.kind === 'receipt') {
+      buildReceipt(entry);
     } else if (def.kind === 'friends') {
       body.innerHTML = def.text || '친구 목록이 비어 있습니다.<br>친구 관리 기능은 준비 중입니다.';
     } else if (def.kind === 'map') {
@@ -627,6 +643,106 @@ body.has-open #hint{display:none}   /* 창이 하나라도 열리면 안내 글�
   }
   function group(title) {
     var f = el('fieldset', 'grp'); f.appendChild(el('legend', '', title)); return f;
+  }
+
+  /* ── 리뷰 관리: 영수증 사진으로 가게 · 결제 시각을 인증하고, 내가 인증한 기록을 보여 줌 ── */
+  function buildReceipt(entry) {
+    var body = entry.body;
+    var panel = el('div', 'ppanel'); body.appendChild(panel);
+    var pick = el('input'); pick.type = 'file'; pick.accept = 'image/*'; pick.hidden = true; body.appendChild(pick);
+    var now = null, prog = null;   // 지금 영수증의 상태 (읽는 중 · 결과 · 오류), 진행 막대
+    var NAMES = { spot: '가게', time: '결제 시각', age: '기한', pay: '결제 정보' };
+
+    function draw() {
+      panel.innerHTML = ''; prog = null;
+      var st = window.Core ? Core.state : {};
+      if (!window.Core || !Core.ready) { panel.appendChild(el('p', 'empty', '서버 설정 전이라 쓸 수 없습니다.')); return; }
+      if (!st.user) {
+        panel.appendChild(el('p', 'empty', '카카오로 로그인하면 쓸 수 있습니다.'));
+        panel.appendChild(button('카카오로 로그인', function () { Core.login(); }));
+        return;
+      }
+      var g = group('영수증 인증');
+      g.appendChild(el('p', 'note', '결제한 지 ' + Receipt.DAYS + '일 안의 영수증을 밝은 곳에서 평평하게 펴고 화면에 꽉 차게 찍어 주십시오. ' +
+        '글자는 이 기기 안에서 읽고, 사진은 서버에 올리지 않습니다.'));
+      var row = el('div', 'prow');
+      var shot = button(now && !now.busy ? '다시 찍기' : '영수증 찍기', function () { pick.value = ''; pick.click(); });
+      shot.disabled = !!(now && now.busy);
+      row.appendChild(shot); g.appendChild(row);
+      if (now) g.appendChild(result());
+      panel.appendChild(g);
+      var h = group('내 인증 기록'); panel.appendChild(h); drawMine(h);
+    }
+
+    // 읽는 중이면 진행 막대, 다 읽었으면 네 가지 확인 결과와 인증 단추
+    function result() {
+      var out = el('div', 'rout');
+      if (now.busy) {
+        var bar = el('div', 'xprog'), fill = el('i'), txt = el('p', 'note', '준비하는 중…');
+        bar.appendChild(fill); out.appendChild(bar); out.appendChild(txt);
+        prog = { fill: fill, txt: txt };
+        return out;
+      }
+      if (now.err) { out.appendChild(el('p', 'empty', now.err)); return out; }
+      var kv = el('dl', 'kv');
+      now.v.checks.forEach(function (c) {
+        kv.appendChild(el('dt', '', NAMES[c.key]));
+        var dd = el('dd'); dd.appendChild(el('span', 'chk ' + (c.ok ? 'ok' : 'no'), (c.ok ? '✔ ' : '✖ ') + c.text)); kv.appendChild(dd);
+      });
+      out.appendChild(kv);
+      if (now.saved) out.appendChild(el('p', 'rdone', '인증되었습니다.'));
+      else if (now.v.ok) {
+        var r = el('div', 'prow'), go = button('인증하기', function () {
+          go.disabled = true;
+          Receipt.submit(now.info).then(function (res) {
+            if (res.error) { go.disabled = false; Core.toast(errText(res.error)); return; }
+            now.saved = true;
+            Core.log('receipt_ok', { spot: now.info.spot.id });
+            draw();
+          });
+        });
+        r.appendChild(go); out.appendChild(r);
+      } else out.appendChild(el('p', 'note', '✖ 칸이 있으면 흔들리지 않게, 글자가 잘 보이도록 다시 찍어 주십시오.'));
+      // 무엇을 읽었는지 직접 볼 수 있게
+      var det = el('details', 'rtext'); det.appendChild(el('summary', '', '읽은 글 보기')); det.appendChild(el('pre', '', now.text || '(읽은 글 없음)'));
+      out.appendChild(det);
+      return out;
+    }
+
+    pick.addEventListener('change', function () {
+      var f = pick.files && pick.files[0];
+      if (!f) return;
+      now = { busy: true }; draw();
+      Receipt.read(f, function (p, msg) {
+        if (!prog) return;
+        prog.fill.style.width = Math.round(p * 100) + '%'; prog.txt.textContent = msg;
+      }).then(function (r) {
+        now = { text: r.text, info: r.info, v: Receipt.judge(r.info) }; draw();
+      }, function () {
+        now = { err: '영수증을 읽지 못했습니다. 인터넷 연결을 확인하고 다시 해 주십시오.' }; draw();
+      });
+    });
+
+    // 내 인증 기록: 최근 20개
+    function drawMine(g) {
+      var wait = el('p', 'empty', '불러오는 중…'); g.appendChild(wait);
+      Receipt.mine().then(function (r) {
+        wait.remove();
+        if (r.error) { g.appendChild(el('p', 'empty', errText(r.error))); return; }
+        if (!r.data.length) { g.appendChild(el('p', 'empty', '아직 인증한 영수증이 없습니다.')); return; }
+        r.data.forEach(function (it) {
+          var sp = (window.SPOTS || []).filter(function (o) { return o.id === it.spot; })[0];
+          var line = el('div', 'role'), t = el('span', 'rtxt');
+          t.appendChild(el('b', '', sp ? sp.name : it.spot));
+          t.appendChild(el('span', '', new Date(it.paid_at).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', dateStyle: 'medium', timeStyle: 'short' })));
+          if (it.amount) t.appendChild(el('span', '', it.amount.toLocaleString('ko-KR') + '원'));
+          line.appendChild(t); g.appendChild(line);
+        });
+      });
+    }
+
+    if (window.Core) Core.onChange(function () { if (isOpen(entry) && !(now && now.busy)) draw(); });
+    draw();
   }
 
   // 카카오 칸: 아이디, 로그아웃, 계정 변경, 맨 아래 계정 삭제
