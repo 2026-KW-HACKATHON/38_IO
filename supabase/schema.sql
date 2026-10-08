@@ -538,7 +538,7 @@ grant execute on function public.gift_send(uuid, text, text) to authenticated;
 grant execute on function public.my_gifts() to authenticated;
 grant execute on function public.new_gifts() to authenticated;
 
--- 13) 매장 방문자 한 줄 리뷰 (로그인 없이 쓰고 누구나 봄)
+-- 15) 매장 방문자 한 줄 리뷰 (로그인 없이 쓰고 누구나 봄)
 --     쓰기는 아래 함수로만 가능: 매장 범위 + 50m 안에서 보낸 위치(gps)이거나, 영수증 인증(receipt)을 거친 경우만 받음
 --     같은 매장에서 직전 리뷰가 2분 안에 올라왔으면 같은 무리(grp)로 묶음
 --     proof가 receipt인 글의 영수증 정보(receipt)는 기기에서 읽은 값이라 서버가 확인하지 못함 (나중에 대조용)
@@ -549,12 +549,14 @@ create table if not exists public.wall_reviews (
   body text not null check (char_length(body) between 1 and 60),
   fish text not null check (char_length(fish) between 1 and 40),
   proof text not null check (proof in ('gps', 'receipt', 'admin')),
+  item text check (item is null or char_length(item) <= 40),
   dist real,
   receipt jsonb,
   grp bigint not null,
   created_at timestamptz not null default now()
 );
--- 이미 만든 표에는 관리자 시험 글(admin)을 허용하도록 검사를 다시 검사
+-- 이미 만든 표에는 관리자 시험 글(admin)을 허용하도록 검사를 다시 함
+alter table public.wall_reviews add column if not exists item text check (item is null or char_length(item) <= 40);   -- 이미 만든 표에 아이템 칸 추가
 alter table public.wall_reviews drop constraint if exists wall_reviews_proof_check;
 alter table public.wall_reviews add constraint wall_reviews_proof_check check (proof in ('gps', 'receipt', 'admin'));
 create index if not exists wall_reviews_spot_time on public.wall_reviews (spot, created_at desc);
@@ -565,11 +567,14 @@ drop policy if exists "wall_admin_delete" on public.wall_reviews;
 create policy "wall_admin_delete" on public.wall_reviews for delete to authenticated using (public.is_admin());
 -- 위치 · 영수증 정보는 공개하지 않음 (열 단위로 허용)
 revoke all on public.wall_reviews from anon, authenticated;
-grant select (id, spot, nick, body, fish, proof, grp, created_at) on public.wall_reviews to anon, authenticated;
+grant select (id, spot, nick, body, fish, item, proof, grp, created_at) on public.wall_reviews to anon, authenticated;
 grant delete on public.wall_reviews to authenticated;
 
+-- 인자가 늘어서 옛 함수는 지우고 새로 만듦
+drop function if exists public.submit_wall_review(text, text, text, text, double precision, double precision, text, jsonb);
 create or replace function public.submit_wall_review(spot_id text, nick text, body text, fish_id text,
-  lat double precision default null, lng double precision default null, proof text default 'gps', receipt jsonb default null)
+  lat double precision default null, lng double precision default null, proof text default 'gps', receipt jsonb default null,
+  item_id text default null)
 returns jsonb language plpgsql security definer set search_path = public as $$
 declare
   sp record; bx jsonb; d double precision := null; t text; n text; last_row record; g bigint; new_id bigint;
@@ -601,9 +606,9 @@ begin
   select w.grp, w.created_at into last_row from public.wall_reviews w where w.spot = spot_id order by w.created_at desc limit 1;
   if found and now() - last_row.created_at <= interval '2 minutes' then g := last_row.grp; end if;
   new_id := nextval(pg_get_serial_sequence('public.wall_reviews', 'id'));
-  insert into public.wall_reviews (id, spot, nick, body, fish, proof, dist, receipt, grp)
-    values (new_id, spot_id, n, t, fish_id, proof, d, case when proof = 'receipt' then receipt end, coalesce(g, new_id));
+  insert into public.wall_reviews (id, spot, nick, body, fish, item, proof, dist, receipt, grp)
+    values (new_id, spot_id, n, t, fish_id, nullif(left(btrim(coalesce(item_id, '')), 40), ''), proof, d, case when proof = 'receipt' then receipt end, coalesce(g, new_id));
   return jsonb_build_object('id', new_id, 'grp', coalesce(g, new_id));
 end $$;
-revoke all on function public.submit_wall_review(text, text, text, text, double precision, double precision, text, jsonb) from public;
-grant execute on function public.submit_wall_review(text, text, text, text, double precision, double precision, text, jsonb) to anon, authenticated;
+revoke all on function public.submit_wall_review(text, text, text, text, double precision, double precision, text, jsonb, text) from public;
+grant execute on function public.submit_wall_review(text, text, text, text, double precision, double precision, text, jsonb, text) to anon, authenticated;
