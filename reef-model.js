@@ -8,7 +8,8 @@
      { id, name, model, color(대표 색), swim: 'school' | 'path', count(떼 물고기를 몇 마리 보일지, 기본 1),
        size(혼자 헤엄치는 물고기 길이, 떼 물고기 한 마리 길이 대비), speed(혼자 헤엄치는 빠르기 배수), says(할 말), forward(머리 방향 '+x' '-z' 등), upright(해마처럼 서서 헤엄), clip(동작 이름, 여러 개일 때), pitch(머리를 숙이는 각도, 도),
        thrust(꼬리 밀기, 아래 참고),
-       flutter(지느러미 떨림, 아래 참고) }
+       flutter(지느러미 떨림, 아래 참고), skin(같은 모델에 입힐 다른 무늬 그림),
+       pick(떼 파일 안에서 몇 번째 물고기부터 보일지, 기본 1), delay(떼 헤엄을 몇 초 지난 자리에서 시작할지) }
      school: 같은 떼에서 나눈 파일이라 자리와 헤엄이 파일 안에 들어 있음
      path:   혼자 있는 모델이라 여기서 고리 모양 길을 따라 헤엄치게 함
 */
@@ -122,9 +123,31 @@
 
   function gltf(THREE, url) { return new Promise(function (ok, no) { new THREE.GLTFLoader().load(url, ok, null, no); }); }
 
+  /* ── 무늬 바꾸기: skin 그림이 있으면 같은 모델에 그 그림을 입힘
+     빛나는 그림도 같은 그림으로 (원래 파일처럼 몸 색의 약 30% 밝기) ── */
+  var skins = {};
+  function skinTex(THREE, url) {
+    return skins[url] || (skins[url] = new Promise(function (ok, no) {
+      new THREE.TextureLoader().load(url, function (t) { t.flipY = false; t.encoding = THREE.sRGBEncoding; ok(t); }, null, no);
+    }));
+  }
+  function loadGltf(THREE, f) {
+    return Promise.all([gltf(THREE, f.model), f.skin ? skinTex(THREE, f.skin) : null]).then(function (r) {
+      var g = r[0], tex = r[1];
+      if (tex) g.scene.traverse(function (o) {
+        if (!o.isMesh || !o.material.map) return;
+        tex.wrapS = o.material.map.wrapS; tex.wrapT = o.material.map.wrapT;
+        o.material.map = tex;
+        if (o.material.emissiveMap) { o.material.emissiveMap = tex; o.material.emissive.setScalar(0.07); }
+        o.material.needsUpdate = true;
+      });
+      return g;
+    });
+  }
+
   /* ── 떼 물고기: 동작이 붙은 뼈만 그 종류의 뼈. 한 마리씩 나눠서 count 마리만 보임 ── */
   function loadSchool(THREE, f) {
-    return gltf(THREE, f.model).then(function (g) {
+    return loadGltf(THREE, f).then(function (g) {
       var scene = g.scene, mixer = null, clip = g.animations[0] || null, mine = {};
       if (clip) {
         mixer = new THREE.AnimationMixer(scene);
@@ -142,14 +165,14 @@
         if (!(o.parent && o.parent.isBone && who(o.parent.name) === k)) e.roots.push(o);
       });
       var names = Object.keys(each).sort(function (a, b) { return num(a.replace(/\D/g, ''), 0) - num(b.replace(/\D/g, ''), 0); });
-      var count = Math.max(1, Math.round(num(f.count, 1)));
-      var shown = names.slice(0, count), hiddenRoots = [];
-      names.slice(count).forEach(function (k) { hiddenRoots = hiddenRoots.concat(each[k].roots); });
+      var count = Math.max(1, Math.round(num(f.count, 1))), from = Math.max(0, Math.round(num(f.pick, 1)) - 1);
+      var shown = names.slice(from, from + count), hiddenRoots = [];
+      names.forEach(function (k) { if (shown.indexOf(k) < 0) hiddenRoots = hiddenRoots.concat(each[k].roots); });
       var bones = [], heads = [];
       shown.forEach(function (k) { bones = bones.concat(each[k].bones); if (each[k].head) heads.push(each[k].head); });
       function hide() { hiddenRoots.forEach(function (b) { b.scale.setScalar(1e-4); }); }
       hide();
-      return { kind: 'school', id: f.id, name: f.name || f.id, color: f.color || '', obj: scene, mixer: mixer, clip: clip,
+      return { kind: 'school', id: f.id, name: f.name || f.id, color: f.color || '', obj: scene, mixer: mixer, clip: clip, delay: num(f.delay, 0),
                bones: bones, heads: heads, hide: hide, says: f.says || [] };
     });
   }
@@ -157,7 +180,7 @@
   /* ── 혼자 헤엄치는 물고기: 머리를 +x로 돌리고 길이를 맞춘 뒤 고리 길을 따라 움직임 ── */
   var TURN = { '+x': 0, '-x': Math.PI, '+z': Math.PI / 2, '-z': -Math.PI / 2 };
   function loadPath(THREE, f) {
-    return gltf(THREE, f.model).then(function (g) {
+    return loadGltf(THREE, f).then(function (g) {
       var model = g.scene, mixer = null;
       model.traverse(function (o) { if (o.isMesh) o.frustumCulled = false; });
       if (f.flutter && f.flutter.y) addFlutter(THREE, model, f.flutter);
@@ -199,7 +222,7 @@
         }
       });
     }
-    parts.forEach(function (p) { if (p.mixer) { p.mixer.setTime(0); p.hide(); } });
+    parts.forEach(function (p) { if (p.mixer) { p.mixer.setTime(p.delay || 0); p.hide(); } });
     if (box.isEmpty()) return { center: new THREE.Vector3(), size: 1, ref: 0.15 };
     var S = box.getSize(new THREE.Vector3()).length() || 1;
     return { center: box.getCenter(new THREE.Vector3()), size: S, ref: ref || S * 0.15 };

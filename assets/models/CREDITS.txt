@@ -82,3 +82,10 @@ cake.glb
   Creative Commons Attribution 4.0 (http://creativecommons.org/licenses/by/4.0/).
   Changes: texture resized to 512px and converted to WebP, mesh simplified,
   vertex data quantized.
+
+skins/clownfish-tomato.webp, skins/clownfish-percula.webp,
+skins/clownfish-domino.webp, skins/clownfish-snowflake.webp
+  Recolored versions of the clownfish.glb texture, made from "School Of Fish"
+  (https://skfb.ly/6WpRz) by Titanas YT (https://sketchfab.com/pcarnage252),
+  licensed under Creative Commons Attribution 4.0 (http://creativecommons.org/licenses/by/4.0/).
+  Changes: bands and fin edges repainted for each clownfish morph, resized to 1024px.

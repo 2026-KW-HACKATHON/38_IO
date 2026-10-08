@@ -77,6 +77,51 @@
       "says": []
      },
      {
+      "id": "tomato-clownfish",
+      "name": "Tomato Clownfish",
+      "model": "assets/models/clownfish.glb",
+      "skin": "assets/models/skins/clownfish-tomato.webp",
+      "color": "#D9261A",
+      "swim": "school",
+      "count": 1,
+      "pick": 2,
+      "says": []
+     },
+     {
+      "id": "percula-clownfish",
+      "name": "Percula",
+      "model": "assets/models/clownfish.glb",
+      "skin": "assets/models/skins/clownfish-percula.webp",
+      "color": "#FF7A10",
+      "swim": "school",
+      "count": 1,
+      "pick": 3,
+      "says": []
+     },
+     {
+      "id": "domino-clownfish",
+      "name": "Domino",
+      "model": "assets/models/clownfish.glb",
+      "skin": "assets/models/skins/clownfish-domino.webp",
+      "color": "#221C1A",
+      "swim": "school",
+      "count": 1,
+      "delay": 13.7,
+      "says": []
+     },
+     {
+      "id": "snowflake-clownfish",
+      "name": "Snowflake",
+      "model": "assets/models/clownfish.glb",
+      "skin": "assets/models/skins/clownfish-snowflake.webp",
+      "color": "#EDE7DC",
+      "swim": "school",
+      "count": 1,
+      "pick": 2,
+      "delay": 27.3,
+      "says": []
+     },
+     {
       "id": "moorish-idol",
       "name": "Moorish Idol",
       "model": "assets/models/moorish-idol.glb",
