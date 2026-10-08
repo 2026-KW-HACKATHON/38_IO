@@ -71,10 +71,10 @@ insert into public.profiles (id, nickname)
 select id, coalesce(raw_user_meta_data->>'nickname', raw_user_meta_data->>'name', '카카오 사용자') from auth.users
 on conflict (id) do nothing;
 
--- 6) 표 사용 권한과 접근 규칙: 본인 것만, 관리자는 전부. 본인은 닉네임 · 아바타만 고침
+-- 6) 표 사용 권한과 접근 규칙: 본인 것만, 관리자는 전부. 본인은 닉네임 · 아바타 · 어항 설정만 고침
 grant usage on schema public to anon, authenticated;
 grant select on public.profiles to authenticated;
-grant update (nickname, avatar) on public.profiles to authenticated;
+grant update (nickname, avatar, tank) on public.profiles to authenticated;
 grant select, insert on public.activity_logs to authenticated;
 
 alter table public.profiles enable row level security;
